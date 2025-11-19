@@ -93,8 +93,8 @@ resource "helm_release" "temporal" {
           }
           resources = {
             requests = {
-              cpu    = "400m"
-              memory = "1024Mi"
+              cpu    = "250m"
+              memory = "256Mi"
             }
           }
         }
@@ -103,8 +103,8 @@ resource "helm_release" "temporal" {
           replicaCount = 1
           resources = {
             requests = {
-              cpu    = "700m"
-              memory = "2048Mi"
+              cpu    = "500m"
+              memory = "1024Mi"
             }
           }
         }
@@ -120,8 +120,8 @@ resource "helm_release" "temporal" {
           }
           resources = {
             requests = {
-              cpu    = "400m"
-              memory = "1024Mi"
+              cpu    = "250m"
+              memory = "256Mi"
             }
           }
         }
@@ -138,7 +138,7 @@ resource "helm_release" "temporal" {
           resources = {
             requests = {
               cpu    = "200m"
-              memory = "512Mi"
+              memory = "256Mi"
             }
           }
         }

@@ -12,7 +12,8 @@ resource "helm_release" "nected" {
     helm_release.cert-manager,
     azurerm_postgresql_flexible_server.postgresql,
     azurerm_redis_cache.redis,
-    azurerm_private_endpoint.redis
+    azurerm_private_endpoint.redis,
+    time_sleep.wait_for_redis
   ]
 
   values = [
@@ -26,8 +27,8 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "350m"
-            memory = "512Mi"
+            cpu    = "250m"
+            memory = "256Mi"
           }
         }
         ingress = {
@@ -130,8 +131,8 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "250m"
-            memory = "512Mi"
+            cpu    = "200m"
+            memory = "256Mi"
           }
         }
 
@@ -168,8 +169,8 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "500m"
-            memory = "512Mi"
+            cpu    = "250m"
+            memory = "256Mi"
           }
         }
 
@@ -207,8 +208,8 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "250m"
-            memory = "512Mi"
+            cpu    = "200m"
+            memory = "256Mi"
           }
         }
 
@@ -250,8 +251,8 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "600m"
-            memory = "1024Mi"
+            cpu    = "500m"
+            memory = "700Mi"
           }
         }
 

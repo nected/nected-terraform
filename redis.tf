@@ -71,3 +71,12 @@ resource "azurerm_private_endpoint" "redis" {
 
   depends_on = [azurerm_virtual_network.prod]
 }
+
+resource "time_sleep" "wait_for_redis" {
+  depends_on = [
+    azurerm_redis_cache.redis,
+    azurerm_private_endpoint.redis
+  ]
+
+  create_duration = "5m"
+}

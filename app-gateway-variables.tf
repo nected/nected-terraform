@@ -159,14 +159,3 @@ variable "appgw_subnet_cidr" {
   description = "CIDR block for Application Gateway subnet"
   default     = ""
 }
-
-
-
-
-
-
-
-
-
-
-
