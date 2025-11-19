@@ -3,6 +3,7 @@ resource "helm_release" "nected" {
   repository = "https://nected.github.io/helm-charts"
   chart      = "nected"
   namespace  = "default"
+  timeout    = 600
 
   depends_on = [
     azurerm_kubernetes_cluster.k8s,
@@ -10,7 +11,8 @@ resource "helm_release" "nected" {
     helm_release.temporal,
     helm_release.cert-manager,
     azurerm_postgresql_flexible_server.postgresql,
-    azurerm_redis_cache.redis
+    azurerm_redis_cache.redis,
+    azurerm_private_endpoint.redis
   ]
 
   values = [
