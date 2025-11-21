@@ -69,7 +69,7 @@ aks_vm_size        = "standard_a2_v2"
 # PostgreSQL
 pg_version      = 17
 pg_admin_user   = "psqladmin"
-pg_admin_passwd = "<pass>"
+pg_admin_passwd = "<password>"
 pg_sku_name     = "B_Standard_B1ms"
 
 # Redis
@@ -80,10 +80,10 @@ redis_capacity = 1
 elasticsearch_version        = "8.12.0"
 elasticsearch_vm_size        = "Standard_B2ms"
 elasticsearch_admin_username = "elastic"
-elasticsearch_admin_password = "<pass>"
+elasticsearch_admin_password = "<password>"
 
 # Nected License
-nected_pre_shared_key = "<key>"
+nected_pre_shared_key = "<nected-license-key>"
 
 # Domain Configuration
 scheme                = "https"
