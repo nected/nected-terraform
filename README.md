@@ -1,7 +1,185 @@
+# 🚀 Nected Terraform Deployment — Azure
+
+This repository contains Terraform configurations to deploy the full **Nected Platform** stack on **Microsoft Azure**.
+It automates provisioning of:
+
+* Azure Resource Group & Networking
+* Azure Kubernetes Service (AKS)
+* PostgreSQL Flexible Server
+* Redis Cache
+* Elasticsearch Cluster
+* DNS, routing & SSL setup
+* Nected service configuration
+---
+
+## 📌 Prerequisites
+
+Before running Terraform, ensure the following are installed and configured:
+
+| Requirement | Version |
+| ----------- | ------- |
+| Terraform   | ≥ 1.6   |
+| Azure CLI   | ≥ 2.60  |
+| kubectl     | Latest  |
+| Helm        | Latest  |
+---
+
+## 🔐 Authentication
+
+Login into Azure:
+
+```
+az login
+```
+
+Ensure your correct subscription is selected:
+
+```
+az account set --subscription "<YOUR_SUBSCRIPTION_ID>"
+```
+---
+
+## ⚙️ Configuration
+
+Create a `terraform.tfvars` file and populate it with your deployment values.
+
+### Example `terraform.tfvars`
+
+```
+# Project Information
+project             = "nected"
+environment         = "dev"
+resource_group_name = "<YOUR_RESOURCE_GROUP>"
+hosted_zone_rg      = "<HOSTED_ZONE_RESOURCE_GROUP>"
+hosted_zone         = "<YOUR_HOSTED_ZONE>"
+
+# Network Configuration
+vnet_address_space = "10.50.0.0/16"
+
+# Azure Subscription
+subscription_id = "<YOUR_SUBSCRIPTION_ID>"
+
+# AKS Configuration
+kubernetes_version = "1.32"
+aks_node_count     = 1
+aks_min_node_count = 1
+aks_max_node_count = 5
+aks_vm_size        = "standard_a2_v2"
+
+# PostgreSQL
+pg_version      = 17
+pg_admin_user   = "psqladmin"
+pg_admin_passwd = "<pass>"
+pg_sku_name     = "B_Standard_B1ms"
+
+# Redis
+redis_sku_name = "Standard"
+redis_capacity = 1
+
+# Elasticsearch
+elasticsearch_version        = "8.12.0"
+elasticsearch_vm_size        = "Standard_B2ms"
+elasticsearch_admin_username = "elastic"
+elasticsearch_admin_password = "<pass>"
+
+# Nected License
+nected_pre_shared_key = "<key>"
+
+# Domain Configuration
+scheme                = "https"
+ui_domain_prefix      = "ui"
+backend_domain_prefix = "backend"
+router_domain_prefix  = "router"
+
+# Console Access
+console_user_email    = "<<user email>>"
+console_user_password = "<<password>>"
+
+# SMTP Configuration
+smtp_config = {
+  SEND_EMAIL         = "false"
+  EMAIL_PROVIDER     = "smtp"
+  SENDER_EMAIL       = ""
+  SENDER_NAME        = ""
+  EMAIL_INSECURE_TLS = ""
+  EMAIL_HOST         = ""
+  EMAIL_PORT         = ""
+  EMAIL_USERNAME     = ""
+  EMAIL_PASSWORD     = ""
+}
+```
+---
+
+## 🏗️ Deployment Steps
+
+### 1️⃣ Initialize Terraform
+
+```
+terraform init
+```
+
+### 2️⃣ Validate Configuration
+
+```
+terraform validate
+```
+
+### 3️⃣ Preview Resources
+
+```
+terraform plan -out=tfplan
+```
+
+### 4️⃣ Apply Deployment
+
+```
+terraform apply tfplan
+```
+---
+
+## 🔍 Post-Deployment
+
+Once the deployment completes, retrieve important outputs
+```
+terraform output
+```
+
+Typical outputs include:
+
+* AKS cluster credentials
+* Application URLs
+* DB connection strings
+
+Then configure kubectl access:
+```
+az aks get-credentials --resource-group <resource_group> --name <aks_name>
+```
+
+###  Alternatively Kubeconfig generation
+```
 terraform output -raw kube_config > /tmp/kubeconfig
 
-export KUBECONFIG=/tmp/kubeconfig
+export KUBECONFIG=/tmp/kubeconfig 
+```
+---
 
+## 🧹 Destroying Resources (Optional)
 
+To remove the entire environment:
 
-Enable B-tree gin paramater in postgresql 
+```
+terraform destroy
+```
+---
+
+### ✅ Access the Application
+- Domain: `ui_domain_prefix.hosted_zone`
+- Username: `console_user_email`
+- Password: `console_user_password`
+---
+
+## 🤝 Community & Support
+For questions, feedback, or contributions:
+- Visit our [documentation](https://docs.nected.ai/)
+- Join the conversation on [LinkedIn](https://www.linkedin.com/company/nected-ai/)
+- Contact the team via support@nected.ai
