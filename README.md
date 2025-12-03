@@ -22,6 +22,22 @@ Before running Terraform, ensure the following are installed and configured:
 | Azure CLI   | ≥ 2.60  |
 | kubectl     | Latest  |
 | Helm        | Latest  |
+
+### Azure Resources  & Nected license key
+
+To successfully deploy the infrastructure, ensure you have:
+
+* **An active Azure Subscription** and its **Subscription ID**
+* **One Azure DNS Hosted Zone**, which will be used for:
+
+  * Creating CNAME records for all Nected services
+  * Adding DNS entries required for SSL certificate validation
+* **One Azure Resource Group** where the entire infrastructure will be created.
+
+  * The **Hosted Zone** can be in the *same* Resource Group or a *different* one.
+* **Nected License Key** required for installing the full Nected service
+  * Remove it from `terraform.tfvars` if you want to use the free & limited version
+
 ---
 
 ## 🔐 Authentication
@@ -46,18 +62,21 @@ Create a `terraform.tfvars` file and populate it with your deployment values.
 ### Example `terraform.tfvars`
 
 ```
-# Project Information
-project             = "nected"
-environment         = "dev"
+# Prerequisites
 resource_group_name = "<YOUR_RESOURCE_GROUP>"
 hosted_zone_rg      = "<HOSTED_ZONE_RESOURCE_GROUP>"
 hosted_zone         = "<YOUR_HOSTED_ZONE>"
+subscription_id     = "<YOUR_SUBSCRIPTION_ID>"
+
+# Nected License (remove to use free version)
+nected_pre_shared_key = "<NECTED_LICENSE_KEY>"
+
+# Project Information
+project             = "nected"
+environment         = "dev"
 
 # Network Configuration
 vnet_address_space = "10.50.0.0/16"
-
-# Azure Subscription
-subscription_id = "<YOUR_SUBSCRIPTION_ID>"
 
 # AKS Configuration
 kubernetes_version = "1.32"
@@ -82,9 +101,6 @@ elasticsearch_vm_size        = "Standard_B2ms"
 elasticsearch_admin_username = "elastic"
 elasticsearch_admin_password = "<password>"
 
-# Nected License
-nected_pre_shared_key = "<nected-license-key>"
-
 # Domain Configuration
 scheme                = "https"
 ui_domain_prefix      = "ui"
@@ -108,6 +124,31 @@ smtp_config = {
   EMAIL_PASSWORD     = ""
 }
 ```
+---
+
+## 📦 Remote Terraform State (Optional)
+
+If you want to use **remote Terraform state** in **Azure Blob Storage**, create the following:
+
+1. **Azure Storage Account**
+2. **Blob Container** inside the storage account
+3. Update your `backend.tf` file with the correct values.
+
+Example `backend.tf` configuration:
+
+```
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "<RESOURCE_GROUP>"
+    storage_account_name = "<STORAGE_ACCOUNT_NAME>"
+    container_name       = "<CONTAINER_NAME>"
+    key                  = "<TFSTATE_FILE_NAME>.tfstate"
+  }
+}
+```
+
+Ensure these resources are created **before** running `terraform init`.
+
 ---
 
 ## 🏗️ Deployment Steps
