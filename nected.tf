@@ -57,7 +57,7 @@ resource "helm_release" "nected" {
         }
       }
       nalanda = {
-        replicaCount      = 1
+        replicaCount = 1
 
         envVars = {
           ALLOWED_CORS_ORIGIN = "${var.scheme}://${local.backend_domain},${var.scheme}://${local.ui_domain}"
@@ -144,7 +144,7 @@ resource "helm_release" "nected" {
         }
       }
       vidhaan-executer = {
-        replicaCount      = 1
+        replicaCount = 1
 
         envVars = {
           VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
@@ -182,8 +182,8 @@ resource "helm_release" "nected" {
       }
 
       vidhaan-router = {
-        enabled           = "true"
-        replicaCount      = 1
+        enabled      = "true"
+        replicaCount = 1
         envVars = {
           VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
           DB_USER                = var.pg_admin_user
