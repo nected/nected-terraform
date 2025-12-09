@@ -46,12 +46,12 @@ variable "kubernetes_version" {
 
 variable "aks_node_count" {
   type    = number
-  default = 1
+  default = 2
 }
 
 variable "aks_min_node_count" {
   type    = number
-  default = 1
+  default = 2
 }
 
 variable "aks_max_node_count" {
@@ -61,7 +61,7 @@ variable "aks_max_node_count" {
 variable "aks_vm_size" {
   type        = string
   description = "AKS VM Size"
-  default     = "standard_a2_v2"
+  default     = "standard_a4_v2"
 }
 
 # Postgresql Variables
@@ -85,7 +85,13 @@ variable "pg_admin_passwd" {
 variable "pg_sku_name" {
   type        = string
   description = "Posgresql SKU Name"
-  default     = "B_Standard_B1ms"
+  default     = "GP_Standard_D2ds_v5"
+}
+
+variable "pg_disk_size" {
+  type        = number
+  description = "Posgresql Disk Size"
+  default     = 32768
 }
 
 # Redis Variables
@@ -98,7 +104,7 @@ variable "redis_sku_name" {
 variable "redis_capacity" {
   type        = number
   description = "Redis Cache capacity"
-  default     = 1
+  default     = 2
 }
 
 # Elasticsearch Variables

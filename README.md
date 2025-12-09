@@ -80,20 +80,21 @@ vnet_address_space = "10.50.0.0/16"
 
 # AKS Configuration
 kubernetes_version = "1.32"
-aks_node_count     = 1
-aks_min_node_count = 1
+aks_node_count     = 2
+aks_min_node_count = 2
 aks_max_node_count = 5
-aks_vm_size        = "standard_a2_v2"
+aks_vm_size        = "standard_a4_v2"
 
 # PostgreSQL
 pg_version      = 17
 pg_admin_user   = "psqladmin"
 pg_admin_passwd = "<password>"
-pg_sku_name     = "B_Standard_B1ms"
+pg_sku_name     = "GP_Standard_D2ds_v5"
+pg_disk_size    = 32768       # size in MB
 
 # Redis
 redis_sku_name = "Standard"
-redis_capacity = 1
+redis_capacity = 2
 
 # Elasticsearch
 elasticsearch_version        = "8.12.0"

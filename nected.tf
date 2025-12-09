@@ -19,6 +19,14 @@ resource "helm_release" "nected" {
   values = [
     yamlencode({
       konark = {
+        livenessProbe = {
+          failureThreshold = 10
+        }
+
+        readinessProbe = {
+          failureThreshold = 10
+        }
+
         envVars = {
           VITE_API_HOST          = "${var.scheme}://${local.backend_domain}"
           VITE_GRAPHQL_URL       = "${var.scheme}://${local.backend_domain}/graphql/query"
@@ -245,6 +253,14 @@ resource "helm_release" "nected" {
       medha = {
         enabled      = "true"
         replicaCount = 1
+
+        livenessProbe = {
+          failureThreshold = 10
+        }
+
+        readinessProbe = {
+          failureThreshold = 10
+        }
 
         resources = {
           requests = {

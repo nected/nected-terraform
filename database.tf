@@ -25,9 +25,8 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   version                = var.pg_version
   administrator_login    = var.pg_admin_user
   administrator_password = var.pg_admin_passwd
-  storage_mb             = 32768
+  storage_mb             = var.pg_disk_size
   sku_name               = var.pg_sku_name
-  //zone                   = "1"
 
   backup_retention_days         = 7
   geo_redundant_backup_enabled  = false
