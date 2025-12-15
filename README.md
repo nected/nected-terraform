@@ -6,7 +6,6 @@ It automates provisioning of:
 * Azure Resource Group & Networking
 * Azure Kubernetes Service (AKS)
 * PostgreSQL Flexible Server
-* Redis Cache
 * Elasticsearch Cluster
 * DNS, routing & SSL setup
 * Nected service configuration
@@ -68,8 +67,8 @@ hosted_zone_rg      = "<HOSTED_ZONE_RESOURCE_GROUP>"
 hosted_zone         = "<YOUR_HOSTED_ZONE>"
 subscription_id     = "<YOUR_SUBSCRIPTION_ID>"
 
-# Nected License (remove to use free version)
-nected_pre_shared_key = "<NECTED_LICENSE_KEY>"
+# Nected License (uncomment to use paid version)
+# nected_pre_shared_key = "<NECTED_LICENSE_KEY>"
 
 # Project Information
 project             = "nected"
@@ -83,24 +82,26 @@ kubernetes_version = "1.32"
 aks_node_count     = 2
 aks_min_node_count = 2
 aks_max_node_count = 5
-aks_vm_size        = "standard_a4_v2"
+aks_vm_size        = "Standard_D4ds_v6"
 
 # PostgreSQL
 pg_version      = 17
 pg_admin_user   = "psqladmin"
 pg_admin_passwd = "<password>"
-pg_sku_name     = "GP_Standard_D2ds_v5"
-pg_disk_size    = 32768       # size in MB
-
-# Redis
-redis_sku_name = "Standard"
-redis_capacity = 2
+pg_sku_name     = "GP_Standard_D4ds_v5"
+pg_disk_size    = 65536       # size in MB
 
 # Elasticsearch
 elasticsearch_version        = "8.12.0"
-elasticsearch_vm_size        = "Standard_B2ms"
+elasticsearch_vm_size        = "Standard_D4ds_v6"
 elasticsearch_admin_username = "elastic"
 elasticsearch_admin_password = "<password>"
+
+# Application variables
+# App resources & autoscaling
+temporal_task_partitions = 20
+temporal_service_autoscale = false
+nected_service_autoscale = false
 
 # Domain Configuration
 scheme                = "https"
@@ -213,7 +214,28 @@ To remove the entire environment:
 terraform destroy
 ```
 ---
-
+## ⚡ Jmeter Load testing
+Update the following placeholders in the configuration:
+- [RULE_ID]
+- [RULE_DOMAIN]
+- [RULE_DOMAIN_IP] (optional)
+- [NECTED_API_KEY]
+- [RULE_PAYLOAD] {"environment": "production", "params": {"a": 1}}
+#### Run JMeter
+```
+cd jmeter-test
+kubectl create ns jmeter
+kubectl -n jmeter apply -f jmeter-test.yaml
+kubectl -n jmeter get pods
+kubectl -n jmeter logs -f jmeter-master
+```
+#### Retrieve JMeter Report
+To copy the generated JMeter report after the test completes:
+```
+kubectl -n jmeter cp jmeter-master:/test/output .
+```
+> 💡 Default configuration supports approximately 25 RPS.
+---
 ### ✅ Access the Application
 - Domain: `ui_domain_prefix.hosted_zone`
 - Username: `console_user_email`

@@ -61,7 +61,7 @@ variable "aks_max_node_count" {
 variable "aks_vm_size" {
   type        = string
   description = "AKS VM Size"
-  default     = "standard_a4_v2"
+  default     = "Standard_D4ds_v6"
 }
 
 # Postgresql Variables
@@ -85,27 +85,32 @@ variable "pg_admin_passwd" {
 variable "pg_sku_name" {
   type        = string
   description = "Posgresql SKU Name"
-  default     = "GP_Standard_D2ds_v5"
+  default     = "GP_Standard_D4ds_v5"
 }
 
 variable "pg_disk_size" {
   type        = number
   description = "Posgresql Disk Size"
-  default     = 32768
+  default     = 65536
 }
 
-# Redis Variables
-variable "redis_sku_name" {
-  type        = string
-  description = "Redis Cache SKU"
-  default     = "Standard"
-}
+# # Redis Variables
+# variable "redis_family" {
+#   type        = string
+#   description = "Redis family"
+#   default     = "C"
+# }
+# variable "redis_sku_name" {
+#   type        = string
+#   description = "Redis Cache SKU"
+#   default     = "Standard"
+# }
 
-variable "redis_capacity" {
-  type        = number
-  description = "Redis Cache capacity"
-  default     = 2
-}
+# variable "redis_capacity" {
+#   type        = number
+#   description = "Redis Cache capacity"
+#   default     = 2
+# }
 
 # Elasticsearch Variables
 variable "elasticsearch_version" {
@@ -117,7 +122,7 @@ variable "elasticsearch_version" {
 variable "elasticsearch_vm_size" {
   type        = string
   description = "Elasticsearch VM Size"
-  default     = "Standard_B2ms"
+  default     = "Standard_D2ds_v4"
 }
 
 variable "elasticsearch_admin_username" {
@@ -129,6 +134,23 @@ variable "elasticsearch_admin_username" {
 variable "elasticsearch_admin_password" {
   type        = string
   description = "Elasticsearch Admin Password"
+}
+
+# App resources & autoscaling
+variable "temporal_task_partitions" {
+  type        = number
+  description = "Temporal tasks partitions"
+  default     = 20
+}
+variable "temporal_service_autoscale" {
+  type        = bool
+  description = "Temporal Service Autoscale"
+  default     = false
+}
+variable "nected_service_autoscale" {
+  type        = bool
+  description = "Nected Service Autoscale"
+  default     = false
 }
 
 # App Domains Variables

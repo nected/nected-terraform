@@ -38,7 +38,12 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
     azurerm_private_dns_zone_virtual_network_link.postgresql,
     azurerm_virtual_network.prod
   ]
+}
 
+resource "azurerm_postgresql_flexible_server_configuration" "require_secure_transport" {
+  name      = "require_secure_transport"
+  server_id = azurerm_postgresql_flexible_server.postgresql.id
+  value     = "off"
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "extensions" {
@@ -52,4 +57,10 @@ resource "azurerm_postgresql_flexible_server_database" "postgresql_db" {
   server_id = azurerm_postgresql_flexible_server.postgresql.id
   charset   = "UTF8"
   collation = "en_US.utf8"
+}
+
+resource "azurerm_postgresql_flexible_server_configuration" "shared_preload_libraries" {
+  name      = "shared_preload_libraries"
+  server_id = azurerm_postgresql_flexible_server.postgresql.id
+  value     = "pg_stat_statements"
 }

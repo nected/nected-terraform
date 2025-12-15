@@ -17,23 +17,23 @@ locals {
       ]
       service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
     },
-    redis = {
-      address_prefixes = cidrsubnet(var.vnet_address_space, 8, 2)
-      delegation       = false
-      security_rules = [
-        {
-          port                  = "6379"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        },
-        {
-          port                  = "6380"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        }
-      ]
-      service_endpoints = ["Microsoft.Storage"]
-    },
+    # redis = {
+    #   address_prefixes = cidrsubnet(var.vnet_address_space, 8, 2)
+    #   delegation       = false
+    #   security_rules = [
+    #     {
+    #       port                  = "6379"
+    #       direction             = "Inbound"
+    #       source_address_prefix = var.vnet_address_space
+    #     },
+    #     {
+    #       port                  = "6380"
+    #       direction             = "Inbound"
+    #       source_address_prefix = var.vnet_address_space
+    #     }
+    #   ]
+    #   service_endpoints = ["Microsoft.Storage"]
+    # },
     aks = {
       address_prefixes = cidrsubnet(var.vnet_address_space, 6, 1)
       delegation       = false

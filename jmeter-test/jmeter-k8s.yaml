@@ -1,0 +1,164 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jmeter
+---
+# ConfigMap to store test plans (you can also mount from PVC instead)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jmeter-test
+  namespace: jmeter
+data:
+  test_plan.jmx: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+      <hashTree>
+        <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Vidhaan External API">
+          <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+          <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+            <collectionProp name="Arguments.arguments"/>
+          </elementProp>
+        </TestPlan>
+        <hashTree>
+          <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group">
+            <intProp name="ThreadGroup.num_threads">3</intProp>
+            <intProp name="ThreadGroup.ramp_time">1</intProp>
+            <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+            <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+            <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+              <stringProp name="LoopController.loops">500</stringProp>
+              <boolProp name="LoopController.continue_forever">false</boolProp>
+            </elementProp>
+          </ThreadGroup>
+          <hashTree>
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="ProteanDev">
+              <intProp name="HTTPSampler.concurrentPool">6</intProp>
+              <stringProp name="HTTPSampler.domain">[RULE_DOMAIN]</stringProp>
+              <stringProp name="HTTPSampler.port">443</stringProp>
+              <stringProp name="HTTPSampler.protocol">https</stringProp>
+              <stringProp name="HTTPSampler.path">nected/rule/[RULE_ID]</stringProp>
+              <boolProp name="HTTPSampler.follow_redirects">true</boolProp>
+              <stringProp name="HTTPSampler.method">POST</stringProp>
+              <boolProp name="HTTPSampler.use_keepalive">true</boolProp>
+              <boolProp name="HTTPSampler.postBodyRaw">true</boolProp>
+              <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments">
+                <collectionProp name="Arguments.arguments">
+                  <elementProp name="RequestBody" elementType="HTTPArgument">
+                    <boolProp name="HTTPArgument.always_encode">false</boolProp>
+                    <stringProp name="Argument.value">[RULE_PAYLOAD]</stringProp>
+                    <stringProp name="Argument.metadata">=</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </elementProp>
+            </HTTPSamplerProxy>
+            <hashTree>
+              <HeaderManager guiclass="HeaderPanel" testclass="HeaderManager" testname="HTTP Header Manager">
+                <collectionProp name="HeaderManager.headers">
+                  <elementProp name="Content-Type" elementType="Header">
+                    <stringProp name="Header.name">Content-Type</stringProp>
+                    <stringProp name="Header.value">application/json</stringProp>
+                  </elementProp>
+                  <elementProp name="nected-api-key" elementType="Header">
+                    <stringProp name="Header.name">nected-api-key</stringProp>
+                    <stringProp name="Header.value">[NECTED_API_KEY]</stringProp>
+                  </elementProp>
+                </collectionProp>
+              </HeaderManager>
+              <hashTree/>
+            </hashTree>
+          </hashTree>
+        </hashTree>
+      </hashTree>
+    </jmeterTestPlan>
+
+---
+# JMeter slave deployment (2 replicas)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jmeter-slave
+  namespace: jmeter
+spec:
+  serviceName: jmeter-slave
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jmeter-slave
+  template:
+    metadata:
+      labels:
+        app: jmeter-slave
+    spec:
+      # hostAliases:
+      #   - ip: "[RULE_DOMAIN_IP]"
+      #     hostnames:
+      #       - "[RULE_DOMAIN]"
+      containers:
+      - name: jmeter-slave
+        image: alpine/jmeter:5.6.3
+        ports:
+        - containerPort: 1099
+        - containerPort: 50000
+        env:
+          - name: HEAP
+            value: "-Xms1g -Xmx2g -XX:MaxMetaspaceSize=256m"
+        command:
+          - "sh"
+          - "-c"
+          - "jmeter-server -Djava.rmi.server.hostname=$(hostname -f) -Dserver.rmi.ssl.disable=true"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jmeter-slave
+  namespace: jmeter
+spec:
+  clusterIP: None
+  selector:
+    app: jmeter-slave
+  ports:
+    - port: 1099
+      name: rmi
+    - port: 50000
+      name: jmeter
+---
+# JMeter master pod
+apiVersion: v1
+kind: Pod
+metadata:
+  name: jmeter-master
+  namespace: jmeter
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - name: jmeter-master
+    image: alpine/jmeter:5.6.3
+    imagePullPolicy: IfNotPresent
+    command:
+      - "sh"
+      - "-c"
+      - >
+        jmeter -n
+        -t /test/test_plan.jmx
+        -R jmeter-slave-0.jmeter-slave.jmeter.svc.cluster.local
+        -l /test/output/results.jtl
+        -e -o /test/output/report
+        -Dserver.rmi.ssl.disable=true
+        && echo "JMeter finished. Sleeping to keep pod alive..."
+        && tail -f /dev/null
+    volumeMounts:
+      - name: test-volume
+        mountPath: /test
+      - name: output
+        mountPath: /test/output
+    env:
+      - name: HEAP
+        value: "-Xms2g -Xmx4g -XX:MaxMetaspaceSize=512m"
+  volumes:
+    - name: test-volume
+      configMap:
+        name: jmeter-test
+    - name: output
+      emptyDir: {}

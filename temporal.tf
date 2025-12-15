@@ -18,10 +18,28 @@ resource "helm_release" "temporal" {
       server = {
         dynamicConfig = {
           "matching.numTaskqueueReadPartitions" = [
-            { value = 20, constraints = {} }
+            { value = var.temporal_task_partitions, constraints = {} }
           ]
           "matching.numTaskqueueWritePartitions" = [
-            { value = 20, constraints = {} }
+            { value = var.temporal_task_partitions, constraints = {} }
+          ]
+          "history.persistenceMaxQPS" = [
+            { value = 15000, constraints = {} }
+          ]
+          "matching.persistenceMaxQPS" = [
+            { value = 15000, constraints = {} }
+          ]
+          "frontend.persistenceMaxQPS" = [
+            { value = 15000, constraints = {} }
+          ]
+          "frontend.rps" = [
+            { value = 20000, constraints = {} }
+          ]
+          "frontend.namespaceRPS" = [
+            { value = 20000, constraints = {} }
+          ]
+          "frontend.maxNamespaceRPSPerInstance" = [
+            { value = 20000, constraints = {} }
           ]
         }
 
@@ -50,16 +68,17 @@ resource "helm_release" "temporal" {
               driver = "sql"
               sql = {
                 driver          = "postgres12"
-                maxConns        = 20
-                maxConnLifetime = "1h"
+                maxConns        = 30
+                maxConnLifetime = "30m"
+                connectTimeout  = "5s"
                 host            = azurerm_postgresql_flexible_server.postgresql.fqdn
                 port            = 5432
                 user            = var.pg_admin_user
                 password        = var.pg_admin_passwd
-                tls = {
-                  enabled                = true
-                  enableHostVerification = false
-                }
+                # tls = {
+                #   enabled                = true
+                #   enableHostVerification = false
+                # }
               }
             }
 
@@ -67,16 +86,17 @@ resource "helm_release" "temporal" {
               driver = "sql"
               sql = {
                 driver          = "postgres12"
-                maxConns        = 20
-                maxConnLifetime = "1h"
+                maxConns        = 30
+                maxConnLifetime = "30m"
+                connectTimeout  = "5s"
                 host            = azurerm_postgresql_flexible_server.postgresql.fqdn
                 port            = 5432
                 user            = var.pg_admin_user
                 password        = var.pg_admin_passwd
-                tls = {
-                  enabled                = true
-                  enableHostVerification = false
-                }
+                # tls = {
+                #   enabled                = true
+                #   enableHostVerification = false
+                # }
               }
             }
           }
@@ -85,16 +105,16 @@ resource "helm_release" "temporal" {
         frontend = {
           replicaCount = 1
           autoscaling = {
-            enabled      = false
+            enabled      = var.temporal_service_autoscale
             minReplicas  = "1"
-            maxReplicas  = "1"
-            targetCPU    = "75"
-            targetMemory = "75"
+            maxReplicas  = "4"
+            targetCPU    = "85"
+            targetMemory = "85"
           }
           resources = {
             requests = {
               cpu    = "250m"
-              memory = "256Mi"
+              memory = "512Mi"
             }
           }
         }
@@ -103,8 +123,8 @@ resource "helm_release" "temporal" {
           replicaCount = 1
           resources = {
             requests = {
-              cpu    = "500m"
-              memory = "1024Mi"
+              cpu    = "1000m"
+              memory = "2048Mi"
             }
           }
         }
@@ -112,16 +132,16 @@ resource "helm_release" "temporal" {
         matching = {
           replicaCount = 1
           autoscaling = {
-            enabled      = false
+            enabled      = var.temporal_service_autoscale
             minReplicas  = "1"
-            maxReplicas  = "1"
-            targetCPU    = "75"
-            targetMemory = "75"
+            maxReplicas  = "4"
+            targetCPU    = "85"
+            targetMemory = "85"
           }
           resources = {
             requests = {
               cpu    = "250m"
-              memory = "256Mi"
+              memory = "512Mi"
             }
           }
         }
@@ -129,16 +149,16 @@ resource "helm_release" "temporal" {
         worker = {
           replicaCount = 1
           autoscaling = {
-            enabled      = false
+            enabled      = var.temporal_service_autoscale
             minReplicas  = "1"
-            maxReplicas  = "1"
-            targetCPU    = "75"
-            targetMemory = "75"
+            maxReplicas  = "3"
+            targetCPU    = "85"
+            targetMemory = "85"
           }
           resources = {
             requests = {
-              cpu    = "200m"
-              memory = "256Mi"
+              cpu    = "250m"
+              memory = "512Mi"
             }
           }
         }

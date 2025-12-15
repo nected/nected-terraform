@@ -11,9 +11,7 @@ resource "helm_release" "nected" {
     helm_release.temporal,
     helm_release.cert-manager,
     azurerm_postgresql_flexible_server.postgresql,
-    azurerm_redis_cache.redis,
-    azurerm_private_endpoint.redis,
-    time_sleep.wait_for_redis
+    helm_release.datastore,
   ]
 
   values = [
@@ -75,18 +73,9 @@ resource "helm_release" "nected" {
           MASTER_DB_USER     = var.pg_admin_user
           MASTER_DB_PASSWORD = var.pg_admin_passwd
           MASTER_DB_HOST     = azurerm_postgresql_flexible_server.postgresql.fqdn
-          MASTER_SSL_MODE    = "require"
-
-          REDIS_TLS_ENABLED = "true"
-          REDIS_HOST        = azurerm_redis_cache.redis.hostname
-          REDIS_PORT        = format("%s", azurerm_redis_cache.redis.ssl_port)
-          REDIS_PASSWORD    = azurerm_redis_cache.redis.primary_access_key
+          MASTER_SSL_MODE    = "disable"
 
           VIDHAAN_PRE_SHARED_KEY    = var.nected_pre_shared_key
-          VIDHAAN_REDIS_TLS_ENABLED = "true"
-          VIDHAAN_REDIS_HOST        = azurerm_redis_cache.redis.hostname
-          VIDHAAN_REDIS_PORT        = format("%s", azurerm_redis_cache.redis.ssl_port)
-          VIDHAAN_REDIS_PASSWORD    = azurerm_redis_cache.redis.primary_access_key
 
           ELASTIC_HOSTS    = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
           ELASTIC_USER     = var.elasticsearch_admin_username
@@ -144,11 +133,11 @@ resource "helm_release" "nected" {
         }
 
         autoscaling = {
-          enabled                           = false
+          enabled                           = var.nected_service_autoscale
           minReplicas                       = 1
-          maxReplicas                       = 1
-          targetCPUUtilizationPercentage    = 80
-          targetMemoryUtilizationPercentage = 80
+          maxReplicas                       = 3
+          targetCPUUtilizationPercentage    = 85
+          targetMemoryUtilizationPercentage = 85
         }
       }
       vidhaan-executer = {
@@ -159,11 +148,10 @@ resource "helm_release" "nected" {
           DB_USER                = var.pg_admin_user
           DB_PASSWORD            = var.pg_admin_passwd
           DB_HOST                = azurerm_postgresql_flexible_server.postgresql.fqdn
-          SSL_MODE               = "require"
+          SSL_MODE               = "disable"
 
-          REDIS_TLS_ENABLED = "true"
-          REDIS_HOST        = "${azurerm_redis_cache.redis.hostname}:${azurerm_redis_cache.redis.ssl_port}"
-          REDIS_PASSWORD    = azurerm_redis_cache.redis.primary_access_key
+          REQUEST_PER_MINUTE_LIMIT = "0"
+          WEBHOOK_PER_MINUTE_LIMIT = "0"
 
           ELASTIC_ADDRESSES = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
           ELASTIC_USERNAME  = var.elasticsearch_admin_username
@@ -171,37 +159,43 @@ resource "helm_release" "nected" {
 
           AUDIT_LOG_ENABLED = "true"
           SKIP_SUBDOMAINS   = local.router_domain
+
+          TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "30"
+          TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "20"
+          TEMPORAL_EXECUTER_WORKFLOW_CONCURRENT_EXECUTION_SIZE       = "1500"
+          TEMPORAL_EXECUTER_ACTIVITY_CONCURRENT_EXECUTION_SIZE       = "1000"
+          TEMPORAL_EXECUTER_LOCAL_ACTIVITY_CONCURRENT_EXECUTION_SIZE = "5000"
+          TEMPORAL_EXECUTER_ACTIVITY_EXECUTION_RPS                   = "100000"
+          TEMPORAL_EXECUTER_LOCAL_ACTIVITY_EXECUTION_RPS             = "200000"
         }
 
         resources = {
           requests = {
-            cpu    = "250m"
-            memory = "256Mi"
+            cpu    = "500m"
+            memory = "1024Mi"
           }
         }
 
         autoscaling = {
-          enabled                           = false
+          enabled                           = var.nected_service_autoscale
           minReplicas                       = 1
-          maxReplicas                       = 1
-          targetCPUUtilizationPercentage    = 80
-          targetMemoryUtilizationPercentage = 80
+          maxReplicas                       = 8
+          targetCPUUtilizationPercentage    = 85
+          targetMemoryUtilizationPercentage = 85
         }
       }
 
       vidhaan-router = {
-        enabled      = "true"
         replicaCount = 1
         envVars = {
           VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
           DB_USER                = var.pg_admin_user
           DB_PASSWORD            = var.pg_admin_passwd
           DB_HOST                = azurerm_postgresql_flexible_server.postgresql.fqdn
-          SSL_MODE               = "require"
+          SSL_MODE               = "disable"
 
-          REDIS_TLS_ENABLED = "true"
-          REDIS_HOST        = "${azurerm_redis_cache.redis.hostname}:${azurerm_redis_cache.redis.ssl_port}"
-          REDIS_PASSWORD    = azurerm_redis_cache.redis.primary_access_key
+          REQUEST_PER_MINUTE_LIMIT = "0"
+          WEBHOOK_PER_MINUTE_LIMIT = "0"
 
           ELASTIC_ADDRESSES = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
           ELASTIC_USERNAME  = var.elasticsearch_admin_username
@@ -209,21 +203,29 @@ resource "helm_release" "nected" {
 
           AUDIT_LOG_ENABLED = "true"
           SKIP_SUBDOMAINS   = local.router_domain
+
+          TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "30"
+          TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "20"
+          TEMPORAL_EXECUTER_WORKFLOW_CONCURRENT_EXECUTION_SIZE       = "1500"
+          TEMPORAL_EXECUTER_ACTIVITY_CONCURRENT_EXECUTION_SIZE       = "1000"
+          TEMPORAL_EXECUTER_LOCAL_ACTIVITY_CONCURRENT_EXECUTION_SIZE = "5000"
+          TEMPORAL_EXECUTER_ACTIVITY_EXECUTION_RPS                   = "100000"
+          TEMPORAL_EXECUTER_LOCAL_ACTIVITY_EXECUTION_RPS             = "200000"
         }
 
         resources = {
           requests = {
-            cpu    = "200m"
-            memory = "256Mi"
+            cpu    = "250m"
+            memory = "512Mi"
           }
         }
 
         autoscaling = {
-          enabled                           = "false"
+          enabled                           = var.nected_service_autoscale
           minReplicas                       = 1
-          maxReplicas                       = 1
-          targetCPUUtilizationPercentage    = 80
-          targetMemoryUtilizationPercentage = 80
+          maxReplicas                       = 4
+          targetCPUUtilizationPercentage    = 85
+          targetMemoryUtilizationPercentage = 85
         }
         ingress = {
           enabled   = "true"
@@ -251,13 +253,10 @@ resource "helm_release" "nected" {
         }
       }
       medha = {
-        enabled      = "true"
         replicaCount = 1
-
         livenessProbe = {
           failureThreshold = 10
         }
-
         readinessProbe = {
           failureThreshold = 10
         }
@@ -265,14 +264,14 @@ resource "helm_release" "nected" {
         resources = {
           requests = {
             cpu    = "500m"
-            memory = "700Mi"
+            memory = "2048Mi"
           }
         }
 
         autoscaling = {
-          enabled                           = "false"
+          enabled                           = var.nected_service_autoscale
           minReplicas                       = 1
-          maxReplicas                       = 1
+          maxReplicas                       = 3
           targetCPUUtilizationPercentage    = 80
           targetMemoryUtilizationPercentage = 80
         }
