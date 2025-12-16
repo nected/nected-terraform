@@ -32,7 +32,7 @@ data:
             </elementProp>
           </ThreadGroup>
           <hashTree>
-            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="ProteanDev">
+            <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="NectedBenchmarking">
               <intProp name="HTTPSampler.concurrentPool">6</intProp>
               <stringProp name="HTTPSampler.domain">[RULE_DOMAIN]</stringProp>
               <stringProp name="HTTPSampler.port">443</stringProp>
