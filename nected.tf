@@ -4,6 +4,7 @@ resource "helm_release" "nected" {
   chart      = "nected"
   namespace  = "default"
   timeout    = 600
+  version    = var.nected_chart_version
 
   depends_on = [
     azurerm_kubernetes_cluster.k8s,
@@ -12,6 +13,9 @@ resource "helm_release" "nected" {
     helm_release.cert-manager,
     azurerm_postgresql_flexible_server.postgresql,
     helm_release.datastore,
+    azurerm_redis_cache.redis,
+    //azurerm_private_endpoint.redis,
+    time_sleep.wait_for_redis
   ]
 
   values = [
@@ -41,7 +45,8 @@ resource "helm_release" "nected" {
           enabled   = "true"
           className = "azure-application-gateway"
           annotations = {
-            "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
+            "cert-manager.io/cluster-issuer"             = "letsencrypt-prod"
+            "appgw.ingress.kubernetes.io/use-private-ip" = local.ingress_use_private
           }
           hosts = [
             {
@@ -75,7 +80,17 @@ resource "helm_release" "nected" {
           MASTER_DB_HOST     = azurerm_postgresql_flexible_server.postgresql.fqdn
           MASTER_SSL_MODE    = "disable"
 
-          VIDHAAN_PRE_SHARED_KEY    = var.nected_pre_shared_key
+          VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
+
+          REDIS_TLS_ENABLED = "${local.redis_tls_enabled}"
+          REDIS_HOST        = local.redis_endpoint
+          REDIS_PORT        = format("%s", local.redis_port)
+          REDIS_PASSWORD    = local.redis_password
+
+          VIDHAAN_REDIS_TLS_ENABLED = "${local.redis_tls_enabled}"
+          VIDHAAN_REDIS_HOST        = local.redis_endpoint
+          VIDHAAN_REDIS_PORT        = format("%s", local.redis_port)
+          VIDHAAN_REDIS_PASSWORD    = local.redis_password
 
           ELASTIC_HOSTS    = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
           ELASTIC_USER     = var.elasticsearch_admin_username
@@ -104,7 +119,8 @@ resource "helm_release" "nected" {
           enabled   = "true"
           className = "azure-application-gateway"
           annotations = {
-            "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
+            "cert-manager.io/cluster-issuer"             = "letsencrypt-prod"
+            "appgw.ingress.kubernetes.io/use-private-ip" = local.ingress_use_private
           }
           hosts = [
             {
@@ -153,6 +169,10 @@ resource "helm_release" "nected" {
           REQUEST_PER_MINUTE_LIMIT = "0"
           WEBHOOK_PER_MINUTE_LIMIT = "0"
 
+          REDIS_TLS_ENABLED = "${local.redis_tls_enabled}"
+          REDIS_HOST        = "${local.redis_endpoint}:${local.redis_port}"
+          REDIS_PASSWORD    = local.redis_password
+
           ELASTIC_ADDRESSES = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
           ELASTIC_USERNAME  = var.elasticsearch_admin_username
           ELASTIC_PASSWORD  = var.elasticsearch_admin_password
@@ -197,6 +217,10 @@ resource "helm_release" "nected" {
           REQUEST_PER_MINUTE_LIMIT = "0"
           WEBHOOK_PER_MINUTE_LIMIT = "0"
 
+          REDIS_TLS_ENABLED = "${local.redis_tls_enabled}"
+          REDIS_HOST        = "${local.redis_endpoint}:${local.redis_port}"
+          REDIS_PASSWORD    = local.redis_password
+
           ELASTIC_ADDRESSES = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
           ELASTIC_USERNAME  = var.elasticsearch_admin_username
           ELASTIC_PASSWORD  = var.elasticsearch_admin_password
@@ -231,7 +255,8 @@ resource "helm_release" "nected" {
           enabled   = "true"
           className = "azure-application-gateway"
           annotations = {
-            "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
+            "cert-manager.io/cluster-issuer"             = "letsencrypt-prod"
+            "appgw.ingress.kubernetes.io/use-private-ip" = local.ingress_use_private
           }
           hosts = [
             {

@@ -94,23 +94,18 @@ variable "pg_disk_size" {
   default     = 65536
 }
 
-# # Redis Variables
-# variable "redis_family" {
-#   type        = string
-#   description = "Redis family"
-#   default     = "C"
-# }
-# variable "redis_sku_name" {
-#   type        = string
-#   description = "Redis Cache SKU"
-#   default     = "Standard"
-# }
+# Redis Variables
+variable "redis_capacity" {
+  type        = number
+  description = "Redis Cache capacity"
+  default     = 1
+}
 
-# variable "redis_capacity" {
-#   type        = number
-#   description = "Redis Cache capacity"
-#   default     = 2
-# }
+variable "use_managed_redis" {
+  type        = bool
+  description = "Azure Provided managed redis"
+  default     = false
+}
 
 # Elasticsearch Variables
 variable "elasticsearch_version" {
@@ -147,10 +142,29 @@ variable "temporal_service_autoscale" {
   description = "Temporal Service Autoscale"
   default     = false
 }
+
+variable "temporal_chart_version" {
+  type        = string
+  description = "Temporal Helm Chart Version"
+  default     = "0.54.0"
+}
+
 variable "nected_service_autoscale" {
   type        = bool
   description = "Nected Service Autoscale"
   default     = false
+}
+
+variable "nected_chart_version" {
+  type        = string
+  description = "Nected Helm Chart Version"
+  default     = "0.4.10"
+}
+
+variable "datastore_chart_version" {
+  type        = string
+  description = "Datastore Helm Chart Version"
+  default     = "0.1.2"
 }
 
 # App Domains Variables

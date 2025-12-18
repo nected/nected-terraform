@@ -17,23 +17,23 @@ locals {
       ]
       service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
     },
-    # redis = {
-    #   address_prefixes = cidrsubnet(var.vnet_address_space, 8, 2)
-    #   delegation       = false
-    #   security_rules = [
-    #     {
-    #       port                  = "6379"
-    #       direction             = "Inbound"
-    #       source_address_prefix = var.vnet_address_space
-    #     },
-    #     {
-    #       port                  = "6380"
-    #       direction             = "Inbound"
-    #       source_address_prefix = var.vnet_address_space
-    #     }
-    #   ]
-    #   service_endpoints = ["Microsoft.Storage"]
-    # },
+    redis = {
+      address_prefixes = cidrsubnet(var.vnet_address_space, 8, 2)
+      delegation       = false
+      security_rules = [
+        {
+          port                  = "6379"
+          direction             = "Inbound"
+          source_address_prefix = var.vnet_address_space
+        },
+        {
+          port                  = "6380"
+          direction             = "Inbound"
+          source_address_prefix = var.vnet_address_space
+        }
+      ]
+      service_endpoints = ["Microsoft.Storage"]
+    },
     aks = {
       address_prefixes = cidrsubnet(var.vnet_address_space, 6, 1)
       delegation       = false
@@ -72,7 +72,33 @@ locals {
       address_prefixes  = cidrsubnet(var.vnet_address_space, 8, 3)
       delegation        = false
       service_endpoints = []
+      security_rules = [
+        {
+          port                  = "443"
+          direction             = "Inbound"
+          source_address_prefix = "0.0.0.0/0"
+        },
+        {
+          port                  = "65200-65535"
+          direction             = "Inbound"
+          source_address_prefix = "Internet"
+        }
+      ]
     }
   }
+  internal_app_gateway_ip        = cidrhost(local.subnets.appgw.address_prefixes, 5)
+  public_app_gateway_ip          = azurerm_public_ip.appgw_pip.ip_address
+  public_app_gateway_id          = azurerm_public_ip.appgw_pip.id
+  dns_record_ip                  = var.agic_internal ? local.internal_app_gateway_ip : local.public_app_gateway_ip
+  frontend_ip_configuration_name = "${var.project}-frontend-ip"
+  ingress_use_private            = var.agic_internal ? "true" : "false"
+
+  private_frontend_name = var.agic_internal ? local.frontend_ip_configuration_name : "${var.project}-frontend-ip-not-use"
+  public_frontend_name  = var.agic_internal ? "${var.project}-frontend-ip-not-use" : local.frontend_ip_configuration_name
+
+  redis_tls_enabled = var.use_managed_redis ? "true" : "false"
+  redis_endpoint    = var.use_managed_redis ? azurerm_redis_cache.redis[0].hostname : "datastore-redis-master"
+  redis_port        = var.use_managed_redis ? "6380" : "6379"
+  redis_password    = var.use_managed_redis ? azurerm_redis_cache.redis[0].primary_access_key : ""
 }
 

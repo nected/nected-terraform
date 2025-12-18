@@ -5,14 +5,12 @@ variable "appgw_sku_name" {
   type        = string
   description = "The SKU name of the Application Gateway"
   default     = "Standard_v2"
-  # Options: Standard_Small, Standard_Medium, Standard_Large, WAF_Medium, WAF_Large, Standard_v2, WAF_v2
 }
 
 variable "appgw_sku_tier" {
   type        = string
   description = "The SKU tier of the Application Gateway"
   default     = "Standard_v2"
-  # Options: Standard, WAF, Standard_v2, WAF_v2
 }
 
 variable "appgw_capacity" {
@@ -158,4 +156,10 @@ variable "appgw_subnet_cidr" {
   type        = string
   description = "CIDR block for Application Gateway subnet"
   default     = ""
+}
+
+variable "agic_internal" {
+  type        = bool
+  description = "Application gateway Internal or Public"
+  default     = false
 }

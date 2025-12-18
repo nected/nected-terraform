@@ -3,6 +3,7 @@ resource "helm_release" "temporal" {
   repository = "https://nected.github.io/helm-charts"
   chart      = "temporal"
   namespace  = "default"
+  version    = var.temporal_chart_version
 
   depends_on = [
     azurerm_kubernetes_cluster.k8s,

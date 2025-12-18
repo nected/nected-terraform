@@ -14,7 +14,7 @@ resource "azurerm_public_ip" "appgw_pip" {
   }
 }
 
-# Application Gateway
+# Internal Application Gateway
 resource "azurerm_application_gateway" "appgw" {
   name                = "${var.project}-appgw-${var.environment}"
   resource_group_name = local.resource_group_name
@@ -40,40 +40,27 @@ resource "azurerm_application_gateway" "appgw" {
     subnet_id = azurerm_subnet.subnets["appgw"].id
   }
 
-  # Frontend port for HTTP
   frontend_port {
     name = "http-port"
     port = 80
   }
 
-  # Frontend port for HTTPS
-  # frontend_port {
-  #   name = "https-port"
-  #   port = 443
-  # }
-
+  frontend_ip_configuration {
+    name                 = local.public_frontend_name
+    public_ip_address_id = local.public_app_gateway_id
+  }
   # Frontend IP configuration
   frontend_ip_configuration {
-    name                 = "${var.project}-frontend-ip"
-    public_ip_address_id = azurerm_public_ip.appgw_pip.id
+    name                          = local.private_frontend_name
+    subnet_id                     = azurerm_subnet.subnets["appgw"].id
+    private_ip_address            = local.internal_app_gateway_ip
+    private_ip_address_allocation = "Static"
   }
 
   # Backend address pool for AKS services
   backend_address_pool {
     name = "${var.project}-aks-backend-pool"
-    # Backend addresses will be populated by AKS services
-    # fqdns = var.aks_service_fqdns # Optional: if using FQDN
   }
-
-  # Additional backend pools can be added dynamically
-  # dynamic "backend_address_pool" {
-  #   for_each = var.additional_backend_pools
-  #   content {
-  #     name  = backend_address_pool.value.name
-  #     fqdns = lookup(backend_address_pool.value, "fqdns", null)
-  #     ip_addresses = lookup(backend_address_pool.value, "ip_addresses", null)
-  #   }
-  # }
 
   # Backend HTTP settings
   backend_http_settings {
@@ -86,23 +73,6 @@ resource "azurerm_application_gateway" "appgw" {
     pick_host_name_from_backend_address = true
   }
 
-  # # Backend HTTPS settings
-  # backend_http_settings {
-  #   name                                = "${var.project}-backend-https-settings"
-  #   cookie_based_affinity               = "Disabled"
-  #   port                                = 443
-  #   protocol                            = "Https"
-  #   request_timeout                     = 60
-  #   probe_name                          = "${var.project}-https-health-probe"
-  #   pick_host_name_from_backend_address = true
-
-  #   connection_draining {
-  #     enabled           = true
-  #     drain_timeout_sec = 30
-  #   }
-  # }
-
-  # Health probe for HTTP
   probe {
     name                                      = "${var.project}-health-probe"
     protocol                                  = "Http"
@@ -118,99 +88,13 @@ resource "azurerm_application_gateway" "appgw" {
     }
   }
 
-  # Health probe for HTTPS
-  # probe {
-  #   name                                      = "${var.project}-https-health-probe"
-  #   protocol                                  = "Https"
-  #   path                                      = var.health_probe_path
-  #   host                                      = var.health_probe_host != "" ? var.health_probe_host : null
-  #   pick_host_name_from_backend_http_settings = var.health_probe_host == "" ? true : false
-  #   interval                                  = 30
-  #   timeout                                   = 30
-  #   unhealthy_threshold                       = 3
-
-  #   match {
-  #     status_code = ["200-399"]
-  #   }
-  # }
-
-  # SSL Certificate - Option 1: File-based (for development)
-  # dynamic "ssl_certificate" {
-  #   for_each = var.ssl_certificate_path != "" ? [1] : []
-  #   content {
-  #     name     = "${var.project}-ssl-cert"
-  #     data     = filebase64(var.ssl_certificate_path)
-  #     password = var.ssl_certificate_password
-  #   }
-  # }
-
-  # SSL Certificate - Option 2: Data-based (for production with Key Vault)
-  # dynamic "ssl_certificate" {
-  #   for_each = var.ssl_certificate_data != "" ? [1] : []
-  #   content {
-  #     name     = "${var.project}-ssl-cert-data"
-  #     data     = var.ssl_certificate_data
-  #     password = var.ssl_certificate_password
-  #   }
-  # }
-
-  # # Trusted root certificate for backend SSL
-  # dynamic "trusted_root_certificate" {
-  #   for_each = var.backend_ssl_cert_path != "" ? [1] : []
-  #   content {
-  #     name = "${var.project}-backend-root-cert"
-  #     data = filebase64(var.backend_ssl_cert_path)
-  #   }
-  # }
-
-  # HTTP Listener
   http_listener {
     name                           = "${var.project}-http-listener"
-    frontend_ip_configuration_name = "${var.project}-frontend-ip"
+    frontend_ip_configuration_name = local.frontend_ip_configuration_name
     frontend_port_name             = "http-port"
     protocol                       = "Http"
   }
 
-  # HTTPS Listener (only if SSL certificate is configured)
-  # dynamic "http_listener" {
-  #   for_each = var.ssl_certificate_path != "" || var.ssl_certificate_data != "" ? [1] : []
-  #   content {
-  #     name                           = "${var.project}-https-listener"
-  #     frontend_ip_configuration_name = "${var.project}-frontend-ip"
-  #     frontend_port_name             = "https-port"
-  #     protocol                       = "Https"
-  #     ssl_certificate_name           = var.ssl_certificate_path != "" ? "${var.project}-ssl-cert" : "${var.project}-ssl-cert-data"
-  #     require_sni                    = false
-  #   }
-  # }
-
-  # # Additional HTTPS listeners with SNI for multiple domains
-  # dynamic "http_listener" {
-  #   for_each = (var.ssl_certificate_path != "" || var.ssl_certificate_data != "") ? var.additional_hostnames : []
-  #   content {
-  #     name                           = "${var.project}-https-listener-${http_listener.key}"
-  #     frontend_ip_configuration_name = "${var.project}-frontend-ip"
-  #     frontend_port_name             = "https-port"
-  #     protocol                       = "Https"
-  #     ssl_certificate_name           = var.ssl_certificate_path != "" ? "${var.project}-ssl-cert" : "${var.project}-ssl-cert-data"
-  #     host_name                      = http_listener.value
-  #     require_sni                    = true
-  #   }
-  # }
-
-  # # HTTP to HTTPS redirect rule (only if SSL is configured)
-  # dynamic "redirect_configuration" {
-  #   for_each = var.ssl_certificate_path != "" || var.ssl_certificate_data != "" ? [1] : []
-  #   content {
-  #     name                 = "${var.project}-http-to-https-redirect"
-  #     redirect_type        = "Permanent"
-  #     target_listener_name = "${var.project}-https-listener"
-  #     include_path         = true
-  #     include_query_string = true
-  #   }
-  # }
-
-  # Request routing rule - HTTP to HTTPS redirect (if SSL configured) OR HTTP to backend (if no SSL)
   request_routing_rule {
     name                        = "${var.project}-http-routing-rule"
     rule_type                   = "Basic"
@@ -221,61 +105,11 @@ resource "azurerm_application_gateway" "appgw" {
     priority                    = 100
   }
 
-  # Request routing rule - HTTPS to backend (only if SSL is configured)
-  # dynamic "request_routing_rule" {
-  #   for_each = var.ssl_certificate_path != "" || var.ssl_certificate_data != "" ? [1] : []
-  #   content {
-  #     name                       = "${var.project}-https-routing-rule"
-  #     rule_type                  = "Basic"
-  #     http_listener_name         = "${var.project}-https-listener"
-  #     backend_address_pool_name  = "${var.project}-aks-backend-pool"
-  #     backend_http_settings_name = "${var.project}-backend-http-settings"
-  #     priority                   = 200
-  #   }
-  # }
-
-  # Path-based routing rules (optional)
-  # dynamic "url_path_map" {
-  #   for_each = var.enable_path_based_routing ? [1] : []
-  #   content {
-  #     name                               = "${var.project}-path-map"
-  #     default_backend_address_pool_name  = "${var.project}-aks-backend-pool"
-  #     default_backend_http_settings_name = "${var.project}-backend-http-settings"
-
-  #     dynamic "path_rule" {
-  #       for_each = var.path_rules
-  #       content {
-  #         name                       = path_rule.value.name
-  #         paths                      = path_rule.value.paths
-  #         backend_address_pool_name  = path_rule.value.backend_pool_name
-  #         backend_http_settings_name = path_rule.value.backend_settings_name
-  #       }
-  #     }
-  #   }
-  # }
-
-  # # WAF configuration (if using WAF tier)
-  # dynamic "waf_configuration" {
-  #   for_each = var.enable_waf ? [1] : []
-  #   content {
-  #     enabled                  = true
-  #     firewall_mode            = var.waf_mode
-  #     rule_set_type            = "OWASP"
-  #     rule_set_version         = var.waf_rule_set_version
-  #     file_upload_limit_mb     = 100
-  #     request_body_check       = true
-  #     max_request_body_size_kb = 128
-  #   }
-  # }
-
   # Identity for Key Vault access
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.identity.id]
   }
-
-  # Enable HTTP/2
-  # enable_http2 = true
 
   tags = {
     Environment = var.environment
@@ -291,14 +125,11 @@ resource "azurerm_application_gateway" "appgw" {
       probe,
       http_listener,
       request_routing_rule,
-      ssl_certificate,
-      frontend_port
+      frontend_port,
+      ssl_certificate
     ]
   }
 }
-
-
-
 
 # Role assignment for AGIC managed identity to manage Application Gateway
 resource "azurerm_role_assignment" "appgw_identity_contributor" {
@@ -306,8 +137,6 @@ resource "azurerm_role_assignment" "appgw_identity_contributor" {
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.identity.principal_id
 }
-
-
 
 # Role assignment for AGIC managed identity to read AKS cluster
 resource "azurerm_role_assignment" "appgw_identity_aks_reader" {
