@@ -158,7 +158,7 @@ variable "nected_service_autoscale" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.10"
+  default     = "0.4.11"
 }
 
 variable "datastore_chart_version" {

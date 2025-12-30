@@ -106,6 +106,9 @@ elasticsearch_admin_username = "elastic"
 elasticsearch_admin_password = "<password>"
 
 # Application variables
+# Chart versions
+nected_chart_version = "0.4.11"
+
 # App resources & autoscaling
 temporal_task_partitions = 20
 temporal_service_autoscale = false
