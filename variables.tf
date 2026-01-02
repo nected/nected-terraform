@@ -91,7 +91,7 @@ variable "pg_sku_name" {
 variable "pg_disk_size" {
   type        = number
   description = "Posgresql Disk Size"
-  default     = 65536
+  default     = 262144
 }
 
 # Redis Variables

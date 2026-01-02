@@ -93,7 +93,7 @@ pg_version      = 17
 pg_admin_user   = "psqladmin"
 pg_admin_passwd = "<password>"
 pg_sku_name     = "GP_Standard_D4ds_v5"
-pg_disk_size    = 65536       # size in MB
+pg_disk_size    = 262144       # size in MB
 
 # Redis (use Azure Redis Cache)
 # default redis via datastore helm chart
