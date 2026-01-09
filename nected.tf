@@ -14,7 +14,6 @@ resource "helm_release" "nected" {
     azurerm_postgresql_flexible_server.postgresql,
     helm_release.datastore,
     azurerm_redis_cache.redis,
-    //azurerm_private_endpoint.redis,
     time_sleep.wait_for_redis
   ]
 
@@ -68,8 +67,6 @@ resource "helm_release" "nected" {
         }
       }
       nalanda = {
-        replicaCount = 1
-
         envVars = {
           ALLOWED_CORS_ORIGIN = "${var.scheme}://${local.backend_domain},${var.scheme}://${local.ui_domain}"
           ALLOWED_HOSTS       = local.backend_domain
@@ -108,7 +105,7 @@ resource "helm_release" "nected" {
 
           ASSETS_BASE_URL        = "${var.scheme}://${local.ui_domain}/assets/konark"
           KONARK_BASE_URL        = "${var.scheme}://${local.ui_domain}"
-          SIGNUP_DOMAINS         = ""
+          SIGNUP_DOMAINS         = var.console_signup_domains
           NECTED_USER_EMAIL      = var.console_user_email
           NECTED_USER_PASSWORD   = var.console_user_password
           DEFAULT_VIDHAAN_SCHEME = var.scheme
@@ -151,14 +148,12 @@ resource "helm_release" "nected" {
         autoscaling = {
           enabled                           = var.nected_service_autoscale
           minReplicas                       = 1
-          maxReplicas                       = 3
+          maxReplicas                       = var.nected_max_nalanda_pods
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
         }
       }
       vidhaan-executer = {
-        replicaCount = 1
-
         envVars = {
           VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
           DB_USER                = var.pg_admin_user
@@ -199,14 +194,13 @@ resource "helm_release" "nected" {
         autoscaling = {
           enabled                           = var.nected_service_autoscale
           minReplicas                       = 1
-          maxReplicas                       = 8
+          maxReplicas                       = var.nected_max_executer_pods
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
         }
       }
 
       vidhaan-router = {
-        replicaCount = 1
         envVars = {
           VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
           DB_USER                = var.pg_admin_user
@@ -247,7 +241,7 @@ resource "helm_release" "nected" {
         autoscaling = {
           enabled                           = var.nected_service_autoscale
           minReplicas                       = 1
-          maxReplicas                       = 4
+          maxReplicas                       = var.nected_max_router_pods
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
         }
@@ -278,7 +272,6 @@ resource "helm_release" "nected" {
         }
       }
       medha = {
-        replicaCount = 1
         livenessProbe = {
           failureThreshold = 10
         }
@@ -296,9 +289,9 @@ resource "helm_release" "nected" {
         autoscaling = {
           enabled                           = var.nected_service_autoscale
           minReplicas                       = 1
-          maxReplicas                       = 3
-          targetCPUUtilizationPercentage    = 80
-          targetMemoryUtilizationPercentage = 80
+          maxReplicas                       = var.nected_max_medha_pods
+          targetCPUUtilizationPercentage    = 85
+          targetMemoryUtilizationPercentage = 85
         }
       }
     })

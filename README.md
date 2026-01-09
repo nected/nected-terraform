@@ -7,7 +7,8 @@ It automates provisioning of:
 * Azure Kubernetes Service (AKS)
 * PostgreSQL Flexible Server
 * Elasticsearch Cluster
-* DNS, routing & SSL setup
+* DNS, routing
+* SSL setup using Cert-Manager
 * Nected service configuration
 ---
 
@@ -31,6 +32,7 @@ To successfully deploy the infrastructure, ensure you have:
 
   * Creating CNAME records for all Nected services
   * Adding DNS entries required for SSL certificate validation
+  * Imp: To issue an SSL certificate using Cert-Manager, the domain must have a public DNS zone for verification.
 * **One Azure Resource Group** where the entire infrastructure will be created.
 
   * The **Hosted Zone** can be in the *same* Resource Group or a *different* one.
@@ -113,6 +115,14 @@ nected_chart_version = "0.4.11"
 temporal_task_partitions = 20
 temporal_service_autoscale = false
 nected_service_autoscale = false
+temporal_history_pods = 1
+temporal_max_frontend_pods = 3
+temporal_max_matching_pods = 3
+temporal_max_worker_pods = 2
+nected_max_nalanda_pods = 2
+nected_max_executer_pods = 5
+nected_max_router_pods = 3
+nected_max_medha_pods = 3
 
 # Domain Configuration
 scheme                = "https"
@@ -121,6 +131,7 @@ backend_domain_prefix = "backend"
 router_domain_prefix  = "router"
 
 # Console Access
+console_signup_domains = ""
 console_user_email    = "<<user email>>"
 console_user_password = "<<password>>"
 

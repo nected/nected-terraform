@@ -143,6 +143,30 @@ variable "temporal_service_autoscale" {
   default     = false
 }
 
+variable "temporal_history_pods" {
+  type        = number
+  description = "Temporal History Pods"
+  default     = 1
+}
+
+variable "temporal_max_frontend_pods" {
+  type        = number
+  description = "Temporal Frontend Pods"
+  default     = 3
+}
+
+variable "temporal_max_matching_pods" {
+  type        = number
+  description = "Temporal Matching Pods"
+  default     = 3
+}
+
+variable "temporal_max_worker_pods" {
+  type        = number
+  description = "Temporal Worker Pods"
+  default     = 2
+}
+
 variable "temporal_chart_version" {
   type        = string
   description = "Temporal Helm Chart Version"
@@ -153,6 +177,30 @@ variable "nected_service_autoscale" {
   type        = bool
   description = "Nected Service Autoscale"
   default     = false
+}
+
+variable "nected_max_nalanda_pods" {
+  type        = number
+  description = "Nected Nalanda Pods"
+  default     = 2
+}
+
+variable "nected_max_executer_pods" {
+  type        = number
+  description = "Nected Executer Pods"
+  default     = 5
+}
+
+variable "nected_max_router_pods" {
+  type        = number
+  description = "Nected Router Pods"
+  default     = 3
+}
+
+variable "nected_max_medha_pods" {
+  type        = number
+  description = "Nected Medha Pods"
+  default     = 3
 }
 
 variable "nected_chart_version" {
@@ -190,6 +238,12 @@ variable "scheme" {
   type        = string
   description = "Scheme"
   default     = "https"
+}
+
+variable "console_signup_domains" {
+  type        = string
+  description = "Console Signup Domains Restriction"
+  default     = ""
 }
 
 variable "console_user_email" {

@@ -45,7 +45,7 @@ resource "helm_release" "temporal" {
         }
 
         config = {
-          numHistoryShards = 512
+          numHistoryShards = 512 * var.temporal_history_pods
 
           clusterMetadata = {
             enableGlobalNamespace    = true
@@ -108,7 +108,7 @@ resource "helm_release" "temporal" {
           autoscaling = {
             enabled      = var.temporal_service_autoscale
             minReplicas  = "1"
-            maxReplicas  = "4"
+            maxReplicas  = "${var.temporal_max_frontend_pods}"
             targetCPU    = "85"
             targetMemory = "85"
           }
@@ -121,7 +121,7 @@ resource "helm_release" "temporal" {
         }
 
         history = {
-          replicaCount = 1
+          replicaCount = var.temporal_history_pods
           resources = {
             requests = {
               cpu    = "1000m"
@@ -135,7 +135,7 @@ resource "helm_release" "temporal" {
           autoscaling = {
             enabled      = var.temporal_service_autoscale
             minReplicas  = "1"
-            maxReplicas  = "4"
+            maxReplicas  = "${var.temporal_max_matching_pods}"
             targetCPU    = "85"
             targetMemory = "85"
           }
@@ -152,7 +152,7 @@ resource "helm_release" "temporal" {
           autoscaling = {
             enabled      = var.temporal_service_autoscale
             minReplicas  = "1"
-            maxReplicas  = "3"
+            maxReplicas  = "${var.temporal_max_worker_pods}"
             targetCPU    = "85"
             targetMemory = "85"
           }
