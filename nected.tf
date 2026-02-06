@@ -279,6 +279,15 @@ resource "helm_release" "nected" {
           failureThreshold = 10
         }
 
+        envVars = {
+          DB_ENABLED      = "true"
+          DB_HOST         = azurerm_postgresql_flexible_server.postgresql.fqdn
+          DB_USER         = var.pg_admin_user
+          DB_PASSWORD     = var.pg_admin_passwd
+          DB_SSL_MODE     = "disable"
+          COPILOT_PDF_OCR = "true"
+        }
+
         resources = {
           requests = {
             cpu    = "500m"
