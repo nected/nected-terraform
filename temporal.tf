@@ -7,7 +7,6 @@ resource "helm_release" "temporal" {
 
   depends_on = [
     azurerm_kubernetes_cluster.k8s,
-    helm_release.agic,
     azurerm_postgresql_flexible_server.postgresql,
   ]
 

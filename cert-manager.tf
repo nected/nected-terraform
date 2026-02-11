@@ -1,13 +1,21 @@
 resource "helm_release" "cert_manager_crds" {
+  count = var.key_vault_name == "null" ? 1 : 0
+
   name             = "cert-manager-crds"
   repository       = "https://wiremind.github.io/wiremind-helm-charts"
   chart            = "cert-manager-crds"
   version          = "v1.19.1"
   namespace        = "cert-manager"
   create_namespace = true
+
+  depends_on = [
+    azurerm_kubernetes_cluster.k8s
+  ]
 }
 
 resource "helm_release" "cert-manager" {
+  count = var.key_vault_name == "null" ? 1 : 0
+
   name       = "cert-manager"
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
@@ -16,7 +24,6 @@ resource "helm_release" "cert-manager" {
 
   depends_on = [
     azurerm_kubernetes_cluster.k8s,
-    helm_release.agic,
     helm_release.cert_manager_crds
   ]
 
@@ -72,4 +79,40 @@ resource "helm_release" "cert-manager" {
           - ${local.backend_domain}
   EOF
   ]
+}
+
+
+resource "helm_release" "azurecert" {
+  count = var.key_vault_name == "null" ? 1 : 0
+
+  name       = "azurecert"
+  repository = "https://nected.github.io/helm-charts"
+  chart      = "azurecert"
+  namespace  = var.namespace
+  timeout    = 600
+  version    = "0.1.6"
+
+  values = [
+    yamlencode({
+      KEYVAULT_NAME = "${local.cert_vault_name}"
+      CERT_NAME     = "${local.cert_secret_name}"
+      CLIENT_ID     = "${azurerm_user_assigned_identity.identity.client_id}"
+      SCHEDULE      = "0 0 * * 0"
+    })
+  ]
+
+  depends_on = [
+    helm_release.cert-manager,
+    azurerm_key_vault.ssl_certs_vault
+  ]
+}
+
+resource "time_sleep" "wait_for_keyvaultsync" {
+  count = var.key_vault_name == "null" ? 1 : 0
+
+  depends_on = [
+    helm_release.azurecert,
+  ]
+
+  create_duration = "2m"
 }

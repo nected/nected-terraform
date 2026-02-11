@@ -206,7 +206,7 @@ variable "nected_max_medha_pods" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.14"
+  default     = "0.4.15"
 }
 
 variable "datastore_chart_version" {
@@ -277,4 +277,16 @@ variable "namespace" {
 variable "nected_pre_shared_key" {
   type    = string
   default = "1182d659-8c9b-4541-90ac-8546372c326f"
+}
+
+variable "key_vault_name" {
+  type        = string
+  description = "Key Vault Name"
+  default     = "null"
+}
+
+variable "key_vault_certificate_name" {
+  type        = string
+  description = "Key Vault Secrets name for certificate"
+  default     = "null"
 }
