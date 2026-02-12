@@ -79,6 +79,11 @@ environment         = "dev"
 # Network Configuration
 vnet_address_space = "10.50.0.0/16"
 
+# SSL certificates, provide vault name & certificate name
+# default behavipur is letsencrypt generated certificate
+key_vault_name = "null"
+key_vault_certificate_name = "null"
+
 # AKS Configuration
 kubernetes_version = "1.32"
 aks_node_count     = 2
@@ -109,7 +114,7 @@ elasticsearch_admin_password = "<password>"
 
 # Application variables
 # Chart versions
-nected_chart_version = "0.4.12"
+nected_chart_version = "0.4.15"
 
 # App resources & autoscaling
 temporal_task_partitions = 20
