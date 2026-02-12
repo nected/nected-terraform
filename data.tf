@@ -14,3 +14,11 @@ data "azurerm_kubernetes_cluster" "k8s" {
   resource_group_name = local.resource_group_name
   depends_on          = [azurerm_kubernetes_cluster.k8s]
 }
+
+# Vault and secrets
+data "azurerm_key_vault" "vault" {
+  count = var.key_vault_name == "null" ? 0 : 1
+
+  name                = var.key_vault_name
+  resource_group_name = local.resource_group_name
+}

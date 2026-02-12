@@ -45,6 +45,11 @@ resource "azurerm_application_gateway" "appgw" {
     port = 80
   }
 
+  frontend_port {
+    name = "https-port"
+    port = 443
+  }
+
   frontend_ip_configuration {
     name                 = local.public_frontend_name
     public_ip_address_id = local.public_app_gateway_id
@@ -95,14 +100,27 @@ resource "azurerm_application_gateway" "appgw" {
     protocol                       = "Http"
   }
 
+  http_listener {
+    name                           = "${var.project}-https-listener"
+    frontend_ip_configuration_name = local.frontend_ip_configuration_name
+    frontend_port_name             = "https-port"
+    protocol                       = "Https"
+    ssl_certificate_name           = "${var.project}-ssl-certificate"
+  }
+
   request_routing_rule {
-    name                        = "${var.project}-http-routing-rule"
-    rule_type                   = "Basic"
-    http_listener_name          = "${var.project}-http-listener"
-    redirect_configuration_name = var.ssl_certificate_path != "" || var.ssl_certificate_data != "" ? "${var.project}-http-to-https-redirect" : null
-    backend_address_pool_name   = var.ssl_certificate_path == "" && var.ssl_certificate_data == "" ? "${var.project}-aks-backend-pool" : null
-    backend_http_settings_name  = var.ssl_certificate_path == "" && var.ssl_certificate_data == "" ? "${var.project}-backend-http-settings" : null
-    priority                    = 100
+    name                       = "${var.project}-https-routing-rule"
+    rule_type                  = "Basic"
+    http_listener_name         = "${var.project}-https-listener"
+    backend_address_pool_name  = "${var.project}-aks-backend-pool"
+    backend_http_settings_name = "${var.project}-backend-http-settings"
+    priority                   = 100
+  }
+
+  ssl_certificate {
+    name = local.alb_listener_cert_name
+    # Using versionless URI for automatic certificate rotation
+    key_vault_secret_id = local.alb_vault_secret_endpoint
   }
 
   # Identity for Key Vault access
@@ -124,11 +142,15 @@ resource "azurerm_application_gateway" "appgw" {
       backend_http_settings,
       probe,
       http_listener,
-      request_routing_rule,
       frontend_port,
-      ssl_certificate
+      request_routing_rule
     ]
   }
+
+  depends_on = [
+    time_sleep.wait_for_keyvaultsync,
+    helm_release.azurecert
+  ]
 }
 
 # Role assignment for AGIC managed identity to manage Application Gateway

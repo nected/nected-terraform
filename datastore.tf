@@ -5,11 +5,11 @@ resource "helm_release" "datastore" {
   repository = "https://nected.github.io/helm-charts"
   chart      = "datastore"
   namespace  = "default"
+  timeout    = 600
   version    = var.datastore_chart_version
 
   depends_on = [
     azurerm_kubernetes_cluster.k8s,
-    helm_release.agic,
   ]
 
   values = [

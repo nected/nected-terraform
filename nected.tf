@@ -41,11 +41,12 @@ resource "helm_release" "nected" {
           }
         }
         ingress = {
-          enabled   = "true"
-          className = "azure-application-gateway"
+          enabled = "true"
           annotations = {
-            "cert-manager.io/cluster-issuer"             = "letsencrypt-prod"
-            "appgw.ingress.kubernetes.io/use-private-ip" = local.ingress_use_private
+            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
+            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
+            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
+            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
           }
           hosts = [
             {
@@ -60,8 +61,7 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              secretName = local.cert_secret_name
-              hosts      = [local.ui_domain]
+              hosts = [local.ui_domain]
             }
           ]
         }
@@ -113,11 +113,12 @@ resource "helm_release" "nected" {
         }
 
         ingress = {
-          enabled   = "true"
-          className = "azure-application-gateway"
+          enabled = "true"
           annotations = {
-            "cert-manager.io/cluster-issuer"             = "letsencrypt-prod"
-            "appgw.ingress.kubernetes.io/use-private-ip" = local.ingress_use_private
+            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
+            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
+            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
+            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
           }
           hosts = [
             {
@@ -132,8 +133,7 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              secretName = local.cert_secret_name
-              hosts      = [local.backend_domain]
+              hosts = [local.backend_domain]
             }
           ]
         }
@@ -246,11 +246,12 @@ resource "helm_release" "nected" {
           targetMemoryUtilizationPercentage = 85
         }
         ingress = {
-          enabled   = "true"
-          className = "azure-application-gateway"
+          enabled = "true"
           annotations = {
-            "cert-manager.io/cluster-issuer"             = "letsencrypt-prod"
-            "appgw.ingress.kubernetes.io/use-private-ip" = local.ingress_use_private
+            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
+            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
+            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
+            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
           }
           hosts = [
             {
@@ -265,8 +266,7 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              secretName = local.cert_secret_name
-              hosts      = [local.router_domain]
+              hosts = [local.router_domain]
             }
           ]
         }

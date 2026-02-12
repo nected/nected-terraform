@@ -84,6 +84,7 @@ locals {
           source_address_prefix = "Internet"
         }
       ]
+      service_endpoints = ["Microsoft.KeyVault"]
     }
   }
   internal_app_gateway_ip        = cidrhost(local.subnets.appgw.address_prefixes, 5)

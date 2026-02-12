@@ -17,3 +17,8 @@ output "resource_group_name" {
 output "postgresql_host" {
   value = azurerm_postgresql_flexible_server.postgresql.fqdn
 }
+
+
+output "client_id" {
+  value = azurerm_user_assigned_identity.identity.client_id
+}
