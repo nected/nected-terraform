@@ -108,29 +108,13 @@ resource "azurerm_application_gateway" "appgw" {
     ssl_certificate_name           = "${var.project}-ssl-certificate"
   }
 
-  # redirect_configuration {
-  #   name                 = "${var.project}-http-to-https-redirect"
-  #   redirect_type        = "Permanent"
-  #   target_listener_name = "${var.project}-https-listener"
-  #   include_path         = true
-  #   include_query_string = true
-  # }
-
-  # request_routing_rule {
-  #   name                        = "${var.project}-http-routing-rule"
-  #   rule_type                   = "Basic"
-  #   http_listener_name          = "${var.project}-http-listener"
-  #   redirect_configuration_name = "${var.project}-http-to-https-redirect"
-  #   priority                    = 100
-  # }
-
   request_routing_rule {
     name                       = "${var.project}-https-routing-rule"
     rule_type                  = "Basic"
     http_listener_name         = "${var.project}-https-listener"
     backend_address_pool_name  = "${var.project}-aks-backend-pool"
     backend_http_settings_name = "${var.project}-backend-http-settings"
-    priority                   = 110
+    priority                   = 100
   }
 
   ssl_certificate {

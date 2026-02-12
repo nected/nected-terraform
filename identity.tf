@@ -55,7 +55,7 @@ resource "azurerm_federated_identity_credential" "keyvault_sync" {
   subject             = "system:serviceaccount:${var.namespace}:keyvault-sync-sa"
 }
 
-# 
+#
 resource "azurerm_key_vault" "ssl_certs_vault" {
   count = var.key_vault_name == "null" ? 1 : 0
 
