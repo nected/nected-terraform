@@ -106,7 +106,7 @@ resource "helm_release" "temporal" {
           replicaCount = 1
           autoscaling = {
             enabled      = var.temporal_service_autoscale
-            minReplicas  = "1"
+            minReplicas  = "${var.temporal_min_frontend_pods}"
             maxReplicas  = "${var.temporal_max_frontend_pods}"
             targetCPU    = "85"
             targetMemory = "85"
@@ -133,7 +133,7 @@ resource "helm_release" "temporal" {
           replicaCount = 1
           autoscaling = {
             enabled      = var.temporal_service_autoscale
-            minReplicas  = "1"
+            minReplicas  = "${var.temporal_min_matching_pods}"
             maxReplicas  = "${var.temporal_max_matching_pods}"
             targetCPU    = "85"
             targetMemory = "85"
@@ -150,7 +150,7 @@ resource "helm_release" "temporal" {
           replicaCount = 1
           autoscaling = {
             enabled      = var.temporal_service_autoscale
-            minReplicas  = "1"
+            minReplicas  = "${var.temporal_min_worker_pods}"
             maxReplicas  = "${var.temporal_max_worker_pods}"
             targetCPU    = "85"
             targetMemory = "85"

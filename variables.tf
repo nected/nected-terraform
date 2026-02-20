@@ -142,28 +142,44 @@ variable "temporal_service_autoscale" {
   description = "Temporal Service Autoscale"
   default     = true
 }
-
 variable "temporal_history_pods" {
   type        = number
   description = "Temporal History Pods"
   default     = 1
 }
 
+variable "temporal_min_frontend_pods" {
+  type        = number
+  description = "Temporal Frontend Min Pods"
+  default     = 1
+}
+
+variable "temporal_min_matching_pods" {
+  type        = number
+  description = "Temporal Matching Min Pods"
+  default     = 1
+}
+
+variable "temporal_min_worker_pods" {
+  type        = number
+  description = "Temporal Worker Min Pods"
+  default     = 1
+}
 variable "temporal_max_frontend_pods" {
   type        = number
-  description = "Temporal Frontend Pods"
+  description = "Temporal Frontend Max Pods"
   default     = 3
 }
 
 variable "temporal_max_matching_pods" {
   type        = number
-  description = "Temporal Matching Pods"
+  description = "Temporal Matching Max Pods"
   default     = 3
 }
 
 variable "temporal_max_worker_pods" {
   type        = number
-  description = "Temporal Worker Pods"
+  description = "Temporal Worker Max Pods"
   default     = 2
 }
 
@@ -179,27 +195,51 @@ variable "nected_service_autoscale" {
   default     = true
 }
 
+variable "nected_min_nalanda_pods" {
+  type        = number
+  description = "Nected Nalanda Min Pods"
+  default     = 1
+}
+
+variable "nected_min_executer_pods" {
+  type        = number
+  description = "Nected Executer Min Pods"
+  default     = 1
+}
+
+variable "nected_min_router_pods" {
+  type        = number
+  description = "Nected Router Min Pods"
+  default     = 1
+}
+
+variable "nected_min_medha_pods" {
+  type        = number
+  description = "Nected Medha Min Pods"
+  default     = 1
+}
+
 variable "nected_max_nalanda_pods" {
   type        = number
-  description = "Nected Nalanda Pods"
+  description = "Nected Nalanda Max Pods"
   default     = 2
 }
 
 variable "nected_max_executer_pods" {
   type        = number
-  description = "Nected Executer Pods"
+  description = "Nected Executer Max Pods"
   default     = 6
 }
 
 variable "nected_max_router_pods" {
   type        = number
-  description = "Nected Router Pods"
+  description = "Nected Router Max Pods"
   default     = 4
 }
 
 variable "nected_max_medha_pods" {
   type        = number
-  description = "Nected Medha Pods"
+  description = "Nected Medha Max Pods"
   default     = 2
 }
 

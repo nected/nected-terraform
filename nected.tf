@@ -147,7 +147,7 @@ resource "helm_release" "nected" {
 
         autoscaling = {
           enabled                           = var.nected_service_autoscale
-          minReplicas                       = 1
+          minReplicas                       = var.nected_min_nalanda_pods
           maxReplicas                       = var.nected_max_nalanda_pods
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
@@ -193,7 +193,7 @@ resource "helm_release" "nected" {
 
         autoscaling = {
           enabled                           = var.nected_service_autoscale
-          minReplicas                       = 1
+          minReplicas                       = var.nected_min_executer_pods
           maxReplicas                       = var.nected_max_executer_pods
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
@@ -240,7 +240,7 @@ resource "helm_release" "nected" {
 
         autoscaling = {
           enabled                           = var.nected_service_autoscale
-          minReplicas                       = 1
+          minReplicas                       = var.nected_min_router_pods
           maxReplicas                       = var.nected_max_router_pods
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
@@ -297,7 +297,7 @@ resource "helm_release" "nected" {
 
         autoscaling = {
           enabled                           = var.nected_service_autoscale
-          minReplicas                       = 1
+          minReplicas                       = var.nected_min_medha_pods
           maxReplicas                       = var.nected_max_medha_pods
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85

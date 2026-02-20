@@ -116,18 +116,25 @@ elasticsearch_admin_password = "<password>"
 # Chart versions
 nected_chart_version = "0.4.16"
 
-# App resources & autoscaling
-temporal_task_partitions = 20
+# App autoscaling
+temporal_task_partitions   = 20
 temporal_service_autoscale = true
-nected_service_autoscale = true
-temporal_history_pods = 1
+nected_service_autoscale   = true
+temporal_history_pods      = 1
+temporal_min_frontend_pods = 1
+temporal_min_matching_pods = 1
+temporal_min_worker_pods   = 1
 temporal_max_frontend_pods = 3
 temporal_max_matching_pods = 3
-temporal_max_worker_pods = 2
-nected_max_nalanda_pods = 2
-nected_max_executer_pods = 6
-nected_max_router_pods = 4
-nected_max_medha_pods = 2
+temporal_max_worker_pods   = 2
+nected_min_nalanda_pods    = 1
+nected_min_executer_pods   = 1
+nected_min_router_pods     = 1
+nected_min_medha_pods      = 1
+nected_max_nalanda_pods    = 2
+nected_max_executer_pods   = 6
+nected_max_router_pods     = 4
+nected_max_medha_pods      = 2
 
 # Domain Configuration
 scheme                = "https"
