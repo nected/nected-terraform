@@ -291,7 +291,7 @@ resource "helm_release" "nected" {
         resources = {
           requests = {
             cpu    = "500m"
-            memory = "2048Mi"
+            memory = "1024Mi"
           }
         }
 

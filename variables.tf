@@ -140,7 +140,7 @@ variable "temporal_task_partitions" {
 variable "temporal_service_autoscale" {
   type        = bool
   description = "Temporal Service Autoscale"
-  default     = false
+  default     = true
 }
 
 variable "temporal_history_pods" {
@@ -176,7 +176,7 @@ variable "temporal_chart_version" {
 variable "nected_service_autoscale" {
   type        = bool
   description = "Nected Service Autoscale"
-  default     = false
+  default     = true
 }
 
 variable "nected_max_nalanda_pods" {
@@ -188,25 +188,25 @@ variable "nected_max_nalanda_pods" {
 variable "nected_max_executer_pods" {
   type        = number
   description = "Nected Executer Pods"
-  default     = 5
+  default     = 6
 }
 
 variable "nected_max_router_pods" {
   type        = number
   description = "Nected Router Pods"
-  default     = 3
+  default     = 4
 }
 
 variable "nected_max_medha_pods" {
   type        = number
   description = "Nected Medha Pods"
-  default     = 3
+  default     = 2
 }
 
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.15"
+  default     = "0.4.16"
 }
 
 variable "datastore_chart_version" {
