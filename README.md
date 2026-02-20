@@ -257,11 +257,10 @@ Update the following placeholders in the configuration:
 - [RULE_PAYLOAD] {"environment": "production", "params": {"a": 1}}
 #### Run JMeter
 ```
-cd jmeter-test
 kubectl create ns jmeter
-kubectl -n jmeter apply -f jmeter-test.yaml
+kubectl apply -f jmeter-test/jmeter-k8s.yaml
 kubectl -n jmeter get pods
-kubectl -n jmeter logs -f jmeter-master
+kubectl -n jmeter logs -f jmeter-test/jmeter-master
 ```
 #### Retrieve JMeter Report
 To copy the generated JMeter report after the test completes:
