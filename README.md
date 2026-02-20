@@ -89,7 +89,7 @@ kubernetes_version = "1.32"
 aks_node_count     = 2
 aks_min_node_count = 2
 aks_max_node_count = 5
-aks_vm_size        = "Standard_D4ds_v6"
+aks_vm_size        = "Standard_D4s_v6"
 
 # Application Gateway private ip
 # default public ip
@@ -108,7 +108,7 @@ use_managed_redis = false
 
 # Elasticsearch
 elasticsearch_version        = "8.12.0"
-elasticsearch_vm_size        = "Standard_D4ds_v6"
+elasticsearch_vm_size        = "Standard_D2ds_v4"
 elasticsearch_admin_username = "elastic"
 elasticsearch_admin_password = "<password>"
 
