@@ -143,7 +143,8 @@ resource "azurerm_application_gateway" "appgw" {
       probe,
       http_listener,
       frontend_port,
-      request_routing_rule
+      request_routing_rule,
+      redirect_configuration
     ]
   }
 

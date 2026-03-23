@@ -65,7 +65,7 @@ resource "helm_release" "temporal" {
 
           persistence = {
             default = {
-              driver = "sql"
+              driver = "${local.temporal_persistant_driver}"
               sql = {
                 driver          = "postgres12"
                 maxConns        = 30
@@ -80,23 +80,12 @@ resource "helm_release" "temporal" {
                 #   enableHostVerification = false
                 # }
               }
-            }
-
-            visibility = {
-              driver = "sql"
-              sql = {
-                driver          = "postgres12"
-                maxConns        = 30
-                maxConnLifetime = "30m"
-                connectTimeout  = "5s"
-                host            = azurerm_postgresql_flexible_server.postgresql.fqdn
-                port            = 5432
-                user            = var.pg_admin_user
-                password        = var.pg_admin_passwd
-                # tls = {
-                #   enabled                = true
-                #   enableHostVerification = false
-                # }
+              cassandra = {
+                hosts    = "${local.seed_node_list}"
+                port     = 9042
+                keyspace = "temporal"
+                user     = ""
+                password = ""
               }
             }
           }
@@ -172,10 +161,15 @@ resource "helm_release" "temporal" {
         enabled = false
       }
 
-
       elasticsearch = {
-        external = false
+        external = true
         enabled  = false
+        host     = "${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}"
+        scheme   = "http"
+        port     = 9200
+        version  = "v7"
+        username = "${var.elasticsearch_admin_username}"
+        password = "${var.elasticsearch_admin_password}"
       }
 
       prometheus = {

@@ -1,8 +1,9 @@
 locals {
-  subscription_id         = data.azurerm_client_config.current.subscription_id
-  resource_group_name     = data.azurerm_resource_group.rg.name
-  resource_group_location = data.azurerm_resource_group.rg.location
-  hosted_zone_rg          = var.hosted_zone_rg == "null" ? local.resource_group_name : var.hosted_zone_rg
+  subscription_id            = data.azurerm_client_config.current.subscription_id
+  resource_group_name        = data.azurerm_resource_group.rg.name
+  resource_group_location    = data.azurerm_resource_group.rg.location
+  hosted_zone_rg             = var.hosted_zone_rg == "null" ? local.resource_group_name : var.hosted_zone_rg
+  temporal_persistant_driver = var.cassandra_node_count != 0 ? "cassandra" : "sql"
 
   subnets = {
     psql = {
@@ -62,6 +63,21 @@ locals {
         },
         {
           port                  = "9200"
+          direction             = "Inbound"
+          source_address_prefix = var.vnet_address_space
+        },
+        {
+          port                  = "9042"
+          direction             = "Inbound"
+          source_address_prefix = var.vnet_address_space
+        },
+        {
+          port                  = "7000"
+          direction             = "Inbound"
+          source_address_prefix = var.vnet_address_space
+        },
+        {
+          port                  = "7199"
           direction             = "Inbound"
           source_address_prefix = var.vnet_address_space
         }

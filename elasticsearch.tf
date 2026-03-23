@@ -46,7 +46,7 @@ resource "azurerm_linux_virtual_machine" "elasticsearch" {
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "Premium_LRS"
-    disk_size_gb         = 128
+    disk_size_gb         = var.elasticsearch_os_disk_size_gb
   }
 
   source_image_reference {
