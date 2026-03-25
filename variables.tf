@@ -289,7 +289,7 @@ variable "nected_max_medha_pods" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.19"
+  default     = "0.4.23"
 }
 
 variable "datastore_chart_version" {
