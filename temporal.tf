@@ -24,13 +24,13 @@ resource "helm_release" "temporal" {
             { value = var.temporal_task_partitions, constraints = {} }
           ]
           "history.persistenceMaxQPS" = [
-            { value = 15000, constraints = {} }
+            { value = 10000, constraints = {} }
           ]
           "matching.persistenceMaxQPS" = [
-            { value = 15000, constraints = {} }
+            { value = 10000, constraints = {} }
           ]
           "frontend.persistenceMaxQPS" = [
-            { value = 15000, constraints = {} }
+            { value = 10000, constraints = {} }
           ]
           "frontend.rps" = [
             { value = 20000, constraints = {} }
@@ -44,7 +44,7 @@ resource "helm_release" "temporal" {
         }
 
         config = {
-          numHistoryShards = 512 * var.temporal_history_pods
+          numHistoryShards = 512
 
           clusterMetadata = {
             enableGlobalNamespace    = true
@@ -68,7 +68,7 @@ resource "helm_release" "temporal" {
               driver = "${local.temporal_persistant_driver}"
               sql = {
                 driver          = "postgres12"
-                maxConns        = 30
+                maxConns        = 20
                 maxConnLifetime = "30m"
                 connectTimeout  = "5s"
                 host            = azurerm_postgresql_flexible_server.postgresql.fqdn
@@ -103,7 +103,7 @@ resource "helm_release" "temporal" {
           resources = {
             requests = {
               cpu    = "250m"
-              memory = "512Mi"
+              memory = "256Mi"
             }
           }
         }
@@ -112,8 +112,8 @@ resource "helm_release" "temporal" {
           replicaCount = var.temporal_history_pods
           resources = {
             requests = {
-              cpu    = "1000m"
-              memory = "2048Mi"
+              cpu    = "512m"
+              memory = "1024Mi"
             }
           }
         }
@@ -130,7 +130,7 @@ resource "helm_release" "temporal" {
           resources = {
             requests = {
               cpu    = "250m"
-              memory = "512Mi"
+              memory = "256Mi"
             }
           }
         }
@@ -147,7 +147,7 @@ resource "helm_release" "temporal" {
           resources = {
             requests = {
               cpu    = "250m"
-              memory = "512Mi"
+              memory = "256Mi"
             }
           }
         }

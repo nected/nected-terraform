@@ -10,6 +10,7 @@ It automates provisioning of:
 * DNS, routing
 * SSL setup using Cert-Manager
 * Nected service configuration
+
 ---
 
 ## 📌 Prerequisites
@@ -23,7 +24,7 @@ Before running Terraform, ensure the following are installed and configured:
 | kubectl     | Latest  |
 | Helm        | Latest  |
 
-### Azure Resources  & Nected license key
+### Azure Resources & Nected license key
 
 To successfully deploy the infrastructure, ensure you have:
 
@@ -32,28 +33,27 @@ To successfully deploy the infrastructure, ensure you have:
 
   * Creating CNAME records for all Nected services
   * Adding DNS entries required for SSL certificate validation
-  * Imp: To issue an SSL certificate using Cert-Manager, the domain must have a public DNS zone for verification.
+  * **Important:** To issue an SSL certificate using Cert-Manager, the domain must have a public DNS zone for verification.
 * **One Azure Resource Group** where the entire infrastructure will be created.
 
   * The **Hosted Zone** can be in the *same* Resource Group or a *different* one.
-* **Nected License Key** required for installing the full Nected service
-  * Remove it from `terraform.tfvars` if you want to use the free & limited version
 
 ---
 
 ## 🔐 Authentication
 
-Login into Azure:
+Log in to Azure:
 
-```
+```bash
 az login
 ```
 
 Ensure your correct subscription is selected:
 
-```
+```bash
 az account set --subscription "<YOUR_SUBSCRIPTION_ID>"
 ```
+
 ---
 
 ## ⚙️ Configuration
@@ -62,7 +62,7 @@ Create a `terraform.tfvars` file and populate it with your deployment values.
 
 ### Example `terraform.tfvars`
 
-```
+```hcl
 # Prerequisites
 resource_group_name = "<YOUR_RESOURCE_GROUP>"
 hosted_zone_rg      = "<HOSTED_ZONE_RESOURCE_GROUP>"
@@ -80,7 +80,8 @@ environment         = "dev"
 vnet_address_space = "10.50.0.0/16"
 
 # SSL certificates, provide vault name & certificate name
-# default behavipur is letsencrypt generated certificate
+# default behaviour is letsencrypt generated certificate
+# set to "null" to use Let's Encrypt (default)
 key_vault_name = "null"
 key_vault_certificate_name = "null"
 
@@ -100,7 +101,7 @@ pg_version      = 17
 pg_admin_user   = "psqladmin"
 pg_admin_passwd = "<password>"
 pg_sku_name     = "GP_Standard_D4ds_v5"
-pg_disk_size    = 262144       # size in MB
+pg_disk_size    = 262144       # 256 GB
 
 # Redis (use Azure Redis Cache)
 # default redis via datastore helm chart
@@ -114,24 +115,24 @@ elasticsearch_admin_password = "<password>"
 
 # Application variables
 # Chart versions
-nected_chart_version = "0.4.25"
+nected_chart_version = "0.4.31"
 
 # App autoscaling
 temporal_task_partitions   = 20
 temporal_service_autoscale = true
 nected_service_autoscale   = true
-temporal_history_pods      = 1
-temporal_min_frontend_pods = 1
-temporal_min_matching_pods = 1
-temporal_min_worker_pods   = 1
-temporal_max_frontend_pods = 3
-temporal_max_matching_pods = 3
-temporal_max_worker_pods   = 2
-nected_min_nalanda_pods    = 1
-nected_min_executer_pods   = 1
-nected_min_router_pods     = 1
-nected_min_medha_pods      = 1
-nected_max_nalanda_pods    = 2
+temporal_history_pods      = 2
+temporal_min_frontend_pods = 2
+temporal_min_matching_pods = 2
+temporal_min_worker_pods   = 2
+temporal_max_frontend_pods = 4
+temporal_max_matching_pods = 4
+temporal_max_worker_pods   = 4
+nected_min_nalanda_pods    = 2
+nected_min_executer_pods   = 2
+nected_min_router_pods     = 2
+nected_min_medha_pods      = 2
+nected_max_nalanda_pods    = 3
 nected_max_executer_pods   = 6
 nected_max_router_pods     = 4
 nected_max_medha_pods      = 2
@@ -143,6 +144,7 @@ backend_domain_prefix = "backend"
 router_domain_prefix  = "router"
 
 # Console Access
+# username is always an email and password should be alphanumeric at least 8 characters
 console_signup_domains = ""
 console_user_email    = "<<user email>>"
 console_user_password = "<<password>>"
@@ -160,6 +162,8 @@ smtp_config = {
   EMAIL_PASSWORD     = ""
 }
 ```
+> ⚠️ Do not commit terraform.tfvars to version control. Add it to .gitignore.
+
 ---
 
 ## 📦 Remote Terraform State (Optional)
@@ -172,7 +176,7 @@ If you want to use **remote Terraform state** in **Azure Blob Storage**, create 
 
 Example `backend.tf` configuration:
 
-```
+```hcl
 terraform {
   backend "azurerm" {
     resource_group_name  = "<RESOURCE_GROUP>"
@@ -191,33 +195,34 @@ Ensure these resources are created **before** running `terraform init`.
 
 ### 1️⃣ Initialize Terraform
 
-```
+```bash
 terraform init
 ```
 
 ### 2️⃣ Validate Configuration
 
-```
+```bash
 terraform validate
 ```
 
 ### 3️⃣ Preview Resources
 
-```
+```bash
 terraform plan -out=tfplan
 ```
 
 ### 4️⃣ Apply Deployment
 
-```
+```bash
 terraform apply tfplan
 ```
+
 ---
 
 ## 🔍 Post-Deployment
 
-Once the deployment completes, retrieve important outputs
-```
+Once the deployment completes, retrieve important outputs:
+```bash
 terraform output
 ```
 
@@ -228,27 +233,53 @@ Typical outputs include:
 * DB connection strings
 
 Then configure kubectl access:
-```
+```bash
 az aks get-credentials --resource-group <resource_group> --name <aks_name>
 ```
 
-###  Alternatively Kubeconfig generation
-```
+### Alternative: Kubeconfig via Terraform Output
+```bash
 terraform output -raw kube_config > /tmp/kubeconfig
 
 export KUBECONFIG=/tmp/kubeconfig 
 ```
+
+## Retrieving chart values for upgrade and backup
+Ensure the following values are retrieved and backed up:
+
+```bash
+helm get values nected > nected-values.yaml
+helm get values temporal > temporal-values.yaml
+kubectl get secret encryption-at-rest-secret -o yaml > encryption-at-rest-secret
+```
+
+To upgrade Nected apps:
+```bash
+helm upgrade -i nected nected/nected -f nected-values.yaml
+```
+
 ---
 
-## 🧹 Destroying Resources (Optional)
+## ✅ Access the Application
+- Domain: `https://ui.example.com`
+- Username: `console_user_email`
+- Password: `console_user_password`
+
+---
+
+## 🧹 Destroying Resources
 
 To remove the entire environment:
 
-```
+```bash
 terraform destroy
 ```
+
+**Important:** This will delete all infrastructure including databases, and data loss is irreversible.
+
 ---
-## ⚡ Jmeter Load testing
+
+## ⚡ JMeter Load testing
 Update the following placeholders in the configuration:
 - [RULE_ID]
 - [RULE_DOMAIN]
@@ -256,7 +287,7 @@ Update the following placeholders in the configuration:
 - [NECTED_API_KEY]
 - [RULE_PAYLOAD] {"environment": "production", "params": {"a": 1}}
 #### Run JMeter
-```
+```bash
 kubectl create ns jmeter
 kubectl apply -f jmeter-test/jmeter-k8s.yaml
 kubectl -n jmeter get pods
@@ -264,15 +295,11 @@ kubectl -n jmeter logs -f jmeter-test/jmeter-master
 ```
 #### Retrieve JMeter Report
 To copy the generated JMeter report after the test completes:
-```
+```bash
 kubectl -n jmeter cp jmeter-master:/test/output .
 ```
 > 💡 Default configuration supports approximately 25 RPS.
----
-### ✅ Access the Application
-- Domain: `ui_domain_prefix.hosted_zone`
-- Username: `console_user_email`
-- Password: `console_user_password`
+
 ---
 
 ## 🤝 Community & Support

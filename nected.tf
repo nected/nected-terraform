@@ -140,7 +140,7 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "200m"
+            cpu    = "250m"
             memory = "256Mi"
           }
         }
@@ -175,8 +175,8 @@ resource "helm_release" "nected" {
           AUDIT_LOG_ENABLED = "true"
           SKIP_SUBDOMAINS   = local.router_domain
 
-          TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "30"
-          TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "20"
+          TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "20"
+          TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "10"
           TEMPORAL_EXECUTER_WORKFLOW_CONCURRENT_EXECUTION_SIZE       = "1500"
           TEMPORAL_EXECUTER_ACTIVITY_CONCURRENT_EXECUTION_SIZE       = "1000"
           TEMPORAL_EXECUTER_LOCAL_ACTIVITY_CONCURRENT_EXECUTION_SIZE = "5000"
@@ -187,7 +187,7 @@ resource "helm_release" "nected" {
         resources = {
           requests = {
             cpu    = "500m"
-            memory = "1024Mi"
+            memory = "512Mi"
           }
         }
 
@@ -222,8 +222,8 @@ resource "helm_release" "nected" {
           AUDIT_LOG_ENABLED = "true"
           SKIP_SUBDOMAINS   = local.router_domain
 
-          TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "30"
-          TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "20"
+          TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "20"
+          TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "10"
           TEMPORAL_EXECUTER_WORKFLOW_CONCURRENT_EXECUTION_SIZE       = "1500"
           TEMPORAL_EXECUTER_ACTIVITY_CONCURRENT_EXECUTION_SIZE       = "1000"
           TEMPORAL_EXECUTER_LOCAL_ACTIVITY_CONCURRENT_EXECUTION_SIZE = "5000"
@@ -234,7 +234,7 @@ resource "helm_release" "nected" {
         resources = {
           requests = {
             cpu    = "250m"
-            memory = "512Mi"
+            memory = "256Mi"
           }
         }
 

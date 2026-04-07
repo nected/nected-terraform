@@ -188,42 +188,42 @@ variable "temporal_service_autoscale" {
 variable "temporal_history_pods" {
   type        = number
   description = "Temporal History Pods"
-  default     = 1
+  default     = 2
 }
 
 variable "temporal_min_frontend_pods" {
   type        = number
   description = "Temporal Frontend Min Pods"
-  default     = 1
+  default     = 2
 }
 
 variable "temporal_min_matching_pods" {
   type        = number
   description = "Temporal Matching Min Pods"
-  default     = 1
+  default     = 2
 }
 
 variable "temporal_min_worker_pods" {
   type        = number
   description = "Temporal Worker Min Pods"
-  default     = 1
+  default     = 2
 }
 variable "temporal_max_frontend_pods" {
   type        = number
   description = "Temporal Frontend Max Pods"
-  default     = 3
+  default     = 4
 }
 
 variable "temporal_max_matching_pods" {
   type        = number
   description = "Temporal Matching Max Pods"
-  default     = 3
+  default     = 4
 }
 
 variable "temporal_max_worker_pods" {
   type        = number
   description = "Temporal Worker Max Pods"
-  default     = 2
+  default     = 4
 }
 
 variable "temporal_chart_version" {
@@ -241,31 +241,31 @@ variable "nected_service_autoscale" {
 variable "nected_min_nalanda_pods" {
   type        = number
   description = "Nected Nalanda Min Pods"
-  default     = 1
+  default     = 2
 }
 
 variable "nected_min_executer_pods" {
   type        = number
   description = "Nected Executer Min Pods"
-  default     = 1
+  default     = 2
 }
 
 variable "nected_min_router_pods" {
   type        = number
   description = "Nected Router Min Pods"
-  default     = 1
+  default     = 2
 }
 
 variable "nected_min_medha_pods" {
   type        = number
   description = "Nected Medha Min Pods"
-  default     = 1
+  default     = 2
 }
 
 variable "nected_max_nalanda_pods" {
   type        = number
   description = "Nected Nalanda Max Pods"
-  default     = 2
+  default     = 3
 }
 
 variable "nected_max_executer_pods" {
@@ -289,7 +289,7 @@ variable "nected_max_medha_pods" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.25"
+  default     = "0.4.31"
 }
 
 variable "datastore_chart_version" {
