@@ -64,12 +64,27 @@ Create a `terraform.tfvars` file and populate it with your deployment values.
 
 ```hcl
 # Prerequisites
-resource_group_name = "<YOUR_RESOURCE_GROUP>"
-hosted_zone_rg      = "<HOSTED_ZONE_RESOURCE_GROUP>"
-hosted_zone         = "<YOUR_HOSTED_ZONE>"
 subscription_id     = "<YOUR_SUBSCRIPTION_ID>"
+resource_group_name = "<YOUR_RESOURCE_GROUP>"
+base_domain         = "<YOUR_BASE_DOMAIN>"
+
+# Set false if base_domain hosted zone is not available
+# If az_hosted_zone = false
+#  - Manual DNS mapping required post deployement
+#  - Required key_vault_name for SSL
+az_hosted_zone      = true
+
+# set hosted_zone_rg if base_domain hosted zone is in different resource group
+# default: "null" and expect hosted zone in resource_group_name
+# hosted_zone_rg    = "<HOSTED_ZONE_RESOURCE_GROUP>"
+
+# SSL certificates, provide vault name & certificate name
+# default: "null" and generate using Let's Encrypt
+# key_vault_name = "<KEY_VAULT_NAME>"
+# key_vault_certificate_name = "<KEY_VAULT_CERTIFICATE_NAME>"
 
 # Nected License (uncomment to use paid version)
+# default: free key with limited usage
 # nected_pre_shared_key = "<NECTED_LICENSE_KEY>"
 
 # Project Information
@@ -78,12 +93,6 @@ environment         = "dev"
 
 # Network Configuration
 vnet_address_space = "10.50.0.0/16"
-
-# SSL certificates, provide vault name & certificate name
-# default behaviour is letsencrypt generated certificate
-# set to "null" to use Let's Encrypt (default)
-key_vault_name = "null"
-key_vault_certificate_name = "null"
 
 # AKS Configuration
 kubernetes_version = "1.32"
@@ -97,11 +106,12 @@ aks_vm_size        = "Standard_D4s_v6"
 agic_internal = false
 
 # PostgreSQL
-pg_version      = 17
-pg_admin_user   = "psqladmin"
-pg_admin_passwd = "<password>"
-pg_sku_name     = "GP_Standard_D4ds_v5"
-pg_disk_size    = 262144       # 256 GB
+pg_version          = 17
+pg_admin_user       = "psqladmin"
+pg_admin_passwd     = "<password>"
+pg_sku_name         = "GP_Standard_D4ds_v5"
+pg_disk_size        = 262144       # 256 GB
+pg_backup_retention = 7
 
 # Redis (use Azure Redis Cache)
 # default redis via datastore helm chart
@@ -115,7 +125,7 @@ elasticsearch_admin_password = "<password>"
 
 # Application variables
 # Chart versions
-nected_chart_version = "0.4.31"
+nected_chart_version = "0.4.33"
 
 # App autoscaling
 temporal_task_partitions   = 20
@@ -124,14 +134,14 @@ nected_service_autoscale   = true
 temporal_history_pods      = 2
 temporal_min_frontend_pods = 2
 temporal_min_matching_pods = 2
-temporal_min_worker_pods   = 2
+temporal_min_worker_pods   = 1
 temporal_max_frontend_pods = 4
 temporal_max_matching_pods = 4
 temporal_max_worker_pods   = 4
 nected_min_nalanda_pods    = 2
 nected_min_executer_pods   = 2
 nected_min_router_pods     = 2
-nected_min_medha_pods      = 2
+nected_min_medha_pods      = 1
 nected_max_nalanda_pods    = 3
 nected_max_executer_pods   = 6
 nected_max_router_pods     = 4

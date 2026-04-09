@@ -1,8 +1,8 @@
 locals {
 
-  backend_domain            = "${var.backend_domain_prefix}.${var.hosted_zone}"
-  router_domain             = "${var.router_domain_prefix}.${var.hosted_zone}"
-  ui_domain                 = "${var.ui_domain_prefix}.${var.hosted_zone}"
+  backend_domain            = "${var.backend_domain_prefix}.${var.base_domain}"
+  router_domain             = "${var.router_domain_prefix}.${var.base_domain}"
+  ui_domain                 = "${var.ui_domain_prefix}.${var.base_domain}"
   cert_secret_name          = "${var.project}-tls-${var.environment}"
   cert_vault_name           = "${var.project}-vault-${var.environment}"
   temporal_cluster_name     = "${var.project}-${var.environment}"

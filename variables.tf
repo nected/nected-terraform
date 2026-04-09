@@ -94,6 +94,12 @@ variable "pg_disk_size" {
   default     = 262144
 }
 
+variable "pg_backup_retention" {
+  type        = number
+  description = "Posgresql Backup retention in days"
+  default     = 7
+}
+
 # Redis Variables
 variable "redis_capacity" {
   type        = number
@@ -206,7 +212,7 @@ variable "temporal_min_matching_pods" {
 variable "temporal_min_worker_pods" {
   type        = number
   description = "Temporal Worker Min Pods"
-  default     = 2
+  default     = 1
 }
 variable "temporal_max_frontend_pods" {
   type        = number
@@ -259,7 +265,7 @@ variable "nected_min_router_pods" {
 variable "nected_min_medha_pods" {
   type        = number
   description = "Nected Medha Min Pods"
-  default     = 2
+  default     = 1
 }
 
 variable "nected_max_nalanda_pods" {
@@ -289,7 +295,7 @@ variable "nected_max_medha_pods" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.31"
+  default     = "0.4.33"
 }
 
 variable "datastore_chart_version" {
@@ -346,10 +352,10 @@ variable "smtp_config" {
   type = map(string)
 }
 
-# DNS hosted Zone
-variable "hosted_zone" {
+# Services Base Domain
+variable "base_domain" {
   type        = string
-  description = "Enter hosted zone"
+  description = "Enter Base Domain for services"
 }
 
 variable "namespace" {
@@ -372,4 +378,21 @@ variable "key_vault_certificate_name" {
   type        = string
   description = "Key Vault Secrets name for certificate"
   default     = "null"
+}
+
+variable "az_hosted_zone" {
+  type        = bool
+  description = "When false, DNS entry and cert-manager certificate will not be created."
+  default     = true
+
+  validation {
+    condition     = !(var.key_vault_name == "null" && var.az_hosted_zone == false)
+    error_message = <<-EOT
+      SSL certificate configuration is missing.
+      Nected services require a valid SSL certificate, which must be provided via one of:
+        - A hosted zone via cert manager (set az_hosted_zone = true, and valid hosted zone with base_domain)
+        - An existing Key Vault certificate (set key_vault_name, and key_vault_certificate_name)
+      Current state: key_vault_name is "null" and az_hosted_zone is false — no certificate source defined.
+    EOT
+  }
 }

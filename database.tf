@@ -28,7 +28,7 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   storage_mb             = var.pg_disk_size
   sku_name               = var.pg_sku_name
 
-  backup_retention_days         = 7
+  backup_retention_days         = var.pg_backup_retention
   geo_redundant_backup_enabled  = false
   public_network_access_enabled = false
   delegated_subnet_id           = azurerm_subnet.subnets["psql"].id

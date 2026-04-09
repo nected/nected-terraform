@@ -53,7 +53,7 @@ resource "helm_release" "cert-manager" {
           solvers:
             - dns01:
                 azureDNS:
-                  hostedZoneName: ${data.azurerm_dns_zone.dns_zone.name}
+                  hostedZoneName: ${data.azurerm_dns_zone.dns_zone[0].name}
                   resourceGroupName: ${local.hosted_zone_rg}
                   subscriptionID: ${data.azurerm_client_config.current.subscription_id}
                   environment: AzurePublicCloud
@@ -71,9 +71,9 @@ resource "helm_release" "cert-manager" {
         issuerRef:
           name: letsencrypt-prod
           kind: ClusterIssuer
-        commonName: ${var.hosted_zone}
+        commonName: ${var.base_domain}
         dnsNames:
-          - ${var.hosted_zone}
+          - ${var.base_domain}
           - ${local.router_domain}
           - ${local.ui_domain}
           - ${local.backend_domain}
@@ -114,5 +114,5 @@ resource "time_sleep" "wait_for_keyvaultsync" {
     helm_release.azurecert,
   ]
 
-  create_duration = "2m"
+  create_duration = "5m"
 }

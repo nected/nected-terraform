@@ -102,7 +102,7 @@ resource "helm_release" "temporal" {
           }
           resources = {
             requests = {
-              cpu    = "250m"
+              cpu    = "200m"
               memory = "256Mi"
             }
           }
@@ -129,7 +129,7 @@ resource "helm_release" "temporal" {
           }
           resources = {
             requests = {
-              cpu    = "250m"
+              cpu    = "200m"
               memory = "256Mi"
             }
           }
@@ -146,7 +146,7 @@ resource "helm_release" "temporal" {
           }
           resources = {
             requests = {
-              cpu    = "250m"
+              cpu    = "200m"
               memory = "256Mi"
             }
           }

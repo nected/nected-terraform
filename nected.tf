@@ -36,7 +36,7 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "250m"
+            cpu    = "200m"
             memory = "256Mi"
           }
         }
@@ -140,7 +140,7 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "250m"
+            cpu    = "200m"
             memory = "256Mi"
           }
         }
@@ -186,7 +186,7 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "500m"
+            cpu    = "250m"
             memory = "512Mi"
           }
         }
@@ -233,7 +233,7 @@ resource "helm_release" "nected" {
 
         resources = {
           requests = {
-            cpu    = "250m"
+            cpu    = "200m"
             memory = "256Mi"
           }
         }

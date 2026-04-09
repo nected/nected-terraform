@@ -26,7 +26,8 @@ resource "azurerm_role_assignment" "appgw_aks_network_contributor" {
 
 # Create role assignment for DNS Zone Contributor
 resource "azurerm_role_assignment" "dns_contributor" {
-  scope                = data.azurerm_dns_zone.dns_zone.id
+  count                = var.az_hosted_zone == false ? 0 : 1
+  scope                = data.azurerm_dns_zone.dns_zone[0].id
   role_definition_name = "DNS Zone Contributor"
   principal_id         = azurerm_user_assigned_identity.identity.principal_id
 }
@@ -35,24 +36,22 @@ resource "azurerm_role_assignment" "dns_contributor" {
 resource "azurerm_federated_identity_credential" "cert_manager" {
   count = var.key_vault_name == "null" ? 1 : 0
 
-  name                = "${var.project}-cert-manager-federated-identity-${var.environment}"
-  resource_group_name = local.resource_group_name
-  parent_id           = azurerm_user_assigned_identity.identity.id
-  issuer              = azurerm_kubernetes_cluster.k8s.oidc_issuer_url
-  audience            = ["api://AzureADTokenExchange"]
-  subject             = "system:serviceaccount:cert-manager:cert-manager"
+  name                      = "${var.project}-cert-manager-federated-identity-${var.environment}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.identity.id
+  issuer                    = azurerm_kubernetes_cluster.k8s.oidc_issuer_url
+  audience                  = ["api://AzureADTokenExchange"]
+  subject                   = "system:serviceaccount:cert-manager:cert-manager"
 }
 
 # Federated Identity for keyvault sync
 resource "azurerm_federated_identity_credential" "keyvault_sync" {
   count = var.key_vault_name == "null" ? 1 : 0
 
-  name                = "${var.project}-keyvault-certificate-${var.environment}"
-  resource_group_name = local.resource_group_name
-  parent_id           = azurerm_user_assigned_identity.identity.id
-  audience            = ["api://AzureADTokenExchange"]
-  issuer              = azurerm_kubernetes_cluster.k8s.oidc_issuer_url
-  subject             = "system:serviceaccount:${var.namespace}:keyvault-sync-sa"
+  name                      = "${var.project}-keyvault-certificate-${var.environment}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.identity.id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = azurerm_kubernetes_cluster.k8s.oidc_issuer_url
+  subject                   = "system:serviceaccount:${var.namespace}:keyvault-sync-sa"
 }
 
 #

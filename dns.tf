@@ -1,6 +1,8 @@
 resource "azurerm_dns_a_record" "router" {
+  count = var.az_hosted_zone == false ? 0 : 1
+
   name                = var.router_domain_prefix
-  zone_name           = data.azurerm_dns_zone.dns_zone.name
+  zone_name           = data.azurerm_dns_zone.dns_zone[0].name
   resource_group_name = var.hosted_zone_rg == "null" ? local.resource_group_name : var.hosted_zone_rg
   ttl                 = 300
   records             = [local.dns_record_ip]
@@ -11,8 +13,10 @@ resource "azurerm_dns_a_record" "router" {
 }
 
 resource "azurerm_dns_a_record" "ui" {
+  count = var.az_hosted_zone == false ? 0 : 1
+
   name                = var.ui_domain_prefix
-  zone_name           = data.azurerm_dns_zone.dns_zone.name
+  zone_name           = data.azurerm_dns_zone.dns_zone[0].name
   resource_group_name = var.hosted_zone_rg == "null" ? local.resource_group_name : var.hosted_zone_rg
   ttl                 = 300
   records             = [local.dns_record_ip]
@@ -23,8 +27,10 @@ resource "azurerm_dns_a_record" "ui" {
 }
 
 resource "azurerm_dns_a_record" "backend" {
+  count = var.az_hosted_zone == false ? 0 : 1
+
   name                = var.backend_domain_prefix
-  zone_name           = data.azurerm_dns_zone.dns_zone.name
+  zone_name           = data.azurerm_dns_zone.dns_zone[0].name
   resource_group_name = var.hosted_zone_rg == "null" ? local.resource_group_name : var.hosted_zone_rg
   ttl                 = 300
   records             = [local.dns_record_ip]

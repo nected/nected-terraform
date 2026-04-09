@@ -5,7 +5,9 @@ data "azurerm_resource_group" "rg" {
 }
 
 data "azurerm_dns_zone" "dns_zone" {
-  name                = var.hosted_zone
+  count = var.az_hosted_zone == false ? 0 : 1
+
+  name                = var.base_domain
   resource_group_name = var.hosted_zone_rg == "null" ? local.resource_group_name : var.hosted_zone_rg
 }
 
