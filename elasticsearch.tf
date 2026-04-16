@@ -6,7 +6,7 @@ resource "azurerm_network_interface" "elasticsearch" {
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.subnets["private"].id # Using your existing private subnet
+    subnet_id                     = var.existing_vnet_name == "" ? azurerm_subnet.subnets["private"].id : data.azurerm_subnet.existing["private"].id
     private_ip_address_allocation = "Dynamic"
   }
 

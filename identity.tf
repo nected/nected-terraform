@@ -19,7 +19,7 @@ resource "azurerm_role_assignment" "appgw_identity_reader" {
 
 # Role assignment for App Gateway to access AKS
 resource "azurerm_role_assignment" "appgw_aks_network_contributor" {
-  scope                = azurerm_virtual_network.prod.id
+  scope                = local.vnet_id
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_user_assigned_identity.identity.principal_id
 }
@@ -73,7 +73,7 @@ resource "azurerm_key_vault" "ssl_certs_vault" {
     bypass         = "AzureServices"
 
     virtual_network_subnet_ids = [
-      azurerm_subnet.subnets["appgw"].id
+      var.existing_vnet_name == "" ? azurerm_subnet.subnets["appgw"].id : data.azurerm_subnet.existing["appgw"].id
     ]
   }
 

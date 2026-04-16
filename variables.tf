@@ -25,11 +25,30 @@ variable "hosted_zone_rg" {
   default     = "null"
 }
 
+# Network Varibales.
 # VNet Variables
+variable "existing_subnets" {
+  description = "Map of subnet names to existing subnet IDs. If provided, the existing subnet will be used instead of creating a new one."
+  type        = map(string)
+  default     = {}
+}
+
+variable "existing_vnet_name" {
+  description = "Name of an existing VNet to use. If empty, a new VNet will be created."
+  type        = string
+  default     = ""
+}
+
 variable "vnet_address_space" {
   type        = string
   description = "The address space of the VNet"
   default     = "10.50.0.0/16"
+}
+
+variable "private_subnets" {
+  description = "List of subnet roles that should have private endpoint configured."
+  type        = list(string)
+  default     = ["psql", "redis", "private"]
 }
 
 # # Subscription Variables

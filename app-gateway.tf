@@ -37,7 +37,7 @@ resource "azurerm_application_gateway" "appgw" {
 
   gateway_ip_configuration {
     name      = "${var.project}-gateway-ip-configuration"
-    subnet_id = azurerm_subnet.subnets["appgw"].id
+    subnet_id = var.existing_vnet_name == "" ? azurerm_subnet.subnets["appgw"].id : data.azurerm_subnet.existing["appgw"].id
   }
 
   frontend_port {
@@ -57,7 +57,7 @@ resource "azurerm_application_gateway" "appgw" {
   # Frontend IP configuration
   frontend_ip_configuration {
     name                          = local.private_frontend_name
-    subnet_id                     = azurerm_subnet.subnets["appgw"].id
+    subnet_id                     = var.existing_vnet_name == "" ? azurerm_subnet.subnets["appgw"].id : data.azurerm_subnet.existing["appgw"].id
     private_ip_address            = local.internal_app_gateway_ip
     private_ip_address_allocation = "Static"
   }
