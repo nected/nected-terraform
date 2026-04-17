@@ -75,10 +75,10 @@ resource "helm_release" "temporal" {
                 port            = 5432
                 user            = var.pg_admin_user
                 password        = var.pg_admin_passwd
-                # tls = {
-                #   enabled                = true
-                #   enableHostVerification = false
-                # }
+                tls = {
+                  enabled                = true
+                  enableHostVerification = false
+                }
               }
               cassandra = {
                 hosts    = "${local.seed_node_list}"

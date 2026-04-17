@@ -75,7 +75,7 @@ resource "helm_release" "nected" {
           MASTER_DB_USER     = var.pg_admin_user
           MASTER_DB_PASSWORD = var.pg_admin_passwd
           MASTER_DB_HOST     = azurerm_postgresql_flexible_server.postgresql.fqdn
-          MASTER_SSL_MODE    = "disable"
+          MASTER_SSL_MODE    = "require"
 
           VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
 
@@ -159,7 +159,7 @@ resource "helm_release" "nected" {
           DB_USER                = var.pg_admin_user
           DB_PASSWORD            = var.pg_admin_passwd
           DB_HOST                = azurerm_postgresql_flexible_server.postgresql.fqdn
-          SSL_MODE               = "disable"
+          SSL_MODE               = "require"
 
           REQUEST_PER_MINUTE_LIMIT = "0"
           WEBHOOK_PER_MINUTE_LIMIT = "0"
@@ -206,7 +206,7 @@ resource "helm_release" "nected" {
           DB_USER                = var.pg_admin_user
           DB_PASSWORD            = var.pg_admin_passwd
           DB_HOST                = azurerm_postgresql_flexible_server.postgresql.fqdn
-          SSL_MODE               = "disable"
+          SSL_MODE               = "require"
 
           REQUEST_PER_MINUTE_LIMIT = "0"
           WEBHOOK_PER_MINUTE_LIMIT = "0"
@@ -284,7 +284,7 @@ resource "helm_release" "nected" {
           DB_HOST         = azurerm_postgresql_flexible_server.postgresql.fqdn
           DB_USER         = var.pg_admin_user
           DB_PASSWORD     = var.pg_admin_passwd
-          DB_SSL_MODE     = "disable"
+          DB_SSL_MODE     = "require"
           COPILOT_PDF_OCR = "true"
         }
 
