@@ -33,7 +33,8 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   identity {
     type = "SystemAssigned"
   }
-  azure_policy_enabled = true
+  private_cluster_enabled = var.aks_private_cluster_enabled
+  azure_policy_enabled    = true
 
   # enable workload identity
   oidc_issuer_enabled       = true

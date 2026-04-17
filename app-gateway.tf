@@ -21,8 +21,8 @@ resource "azurerm_application_gateway" "appgw" {
   location            = local.resource_group_location
 
   sku {
-    name     = var.appgw_sku_name
-    tier     = var.appgw_sku_tier
+    name     = var.enable_waf ? "WAF_v2" : var.appgw_sku_name
+    tier     = var.enable_waf ? "WAF_v2" : var.appgw_sku_tier
     capacity = var.enable_autoscaling ? null : var.appgw_capacity
   }
 
@@ -32,6 +32,17 @@ resource "azurerm_application_gateway" "appgw" {
     content {
       min_capacity = var.appgw_min_capacity
       max_capacity = var.appgw_max_capacity
+    }
+  }
+
+  # WAF configuration (only when enable_waf is true)
+  dynamic "waf_configuration" {
+    for_each = var.enable_waf ? [1] : []
+    content {
+      enabled          = true
+      firewall_mode    = var.waf_mode
+      rule_set_type    = "OWASP"
+      rule_set_version = var.waf_rule_set_version
     }
   }
 
