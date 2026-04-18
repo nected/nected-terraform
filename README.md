@@ -95,10 +95,10 @@ environment         = "dev"
 vnet_address_space = "10.50.0.0/16"
 
 # AKS Configuration
-kubernetes_version = "1.32"
+kubernetes_version = "1.33"
 aks_node_count     = 2
 aks_min_node_count = 2
-aks_max_node_count = 5
+aks_max_node_count = 4
 aks_vm_size        = "Standard_D4s_v6"
 
 # Application Gateway private ip
@@ -127,31 +127,30 @@ elasticsearch_admin_password = "<password>"
 # Chart versions
 nected_chart_version = "0.4.35"
 
-# App autoscaling
-temporal_task_partitions   = 20
-temporal_service_autoscale = true
-nected_service_autoscale   = true
-temporal_history_pods      = 2
-temporal_min_frontend_pods = 2
-temporal_min_matching_pods = 2
-temporal_min_worker_pods   = 1
-temporal_max_frontend_pods = 4
-temporal_max_matching_pods = 4
-temporal_max_worker_pods   = 4
-nected_min_nalanda_pods    = 2
-nected_min_executer_pods   = 2
-nected_min_router_pods     = 2
-nected_min_medha_pods      = 1
-nected_max_nalanda_pods    = 3
-nected_max_executer_pods   = 6
-nected_max_router_pods     = 4
-nected_max_medha_pods      = 2
-
 # Domain Configuration
 scheme                = "https"
 ui_domain_prefix      = "ui"
 backend_domain_prefix = "backend"
 router_domain_prefix  = "router"
+
+# Serivices env configs
+nected_env_overrides = {
+  "nalanda" = {
+    # notifications setiings
+    SEND_EMAIL         = "false"
+    EMAIL_PROVIDER     = "smtp"
+    SENDER_EMAIL       = ""
+    SENDER_NAME        = ""
+    EMAIL_INSECURE_TLS = ""
+    EMAIL_HOST         = ""
+    EMAIL_PORT         = ""
+    EMAIL_USERNAME     = ""
+    EMAIL_PASSWORD     = ""
+
+    # to restrict signup/invite user email domain
+    SIGNUP_DOMAINS = ""
+  }
+}
 
 # Console Access
 # username is always an email and password should be alphanumeric at least 8 characters
@@ -159,18 +158,6 @@ console_signup_domains = ""
 console_user_email    = "<<user email>>"
 console_user_password = "<<password>>"
 
-# SMTP Configuration
-smtp_config = {
-  SEND_EMAIL         = "false"
-  EMAIL_PROVIDER     = "smtp"
-  SENDER_EMAIL       = ""
-  SENDER_NAME        = ""
-  EMAIL_INSECURE_TLS = ""
-  EMAIL_HOST         = ""
-  EMAIL_PORT         = ""
-  EMAIL_USERNAME     = ""
-  EMAIL_PASSWORD     = ""
-}
 ```
 > ⚠️ Do not commit terraform.tfvars to version control. Add it to .gitignore.
 

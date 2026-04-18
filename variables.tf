@@ -46,7 +46,7 @@ variable "vnet_address_space" {
 }
 
 variable "private_subnets" {
-  description = "List of subnet roles that should have private endpoint configured."
+  description = "List of subnet roles that should have private endpoint configured. Not required for existing vnet"
   type        = list(string)
   default     = ["psql", "redis", "private"]
 }
@@ -60,7 +60,7 @@ variable "subscription_id" {
 # AKS Variables
 variable "kubernetes_version" {
   type    = string
-  default = "1.32"
+  default = "1.33"
 }
 
 variable "aks_node_count" {
@@ -75,7 +75,7 @@ variable "aks_min_node_count" {
 
 variable "aks_max_node_count" {
   type    = number
-  default = 5
+  default = 4
 }
 variable "aks_vm_size" {
   type        = string
@@ -134,7 +134,7 @@ variable "redis_capacity" {
 
 variable "use_managed_redis" {
   type        = bool
-  description = "Azure Provided managed redis"
+  description = "Azure Provided managed redis, if set false redis will be installed in aks cluster"
   default     = false
 }
 
@@ -205,116 +205,11 @@ variable "cassandra_data_disk_size_gb" {
   default     = 256
 }
 
-# App resources & autoscaling
-variable "temporal_task_partitions" {
-  type        = number
-  description = "Temporal tasks partitions"
-  default     = 20
-}
-variable "temporal_service_autoscale" {
-  type        = bool
-  description = "Temporal Service Autoscale"
-  default     = true
-}
-variable "temporal_history_pods" {
-  type        = number
-  description = "Temporal History Pods"
-  default     = 2
-}
-
-variable "temporal_min_frontend_pods" {
-  type        = number
-  description = "Temporal Frontend Min Pods"
-  default     = 2
-}
-
-variable "temporal_min_matching_pods" {
-  type        = number
-  description = "Temporal Matching Min Pods"
-  default     = 2
-}
-
-variable "temporal_min_worker_pods" {
-  type        = number
-  description = "Temporal Worker Min Pods"
-  default     = 1
-}
-variable "temporal_max_frontend_pods" {
-  type        = number
-  description = "Temporal Frontend Max Pods"
-  default     = 4
-}
-
-variable "temporal_max_matching_pods" {
-  type        = number
-  description = "Temporal Matching Max Pods"
-  default     = 4
-}
-
-variable "temporal_max_worker_pods" {
-  type        = number
-  description = "Temporal Worker Max Pods"
-  default     = 4
-}
-
+# services helm charts versions
 variable "temporal_chart_version" {
   type        = string
   description = "Temporal Helm Chart Version"
-  default     = "0.54.0"
-}
-
-variable "nected_service_autoscale" {
-  type        = bool
-  description = "Nected Service Autoscale"
-  default     = true
-}
-
-variable "nected_min_nalanda_pods" {
-  type        = number
-  description = "Nected Nalanda Min Pods"
-  default     = 2
-}
-
-variable "nected_min_executer_pods" {
-  type        = number
-  description = "Nected Executer Min Pods"
-  default     = 2
-}
-
-variable "nected_min_router_pods" {
-  type        = number
-  description = "Nected Router Min Pods"
-  default     = 2
-}
-
-variable "nected_min_medha_pods" {
-  type        = number
-  description = "Nected Medha Min Pods"
-  default     = 1
-}
-
-variable "nected_max_nalanda_pods" {
-  type        = number
-  description = "Nected Nalanda Max Pods"
-  default     = 3
-}
-
-variable "nected_max_executer_pods" {
-  type        = number
-  description = "Nected Executer Max Pods"
-  default     = 6
-}
-
-variable "nected_max_router_pods" {
-  type        = number
-  description = "Nected Router Max Pods"
-  default     = 4
-}
-
-variable "nected_max_medha_pods" {
-  type        = number
-  description = "Nected Medha Max Pods"
-  default     = 2
+  default     = "0.54.2"
 }
 
 variable "nected_chart_version" {
@@ -329,7 +224,145 @@ variable "datastore_chart_version" {
   default     = "0.1.2"
 }
 
+# App resources & autoscaling
+# temporal replicas and resources
+variable "temporal_task_partitions" {
+  type        = number
+  description = "Temporal tasks partitions"
+  default     = 5
+}
+
+variable "temporal_pods_replicas" {
+  description = "Temporal auto scaling and replicas"
+  type = object({
+    autoscaling  = optional(bool, true)
+    history      = optional(number, 2)
+    min_frontend = optional(number, 2)
+    min_matching = optional(number, 2)
+    min_worker   = optional(number, 2)
+    max_frontend = optional(number, 4)
+    max_matching = optional(number, 4)
+    max_worker   = optional(number, 4)
+  })
+  default = {}
+}
+
+variable "temporal_pods_resources" {
+  description = "Temporal pods resource requests and limits - limits only applied when set"
+  type = object({
+    # frontend
+    frontend_cpu_request    = optional(string, "200m")
+    frontend_memory_request = optional(string, "256Mi")
+    frontend_cpu_limit      = optional(string, null)
+    frontend_memory_limit   = optional(string, null)
+    # history
+    history_cpu_request    = optional(string, "512m")
+    history_memory_request = optional(string, "1024Mi")
+    history_cpu_limit      = optional(string, null)
+    history_memory_limit   = optional(string, null)
+    # matching
+    matching_cpu_request    = optional(string, "200m")
+    matching_memory_request = optional(string, "256Mi")
+    matching_cpu_limit      = optional(string, null)
+    matching_memory_limit   = optional(string, null)
+    # worker
+    worker_cpu_request    = optional(string, "200m")
+    worker_memory_request = optional(string, "256Mi")
+    worker_cpu_limit      = optional(string, null)
+    worker_memory_limit   = optional(string, null)
+    # schema
+    schema_job_cpu_request    = optional(string, null)
+    schema_job_memory_request = optional(string, null)
+    schema_job_cpu_limit      = optional(string, null)
+    schema_job_memory_limit   = optional(string, null)
+  })
+  default = {}
+}
+
+# nected resources and replicas
+variable "nected_enable_garuda" {
+  type    = bool
+  default = false
+}
+
+variable "nected_pods_resources" {
+  description = "Nected pods resource requests and limits - limits only applied when set"
+  type = object({
+    # konark
+    konark_cpu_request    = optional(string, "200m")
+    konark_memory_request = optional(string, "256Mi")
+    konark_cpu_limit      = optional(string, null)
+    konark_memory_limit   = optional(string, null)
+    # nalanda
+    nalanda_cpu_request    = optional(string, "200m")
+    nalanda_memory_request = optional(string, "256Mi")
+    nalanda_cpu_limit      = optional(string, null)
+    nalanda_memory_limit   = optional(string, null)
+    # vidhaan-executer
+    executer_cpu_request    = optional(string, "250m")
+    executer_memory_request = optional(string, "512Mi")
+    executer_cpu_limit      = optional(string, null)
+    executer_memory_limit   = optional(string, null)
+    # vidhaan-router
+    router_cpu_request    = optional(string, "200m")
+    router_memory_request = optional(string, "256Mi")
+    router_cpu_limit      = optional(string, null)
+    router_memory_limit   = optional(string, null)
+    # medha
+    medha_cpu_request    = optional(string, "500m")
+    medha_memory_request = optional(string, "1024Mi")
+    medha_cpu_limit      = optional(string, null)
+    medha_memory_limit   = optional(string, null)
+    # garuda
+    garuda_cpu_request    = optional(string, "500m")
+    garuda_memory_request = optional(string, "1024Mi")
+    garuda_cpu_limit      = optional(string, null)
+    garuda_memory_limit   = optional(string, null)
+    # setup job
+    setup_job_cpu_request    = optional(string, null)
+    setup_job_memory_request = optional(string, null)
+    setup_job_cpu_limit      = optional(string, null)
+    setup_job_memory_limit   = optional(string, null)
+    # setup job
+    secret_job_cpu_request    = optional(string, null)
+    secret_job_memory_request = optional(string, null)
+    secret_job_cpu_limit      = optional(string, null)
+    secret_job_memory_limit   = optional(string, null)
+  })
+  default = {}
+}
+
+variable "nected_pods_replicas" {
+  description = "Nected auto-scaling and replicas"
+  type = object({
+    autoscaling  = optional(bool, true)
+    min_nalanda  = optional(number, 2)
+    min_executer = optional(number, 2)
+    min_router   = optional(number, 2)
+    min_medha    = optional(number, 1)
+    min_garuda   = optional(number, 1)
+    max_nalanda  = optional(number, 3)
+    max_executer = optional(number, 6)
+    max_router   = optional(number, 4)
+    max_medha    = optional(number, 2)
+    max_garuda   = optional(number, 2)
+  })
+  default = {}
+}
+
+# Nected license pre shared key
+variable "nected_pre_shared_key" {
+  type    = string
+  default = "1182d659-8c9b-4541-90ac-8546372c326f"
+}
+
 # App Domains Variables
+variable "scheme" {
+  type        = string
+  description = "Scheme"
+  default     = "https"
+}
+
 variable "router_domain_prefix" {
   type        = string
   description = "Router Domain Prefix"
@@ -348,18 +381,7 @@ variable "ui_domain_prefix" {
   default     = "ui"
 }
 
-variable "scheme" {
-  type        = string
-  description = "Scheme"
-  default     = "https"
-}
-
-variable "console_signup_domains" {
-  type        = string
-  description = "Console Signup Domains Restriction"
-  default     = ""
-}
-
+# Nected app env configuration variables
 variable "console_user_email" {
   type        = string
   description = "Console User Email"
@@ -372,9 +394,28 @@ variable "console_user_password" {
   default     = "P@ssw0rd#123"
 }
 
-# SMTP Configuration
-variable "smtp_config" {
-  type = map(string)
+variable "nected_existing_secret_name" {
+  type        = string
+  description = "Nected services env secret name"
+  default     = ""
+}
+
+variable "nected_common_secret_value" {
+  type        = string
+  description = "Nected services common secret value"
+  default     = ""
+}
+
+variable "nected_env_overrides" {
+  type        = map(map(string))
+  description = "nalanda services envVars keys"
+  default = {
+    "konark"  = {}
+    "nalanda" = {}
+    "vidhaan" = {}
+    "medha"   = {}
+    "garuda"  = {}
+  }
 }
 
 # Services Base Domain
@@ -386,11 +427,6 @@ variable "base_domain" {
 variable "namespace" {
   type    = string
   default = "default"
-}
-
-variable "nected_pre_shared_key" {
-  type    = string
-  default = "1182d659-8c9b-4541-90ac-8546372c326f"
 }
 
 variable "key_vault_name" {
