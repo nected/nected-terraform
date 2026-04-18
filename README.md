@@ -288,7 +288,7 @@ Update the following placeholders in the configuration:
 kubectl create ns jmeter
 kubectl apply -f jmeter-test/jmeter-k8s.yaml
 kubectl -n jmeter get pods
-kubectl -n jmeter logs -f jmeter-test/jmeter-master
+kubectl -n jmeter logs -f jmeter-master
 ```
 #### Retrieve JMeter Report
 To copy the generated JMeter report after the test completes:

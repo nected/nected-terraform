@@ -8,6 +8,8 @@ resource "helm_release" "temporal" {
   depends_on = [
     azurerm_kubernetes_cluster.k8s,
     azurerm_postgresql_flexible_server.postgresql,
+    azurerm_linux_virtual_machine.elasticsearch,
+    azurerm_linux_virtual_machine.cassandra
   ]
 
   values = [
@@ -44,7 +46,7 @@ resource "helm_release" "temporal" {
         }
 
         config = {
-          numHistoryShards = 512
+          numHistoryShards = var.temporal_history_shards
 
           clusterMetadata = {
             enableGlobalNamespace    = true

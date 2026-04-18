@@ -232,6 +232,12 @@ variable "temporal_task_partitions" {
   default     = 5
 }
 
+variable "temporal_history_shards" {
+  type        = number
+  description = "Temporal History Shards"
+  default     = 512
+}
+
 variable "temporal_pods_replicas" {
   description = "Temporal auto scaling and replicas"
   type = object({
