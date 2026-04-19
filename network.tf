@@ -47,6 +47,20 @@ resource "azurerm_subnet" "subnets" {
 }
 
 # Only create NAT Gateway when there are private subnets
+resource "azurerm_public_ip" "nat_gw" {
+  count               = local.create_nat_gateway ? 1 : 0
+  name                = "${var.project}-natgw-pip"
+  location            = local.resource_group_location
+  resource_group_name = local.resource_group_name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+
+  tags = {
+    environment = var.environment
+    managed-by  = "terraform"
+  }
+}
+
 resource "azurerm_nat_gateway" "this" {
   count               = local.create_nat_gateway ? 1 : 0
   name                = "${var.project}-natgw"
@@ -57,6 +71,12 @@ resource "azurerm_nat_gateway" "this" {
     environment = var.environment
     managed-by  = "terraform"
   }
+}
+
+resource "azurerm_nat_gateway_public_ip_association" "this" {
+  count                = local.create_nat_gateway ? 1 : 0
+  nat_gateway_id       = azurerm_nat_gateway.this[0].id
+  public_ip_address_id = azurerm_public_ip.nat_gw[0].id
 }
 
 # Associate NAT Gateway only to private subnets being created
