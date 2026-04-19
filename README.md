@@ -241,18 +241,29 @@ terraform output -raw kube_config > /tmp/kubeconfig
 export KUBECONFIG=/tmp/kubeconfig 
 ```
 
-## Retrieving chart values for upgrade and backup
-Ensure the following values are retrieved and backed up:
+## Retrieving encryption key
+Ensure the following secret is retrieved and backed up:
 
 ```bash
-helm get values nected > nected-values.yaml
-helm get values temporal > temporal-values.yaml
 kubectl get secret encryption-at-rest-secret -o yaml > encryption-at-rest-secret
 ```
 
 To upgrade Nected apps:
+### Upgrade using Tearraform
+update terraform.tfvars:
+```
+nected_chart_version =  <version-number>
+```
+
 ```bash
-helm upgrade -i nected nected/nected -f nected-values.yaml
+terraform apply
+```
+
+### Upgrade using Helm
+
+```bash
+helm get values nected > nected-values.yaml
+helm upgrade -i nected nected/nected -f nected-values.yaml --version <version-number>
 ```
 
 ---
