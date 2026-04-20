@@ -14,6 +14,57 @@ resource "azurerm_public_ip" "appgw_pip" {
   }
 }
 
+# WAF Policy with custom rules
+resource "azurerm_web_application_firewall_policy" "waf_policy" {
+  count               = var.enable_waf && length(var.waf_custom_rules) > 0 ? 1 : 0
+  name                = "${var.project}-waf-policy-${var.environment}"
+  resource_group_name = local.resource_group_name
+  location            = local.resource_group_location
+
+  policy_settings {
+    enabled = true
+    mode    = var.waf_mode
+  }
+
+  managed_rules {
+    managed_rule_set {
+      type    = "OWASP"
+      version = var.waf_rule_set_version
+    }
+  }
+
+  dynamic "custom_rules" {
+    for_each = var.waf_custom_rules
+    content {
+      name      = custom_rules.value.name
+      priority  = custom_rules.value.priority
+      rule_type = custom_rules.value.rule_type
+      action    = custom_rules.value.action
+
+      dynamic "match_conditions" {
+        for_each = custom_rules.value.match_conditions
+        content {
+          dynamic "match_variables" {
+            for_each = match_conditions.value.match_variables
+            content {
+              variable_name = match_variables.value.variable_name
+              selector      = match_variables.value.selector
+            }
+          }
+          operator           = match_conditions.value.operator
+          negation_condition = match_conditions.value.negation_condition
+          match_values       = match_conditions.value.match_values
+        }
+      }
+    }
+  }
+
+  tags = {
+    Environment = var.environment
+    createdby   = "terraform"
+  }
+}
+
 # Internal Application Gateway
 resource "azurerm_application_gateway" "appgw" {
   name                = "${var.project}-appgw-${var.environment}"
@@ -46,32 +97,7 @@ resource "azurerm_application_gateway" "appgw" {
     }
   }
 
-  # WAF custom rules
-  dynamic "custom_rule" {
-    for_each = var.enable_waf ? var.waf_custom_rules : []
-    content {
-      name      = custom_rule.value.name
-      priority  = custom_rule.value.priority
-      rule_type = custom_rule.value.rule_type
-      action    = custom_rule.value.action
-
-      dynamic "match_conditions" {
-        for_each = custom_rule.value.match_conditions
-        content {
-          dynamic "match_variables" {
-            for_each = match_conditions.value.match_variables
-            content {
-              variable_name = match_variables.value.variable_name
-              selector      = match_variables.value.selector
-            }
-          }
-          operator           = match_conditions.value.operator
-          negation_condition = match_conditions.value.negation_condition
-          match_values       = match_conditions.value.match_values
-        }
-      }
-    }
-  }
+  firewall_policy_id = var.enable_waf && length(var.waf_custom_rules) > 0 ? azurerm_web_application_firewall_policy.waf_policy[0].id : null
 
   gateway_ip_configuration {
     name      = "${var.project}-gateway-ip-configuration"
