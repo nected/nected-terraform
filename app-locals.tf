@@ -9,4 +9,11 @@ locals {
   alb_listener_cert_name    = "${var.project}-ssl-certificate"
   key_vault_id              = var.key_vault_name == "null" ? azurerm_key_vault.ssl_certs_vault[0].id : data.azurerm_key_vault.vault[0].id
   alb_vault_secret_endpoint = var.key_vault_name == "null" ? "https://${azurerm_key_vault.ssl_certs_vault[0].name}.vault.azure.net/secrets/${local.cert_secret_name}" : "https://${var.key_vault_name}.vault.azure.net/secrets/${var.key_vault_certificate_name}"
+
+  # Offset user-supplied custom rule priorities so the built-in AllowGraphQL (priority 1) always runs first
+  waf_custom_rules_with_offset = [
+    for rule in var.waf_custom_rules : merge(rule, {
+      priority = rule.priority + 10
+    })
+  ]
 }

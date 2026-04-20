@@ -31,10 +31,27 @@ resource "azurerm_web_application_firewall_policy" "waf_policy" {
       type    = "OWASP"
       version = var.waf_rule_set_version
     }
+
+  }
+
+  # Always allow GraphQL endpoint through WAF
+  custom_rules {
+    name      = "AllowGraphQL"
+    priority  = 1
+    rule_type = "MatchRule"
+    action    = "Allow"
+
+    match_conditions {
+      match_variables {
+        variable_name = "RequestUri"
+      }
+      operator     = "Contains"
+      match_values = ["/graphql/query"]
+    }
   }
 
   dynamic "custom_rules" {
-    for_each = var.waf_custom_rules
+    for_each = local.waf_custom_rules_with_offset
     content {
       name      = custom_rules.value.name
       priority  = custom_rules.value.priority
