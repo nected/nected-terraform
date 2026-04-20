@@ -70,6 +70,26 @@ variable "waf_rule_set_version" {
   default     = "3.2"
 }
 
+variable "waf_custom_rules" {
+  type = list(object({
+    name      = string
+    priority  = number
+    rule_type = string
+    action    = string
+    match_conditions = list(object({
+      match_variables = list(object({
+        variable_name = string
+        selector      = optional(string)
+      }))
+      operator           = string
+      negation_condition = optional(bool, false)
+      match_values       = list(string)
+    }))
+  }))
+  description = "List of WAF custom rules for the Application Gateway"
+  default     = []
+}
+
 variable "agic_internal" {
   type        = bool
   description = "Application gateway Internal or Public"

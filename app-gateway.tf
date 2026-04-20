@@ -46,6 +46,33 @@ resource "azurerm_application_gateway" "appgw" {
     }
   }
 
+  # WAF custom rules
+  dynamic "custom_rule" {
+    for_each = var.enable_waf ? var.waf_custom_rules : []
+    content {
+      name      = custom_rule.value.name
+      priority  = custom_rule.value.priority
+      rule_type = custom_rule.value.rule_type
+      action    = custom_rule.value.action
+
+      dynamic "match_conditions" {
+        for_each = custom_rule.value.match_conditions
+        content {
+          dynamic "match_variables" {
+            for_each = match_conditions.value.match_variables
+            content {
+              variable_name = match_variables.value.variable_name
+              selector      = match_variables.value.selector
+            }
+          }
+          operator           = match_conditions.value.operator
+          negation_condition = match_conditions.value.negation_condition
+          match_values       = match_conditions.value.match_values
+        }
+      }
+    }
+  }
+
   gateway_ip_configuration {
     name      = "${var.project}-gateway-ip-configuration"
     subnet_id = var.existing_vnet_name == "" ? azurerm_subnet.subnets["appgw"].id : data.azurerm_subnet.existing["appgw"].id
