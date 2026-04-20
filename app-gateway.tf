@@ -16,7 +16,7 @@ resource "azurerm_public_ip" "appgw_pip" {
 
 # WAF Policy with custom rules
 resource "azurerm_web_application_firewall_policy" "waf_policy" {
-  count               = var.enable_waf && length(var.waf_custom_rules) > 0 ? 1 : 0
+  count               = var.enable_waf ? 1 : 0
   name                = "${var.project}-waf-policy-${var.environment}"
   resource_group_name = local.resource_group_name
   location            = local.resource_group_location
@@ -86,18 +86,7 @@ resource "azurerm_application_gateway" "appgw" {
     }
   }
 
-  # WAF configuration (only when enable_waf is true)
-  dynamic "waf_configuration" {
-    for_each = var.enable_waf ? [1] : []
-    content {
-      enabled          = true
-      firewall_mode    = var.waf_mode
-      rule_set_type    = "OWASP"
-      rule_set_version = var.waf_rule_set_version
-    }
-  }
-
-  firewall_policy_id = var.enable_waf && length(var.waf_custom_rules) > 0 ? azurerm_web_application_firewall_policy.waf_policy[0].id : null
+  firewall_policy_id = var.enable_waf ? azurerm_web_application_firewall_policy.waf_policy[0].id : null
 
   gateway_ip_configuration {
     name      = "${var.project}-gateway-ip-configuration"
