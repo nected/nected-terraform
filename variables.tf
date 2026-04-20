@@ -363,12 +363,6 @@ variable "nected_pre_shared_key" {
 }
 
 # App Domains Variables
-variable "scheme" {
-  type        = string
-  description = "Scheme"
-  default     = "https"
-}
-
 variable "router_domain_prefix" {
   type        = string
   description = "Router Domain Prefix"

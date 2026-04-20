@@ -128,7 +128,6 @@ elasticsearch_admin_password = "<password>"
 nected_chart_version = "0.4.35"
 
 # Domain Configuration
-scheme                = "https"
 ui_domain_prefix      = "ui"
 backend_domain_prefix = "backend"
 router_domain_prefix  = "router"

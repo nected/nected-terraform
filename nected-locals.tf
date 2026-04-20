@@ -1,13 +1,14 @@
 locals {
+  scheme = "https"
   konark_base_env = {
-    VITE_API_HOST          = "${var.scheme}://${local.backend_domain}"
-    VITE_GRAPHQL_URL       = "${var.scheme}://${local.backend_domain}/graphql/query"
+    VITE_API_HOST          = "${local.scheme}://${local.backend_domain}"
+    VITE_GRAPHQL_URL       = "${local.scheme}://${local.backend_domain}/graphql/query"
     VITE_NGINX_SERVER_NAME = local.ui_domain
   }
   nalanda_base_env = {
-    ALLOWED_CORS_ORIGIN = "${var.scheme}://${local.backend_domain},${var.scheme}://${local.ui_domain}"
+    ALLOWED_CORS_ORIGIN = "${local.scheme}://${local.backend_domain},${local.scheme}://${local.ui_domain}"
     ALLOWED_HOSTS       = local.backend_domain
-    BACKEND_URL         = "${var.scheme}://${local.backend_domain}"
+    BACKEND_URL         = "${local.scheme}://${local.backend_domain}"
 
     MASTER_DB_USER     = var.pg_admin_user
     MASTER_DB_PASSWORD = var.pg_admin_passwd
@@ -30,13 +31,13 @@ locals {
     ELASTIC_USER     = var.elasticsearch_admin_username
     ELASTIC_PASSWORD = var.elasticsearch_admin_password
 
-    ASSETS_BASE_URL = "${var.scheme}://${local.ui_domain}/assets/konark"
-    KONARK_BASE_URL = "${var.scheme}://${local.ui_domain}"
+    ASSETS_BASE_URL = "${local.scheme}://${local.ui_domain}/assets/konark"
+    KONARK_BASE_URL = "${local.scheme}://${local.ui_domain}"
 
     NECTED_USER_EMAIL    = var.console_user_email
     NECTED_USER_PASSWORD = var.console_user_password
 
-    DEFAULT_VIDHAAN_SCHEME = var.scheme
+    DEFAULT_VIDHAAN_SCHEME = local.scheme
     DEFAULT_VIDHAAN_DOMAIN = local.router_domain
   }
   vidhaan_base_env = {
