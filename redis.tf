@@ -13,7 +13,7 @@ resource "azurerm_redis_cache" "redis" {
   # For private endpoint access, disable public access
   public_network_access_enabled = false
 
-  subnet_id = azurerm_subnet.subnets["redis"].id
+  subnet_id = var.existing_vnet_name == "" ? azurerm_subnet.subnets["redis"].id : data.azurerm_subnet.existing["redis"].id
 
   redis_configuration {
     # Standard SKU configurations
@@ -43,7 +43,7 @@ resource "azurerm_redis_cache" "redis" {
 #   name                  = "${var.project}-redis-dns-link"
 #   resource_group_name   = local.resource_group_name
 #   private_dns_zone_name = azurerm_private_dns_zone.redis[0].name
-#   virtual_network_id    = azurerm_virtual_network.prod.id
+#   virtual_network_id    = local.vnet_id
 
 #   tags = {
 #     environment = var.environment
@@ -57,7 +57,7 @@ resource "azurerm_redis_cache" "redis" {
 #   name                = "${var.project}-redis-pe"
 #   location            = local.resource_group_location
 #   resource_group_name = local.resource_group_name
-#   subnet_id           = azurerm_subnet.subnets["private"].id
+#   subnet_id           = var.existing_vnet_name != "" ? azurerm_subnet.subnets["redis"].id : data.azurerm_subnet.existing["redis"].id
 
 #   private_service_connection {
 #     name                           = "${var.project}-redis-psc"

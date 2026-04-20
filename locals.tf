@@ -5,6 +5,30 @@ locals {
   hosted_zone_rg             = var.hosted_zone_rg == "null" ? local.resource_group_name : var.hosted_zone_rg
   temporal_persistant_driver = var.cassandra_node_count != 0 ? "cassandra" : "sql"
 
+  vnet_name = var.existing_vnet_name != "" ? data.azurerm_virtual_network.existing[0].name : azurerm_virtual_network.prod[0].name
+
+  vnet_id = var.existing_vnet_name != "" ? data.azurerm_virtual_network.existing[0].id : azurerm_virtual_network.prod[0].id
+
+  subnets_to_create = {
+    for name, subnet in local.subnets : name => subnet
+    if var.existing_vnet_name == ""
+  }
+
+  nsg_to_create = {
+    for name, subnet in local.subnets : name => subnet
+    if lookup(subnet, "security_rules", null) != null
+  }
+
+  subnets_to_private = {
+    for name, subnet in local.subnets_to_create : name => subnet
+    if contains(var.private_subnets, name) && var.existing_vnet_name == ""
+  }
+
+  subnets_to_lookup = var.existing_vnet_name != "" ? var.existing_subnets : {}
+
+  # NAT Gateway needed only when there are private subnets being created
+  create_nat_gateway = length(local.subnets_to_private) > 0 && var.existing_vnet_name == ""
+
   subnets = {
     psql = {
       address_prefixes = cidrsubnet(var.vnet_address_space, 8, 1)
@@ -103,7 +127,7 @@ locals {
       service_endpoints = ["Microsoft.KeyVault"]
     }
   }
-  internal_app_gateway_ip        = cidrhost(local.subnets.appgw.address_prefixes, 5)
+  internal_app_gateway_ip        = var.existing_vnet_name != "" ? cidrhost(data.azurerm_subnet.existing["appgw"].address_prefixes[0], 5) : cidrhost(local.subnets.appgw.address_prefixes, 5)
   public_app_gateway_ip          = azurerm_public_ip.appgw_pip.ip_address
   public_app_gateway_id          = azurerm_public_ip.appgw_pip.id
   dns_record_ip                  = var.agic_internal ? local.internal_app_gateway_ip : local.public_app_gateway_ip

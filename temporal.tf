@@ -8,6 +8,8 @@ resource "helm_release" "temporal" {
   depends_on = [
     azurerm_kubernetes_cluster.k8s,
     azurerm_postgresql_flexible_server.postgresql,
+    azurerm_linux_virtual_machine.elasticsearch,
+    azurerm_linux_virtual_machine.cassandra
   ]
 
   values = [
@@ -44,7 +46,7 @@ resource "helm_release" "temporal" {
         }
 
         config = {
-          numHistoryShards = 512
+          numHistoryShards = var.temporal_history_shards
 
           clusterMetadata = {
             enableGlobalNamespace    = true
@@ -75,10 +77,10 @@ resource "helm_release" "temporal" {
                 port            = 5432
                 user            = var.pg_admin_user
                 password        = var.pg_admin_passwd
-                # tls = {
-                #   enabled                = true
-                #   enableHostVerification = false
-                # }
+                tls = {
+                  enabled                = true
+                  enableHostVerification = false
+                }
               }
               cassandra = {
                 hosts    = "${local.seed_node_list}"
@@ -94,62 +96,94 @@ resource "helm_release" "temporal" {
         frontend = {
           replicaCount = 1
           autoscaling = {
-            enabled      = var.temporal_service_autoscale
-            minReplicas  = "${var.temporal_min_frontend_pods}"
-            maxReplicas  = "${var.temporal_max_frontend_pods}"
+            enabled      = var.temporal_pods_replicas.autoscaling
+            minReplicas  = "${var.temporal_pods_replicas.min_frontend}"
+            maxReplicas  = "${var.temporal_pods_replicas.max_frontend}"
             targetCPU    = "85"
             targetMemory = "85"
           }
-          resources = {
-            requests = {
-              cpu    = "200m"
-              memory = "256Mi"
-            }
-          }
+          resources = merge(
+            {
+              requests = {
+                cpu    = var.temporal_pods_resources.frontend_cpu_request
+                memory = var.temporal_pods_resources.frontend_memory_request
+              }
+            },
+            var.temporal_pods_resources.frontend_cpu_limit != null || var.temporal_pods_resources.frontend_memory_limit != null ? {
+              limits = merge(
+                var.temporal_pods_resources.frontend_cpu_limit != null ? { cpu = var.temporal_pods_resources.frontend_cpu_limit } : {},
+                var.temporal_pods_resources.frontend_memory_limit != null ? { memory = var.temporal_pods_resources.frontend_memory_limit } : {}
+              )
+            } : {}
+          )
         }
 
         history = {
-          replicaCount = var.temporal_history_pods
-          resources = {
-            requests = {
-              cpu    = "512m"
-              memory = "1024Mi"
-            }
-          }
+          replicaCount = var.temporal_pods_replicas.history
+          resources = merge(
+            {
+              requests = {
+                cpu    = var.temporal_pods_resources.history_cpu_request
+                memory = var.temporal_pods_resources.history_memory_request
+              }
+            },
+            var.temporal_pods_resources.history_cpu_limit != null || var.temporal_pods_resources.history_memory_limit != null ? {
+              limits = merge(
+                var.temporal_pods_resources.history_cpu_limit != null ? { cpu = var.temporal_pods_resources.history_cpu_limit } : {},
+                var.temporal_pods_resources.history_memory_limit != null ? { memory = var.temporal_pods_resources.history_memory_limit } : {}
+              )
+            } : {}
+          )
         }
 
         matching = {
           replicaCount = 1
           autoscaling = {
-            enabled      = var.temporal_service_autoscale
-            minReplicas  = "${var.temporal_min_matching_pods}"
-            maxReplicas  = "${var.temporal_max_matching_pods}"
+            enabled      = var.temporal_pods_replicas.autoscaling
+            minReplicas  = "${var.temporal_pods_replicas.min_matching}"
+            maxReplicas  = "${var.temporal_pods_replicas.max_matching}"
             targetCPU    = "85"
             targetMemory = "85"
           }
-          resources = {
-            requests = {
-              cpu    = "200m"
-              memory = "256Mi"
-            }
-          }
+          resources = merge(
+            {
+              requests = {
+                cpu    = var.temporal_pods_resources.matching_cpu_request
+                memory = var.temporal_pods_resources.matching_memory_request
+              }
+            },
+            var.temporal_pods_resources.matching_cpu_limit != null || var.temporal_pods_resources.matching_memory_limit != null ? {
+              limits = merge(
+                var.temporal_pods_resources.matching_cpu_limit != null ? { cpu = var.temporal_pods_resources.matching_cpu_limit } : {},
+                var.temporal_pods_resources.matching_memory_limit != null ? { memory = var.temporal_pods_resources.matching_memory_limit } : {}
+              )
+            } : {}
+          )
         }
 
         worker = {
           replicaCount = 1
           autoscaling = {
-            enabled      = var.temporal_service_autoscale
-            minReplicas  = "${var.temporal_min_worker_pods}"
-            maxReplicas  = "${var.temporal_max_worker_pods}"
+            enabled      = var.temporal_pods_replicas.autoscaling
+            minReplicas  = "${var.temporal_pods_replicas.min_worker}"
+            maxReplicas  = "${var.temporal_pods_replicas.max_worker}"
             targetCPU    = "85"
             targetMemory = "85"
           }
-          resources = {
-            requests = {
-              cpu    = "200m"
-              memory = "256Mi"
-            }
-          }
+          resources = merge(
+            {
+              requests = {
+                cpu    = var.temporal_pods_resources.worker_cpu_request
+                memory = var.temporal_pods_resources.worker_memory_request
+              }
+            },
+            var.temporal_pods_resources.worker_cpu_limit != null || var.temporal_pods_resources.worker_memory_limit != null ? {
+              limits = merge(
+                var.temporal_pods_resources.worker_cpu_limit != null ? { cpu = var.temporal_pods_resources.worker_cpu_limit } : {},
+                var.temporal_pods_resources.worker_memory_limit != null ? { memory = var.temporal_pods_resources.worker_memory_limit } : {}
+              )
+            } : {}
+          )
         }
       }
 
@@ -159,6 +193,23 @@ resource "helm_release" "temporal" {
 
       web = {
         enabled = false
+      }
+
+      schema = {
+        resources = merge(
+          var.temporal_pods_resources.schema_job_cpu_request != null || var.temporal_pods_resources.schema_job_memory_request != null ? {
+            requests = merge(
+              var.temporal_pods_resources.schema_job_cpu_request != null ? { cpu = var.temporal_pods_resources.schema_job_cpu_request } : {},
+              var.temporal_pods_resources.schema_job_memory_request != null ? { memory = var.temporal_pods_resources.schema_job_memory_request } : {}
+            )
+          } : {},
+          var.temporal_pods_resources.schema_job_cpu_limit != null || var.temporal_pods_resources.schema_job_memory_limit != null ? {
+            limits = merge(
+              var.temporal_pods_resources.schema_job_cpu_limit != null ? { cpu = var.temporal_pods_resources.schema_job_cpu_limit } : {},
+              var.temporal_pods_resources.schema_job_memory_limit != null ? { memory = var.temporal_pods_resources.schema_job_memory_limit } : {}
+            )
+          } : {}
+        )
       }
 
       elasticsearch = {

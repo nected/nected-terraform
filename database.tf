@@ -8,7 +8,7 @@ resource "azurerm_private_dns_zone" "postgresql" {
 resource "azurerm_private_dns_zone_virtual_network_link" "postgresql" {
   name                  = "${var.project}-psql-vnet-link"
   private_dns_zone_name = azurerm_private_dns_zone.postgresql.name
-  virtual_network_id    = azurerm_virtual_network.prod.id
+  virtual_network_id    = local.vnet_id
   resource_group_name   = local.resource_group_name
 
   depends_on = [
@@ -31,19 +31,13 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
   backup_retention_days         = var.pg_backup_retention
   geo_redundant_backup_enabled  = false
   public_network_access_enabled = false
-  delegated_subnet_id           = azurerm_subnet.subnets["psql"].id
+  delegated_subnet_id           = var.existing_vnet_name == "" ? azurerm_subnet.subnets["psql"].id : data.azurerm_subnet.existing["psql"].id
   private_dns_zone_id           = azurerm_private_dns_zone.postgresql.id
 
   depends_on = [
     azurerm_private_dns_zone_virtual_network_link.postgresql,
     azurerm_virtual_network.prod
   ]
-}
-
-resource "azurerm_postgresql_flexible_server_configuration" "require_secure_transport" {
-  name      = "require_secure_transport"
-  server_id = azurerm_postgresql_flexible_server.postgresql.id
-  value     = "off"
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "extensions" {
@@ -57,10 +51,4 @@ resource "azurerm_postgresql_flexible_server_database" "postgresql_db" {
   server_id = azurerm_postgresql_flexible_server.postgresql.id
   charset   = "UTF8"
   collation = "en_US.utf8"
-}
-
-resource "azurerm_postgresql_flexible_server_configuration" "shared_preload_libraries" {
-  name      = "shared_preload_libraries"
-  server_id = azurerm_postgresql_flexible_server.postgresql.id
-  value     = "pg_stat_statements"
 }

@@ -25,11 +25,11 @@ resource "helm_release" "datastore" {
         master = {
           resources = {
             requests = {
-              cpu    = "1"
+              cpu    = "500m"
               memory = "2Gi"
             }
             limits = {
-              cpu    = "2"
+              cpu    = "1000m"
               memory = "4Gi"
             }
           }

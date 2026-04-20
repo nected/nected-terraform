@@ -21,8 +21,8 @@ resource "azurerm_application_gateway" "appgw" {
   location            = local.resource_group_location
 
   sku {
-    name     = var.appgw_sku_name
-    tier     = var.appgw_sku_tier
+    name     = var.enable_waf ? "WAF_v2" : var.appgw_sku_name
+    tier     = var.enable_waf ? "WAF_v2" : var.appgw_sku_tier
     capacity = var.enable_autoscaling ? null : var.appgw_capacity
   }
 
@@ -35,9 +35,20 @@ resource "azurerm_application_gateway" "appgw" {
     }
   }
 
+  # WAF configuration (only when enable_waf is true)
+  dynamic "waf_configuration" {
+    for_each = var.enable_waf ? [1] : []
+    content {
+      enabled          = true
+      firewall_mode    = var.waf_mode
+      rule_set_type    = "OWASP"
+      rule_set_version = var.waf_rule_set_version
+    }
+  }
+
   gateway_ip_configuration {
     name      = "${var.project}-gateway-ip-configuration"
-    subnet_id = azurerm_subnet.subnets["appgw"].id
+    subnet_id = var.existing_vnet_name == "" ? azurerm_subnet.subnets["appgw"].id : data.azurerm_subnet.existing["appgw"].id
   }
 
   frontend_port {
@@ -57,7 +68,7 @@ resource "azurerm_application_gateway" "appgw" {
   # Frontend IP configuration
   frontend_ip_configuration {
     name                          = local.private_frontend_name
-    subnet_id                     = azurerm_subnet.subnets["appgw"].id
+    subnet_id                     = var.existing_vnet_name == "" ? azurerm_subnet.subnets["appgw"].id : data.azurerm_subnet.existing["appgw"].id
     private_ip_address            = local.internal_app_gateway_ip
     private_ip_address_allocation = "Static"
   }

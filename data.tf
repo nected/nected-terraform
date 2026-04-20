@@ -24,3 +24,19 @@ data "azurerm_key_vault" "vault" {
   name                = var.key_vault_name
   resource_group_name = local.resource_group_name
 }
+
+# Use existing VNet if name is provided, otherwise create new
+data "azurerm_virtual_network" "existing" {
+  count = var.existing_vnet_name == "" ? 0 : 1
+
+  name                = var.existing_vnet_name
+  resource_group_name = local.resource_group_name
+}
+
+# Look up existing subnets by customer-provided name
+data "azurerm_subnet" "existing" {
+  for_each             = local.subnets_to_lookup
+  name                 = each.value
+  virtual_network_name = local.vnet_name
+  resource_group_name  = local.resource_group_name
+}

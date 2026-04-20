@@ -10,7 +10,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     name                 = "default"
     node_count           = var.aks_node_count
     vm_size              = var.aks_vm_size
-    vnet_subnet_id       = azurerm_subnet.subnets["aks"].id
+    vnet_subnet_id       = var.existing_vnet_name == "" ? azurerm_subnet.subnets["aks"].id : data.azurerm_subnet.existing["aks"].id
     min_count            = var.aks_min_node_count
     max_count            = var.aks_max_node_count
     auto_scaling_enabled = true
@@ -33,7 +33,8 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   identity {
     type = "SystemAssigned"
   }
-  azure_policy_enabled = true
+  private_cluster_enabled = var.aks_private_cluster_enabled
+  azure_policy_enabled    = true
 
   # enable workload identity
   oidc_issuer_enabled       = true

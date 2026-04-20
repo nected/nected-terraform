@@ -20,6 +20,8 @@ resource "helm_release" "nected" {
   values = [
     yamlencode({
       konark = {
+        envVars = merge(local.konark_base_env, lookup(var.nected_env_overrides, "konark", {}))
+
         livenessProbe = {
           failureThreshold = 10
         }
@@ -28,18 +30,20 @@ resource "helm_release" "nected" {
           failureThreshold = 10
         }
 
-        envVars = {
-          VITE_API_HOST          = "${var.scheme}://${local.backend_domain}"
-          VITE_GRAPHQL_URL       = "${var.scheme}://${local.backend_domain}/graphql/query"
-          VITE_NGINX_SERVER_NAME = local.ui_domain
-        }
-
-        resources = {
-          requests = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-        }
+        resources = merge(
+          {
+            requests = {
+              cpu    = var.nected_pods_resources.konark_cpu_request
+              memory = var.nected_pods_resources.konark_memory_request
+            }
+          },
+          var.nected_pods_resources.konark_cpu_limit != null || var.nected_pods_resources.konark_memory_limit != null ? {
+            limits = merge(
+              var.nected_pods_resources.konark_cpu_limit != null ? { cpu = var.nected_pods_resources.konark_cpu_limit } : {},
+              var.nected_pods_resources.konark_memory_limit != null ? { memory = var.nected_pods_resources.konark_memory_limit } : {}
+            )
+          } : {}
+        )
         ingress = {
           enabled = "true"
           annotations = {
@@ -67,49 +71,24 @@ resource "helm_release" "nected" {
         }
       }
       nalanda = {
-        envVars = {
-          ALLOWED_CORS_ORIGIN = "${var.scheme}://${local.backend_domain},${var.scheme}://${local.ui_domain}"
-          ALLOWED_HOSTS       = local.backend_domain
-          BACKEND_URL         = "${var.scheme}://${local.backend_domain}"
+        existingSecret = var.nected_existing_secret_name
+        envVars        = merge(local.nalanda_base_env, lookup(var.nected_env_overrides, "nalanda", {}))
 
-          MASTER_DB_USER     = var.pg_admin_user
-          MASTER_DB_PASSWORD = var.pg_admin_passwd
-          MASTER_DB_HOST     = azurerm_postgresql_flexible_server.postgresql.fqdn
-          MASTER_SSL_MODE    = "disable"
-
-          VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
-
-          REDIS_TLS_ENABLED = "${local.redis_tls_enabled}"
-          REDIS_HOST        = local.redis_endpoint
-          REDIS_PORT        = format("%s", local.redis_port)
-          REDIS_PASSWORD    = local.redis_password
-
-          VIDHAAN_REDIS_TLS_ENABLED = "${local.redis_tls_enabled}"
-          VIDHAAN_REDIS_HOST        = local.redis_endpoint
-          VIDHAAN_REDIS_PORT        = format("%s", local.redis_port)
-          VIDHAAN_REDIS_PASSWORD    = local.redis_password
-
-          ELASTIC_HOSTS    = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
-          ELASTIC_USER     = var.elasticsearch_admin_username
-          ELASTIC_PASSWORD = var.elasticsearch_admin_password
-
-          SEND_EMAIL         = "${var.smtp_config.SEND_EMAIL}"
-          EMAIL_PROVIDER     = var.smtp_config.EMAIL_PROVIDER
-          SENDER_EMAIL       = var.smtp_config.SENDER_EMAIL
-          SENDER_NAME        = var.smtp_config.SENDER_NAME
-          EMAIL_INSECURE_TLS = "${var.smtp_config.EMAIL_INSECURE_TLS}"
-          EMAIL_HOST         = var.smtp_config.EMAIL_HOST
-          EMAIL_PORT         = "${var.smtp_config.EMAIL_PORT}"
-          EMAIL_USERNAME     = var.smtp_config.EMAIL_USERNAME
-          EMAIL_PASSWORD     = var.smtp_config.EMAIL_PASSWORD
-
-          ASSETS_BASE_URL        = "${var.scheme}://${local.ui_domain}/assets/konark"
-          KONARK_BASE_URL        = "${var.scheme}://${local.ui_domain}"
-          SIGNUP_DOMAINS         = var.console_signup_domains
-          NECTED_USER_EMAIL      = var.console_user_email
-          NECTED_USER_PASSWORD   = var.console_user_password
-          DEFAULT_VIDHAAN_SCHEME = var.scheme
-          DEFAULT_VIDHAAN_DOMAIN = local.router_domain
+        autoSetup = {
+          resources = merge(
+            var.nected_pods_resources.setup_job_cpu_request != null || var.nected_pods_resources.setup_job_memory_request != null ? {
+              requests = merge(
+                var.nected_pods_resources.setup_job_cpu_request != null ? { cpu = var.nected_pods_resources.setup_job_cpu_request } : {},
+                var.nected_pods_resources.setup_job_memory_request != null ? { memory = var.nected_pods_resources.setup_job_memory_request } : {}
+              )
+            } : {},
+            var.nected_pods_resources.setup_job_cpu_limit != null || var.nected_pods_resources.setup_job_memory_limit != null ? {
+              limits = merge(
+                var.nected_pods_resources.setup_job_cpu_limit != null ? { cpu = var.nected_pods_resources.setup_job_cpu_limit } : {},
+                var.nected_pods_resources.setup_job_memory_limit != null ? { memory = var.nected_pods_resources.setup_job_memory_limit } : {}
+              )
+            } : {}
+          )
         }
 
         ingress = {
@@ -138,110 +117,81 @@ resource "helm_release" "nected" {
           ]
         }
 
-        resources = {
-          requests = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-        }
+        resources = merge(
+          {
+            requests = {
+              cpu    = var.nected_pods_resources.nalanda_cpu_request
+              memory = var.nected_pods_resources.nalanda_memory_request
+            }
+          },
+          var.nected_pods_resources.nalanda_cpu_limit != null || var.nected_pods_resources.nalanda_memory_limit != null ? {
+            limits = merge(
+              var.nected_pods_resources.nalanda_cpu_limit != null ? { cpu = var.nected_pods_resources.nalanda_cpu_limit } : {},
+              var.nected_pods_resources.nalanda_memory_limit != null ? { memory = var.nected_pods_resources.nalanda_memory_limit } : {}
+            )
+          } : {}
+        )
 
         autoscaling = {
-          enabled                           = var.nected_service_autoscale
-          minReplicas                       = var.nected_min_nalanda_pods
-          maxReplicas                       = var.nected_max_nalanda_pods
+          enabled                           = var.nected_pods_replicas.autoscaling
+          minReplicas                       = var.nected_pods_replicas.min_nalanda
+          maxReplicas                       = var.nected_pods_replicas.max_nalanda
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
         }
       }
+
       vidhaan-executer = {
-        envVars = {
-          VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
-          DB_USER                = var.pg_admin_user
-          DB_PASSWORD            = var.pg_admin_passwd
-          DB_HOST                = azurerm_postgresql_flexible_server.postgresql.fqdn
-          SSL_MODE               = "disable"
+        existingSecret = var.nected_existing_secret_name
+        envVars        = merge(local.vidhaan_base_env, lookup(var.nected_env_overrides, "vidhaan", {}))
 
-          REQUEST_PER_MINUTE_LIMIT = "0"
-          WEBHOOK_PER_MINUTE_LIMIT = "0"
-
-          REDIS_TLS_ENABLED = "${local.redis_tls_enabled}"
-          REDIS_HOST        = "${local.redis_endpoint}:${local.redis_port}"
-          REDIS_PASSWORD    = local.redis_password
-
-          ELASTIC_ADDRESSES = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
-          ELASTIC_USERNAME  = var.elasticsearch_admin_username
-          ELASTIC_PASSWORD  = var.elasticsearch_admin_password
-
-          AUDIT_LOG_ENABLED = "true"
-          SKIP_SUBDOMAINS   = local.router_domain
-
-          TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "20"
-          TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "10"
-          TEMPORAL_EXECUTER_WORKFLOW_CONCURRENT_EXECUTION_SIZE       = "1500"
-          TEMPORAL_EXECUTER_ACTIVITY_CONCURRENT_EXECUTION_SIZE       = "1000"
-          TEMPORAL_EXECUTER_LOCAL_ACTIVITY_CONCURRENT_EXECUTION_SIZE = "5000"
-          TEMPORAL_EXECUTER_ACTIVITY_EXECUTION_RPS                   = "100000"
-          TEMPORAL_EXECUTER_LOCAL_ACTIVITY_EXECUTION_RPS             = "200000"
-        }
-
-        resources = {
-          requests = {
-            cpu    = "250m"
-            memory = "512Mi"
-          }
-        }
+        resources = merge(
+          {
+            requests = {
+              cpu    = var.nected_pods_resources.executer_cpu_request
+              memory = var.nected_pods_resources.executer_memory_request
+            }
+          },
+          var.nected_pods_resources.executer_cpu_limit != null || var.nected_pods_resources.executer_memory_limit != null ? {
+            limits = merge(
+              var.nected_pods_resources.executer_cpu_limit != null ? { cpu = var.nected_pods_resources.executer_cpu_limit } : {},
+              var.nected_pods_resources.executer_memory_limit != null ? { memory = var.nected_pods_resources.executer_memory_limit } : {}
+            )
+          } : {}
+        )
 
         autoscaling = {
-          enabled                           = var.nected_service_autoscale
-          minReplicas                       = var.nected_min_executer_pods
-          maxReplicas                       = var.nected_max_executer_pods
+          enabled                           = var.nected_pods_replicas.autoscaling
+          minReplicas                       = var.nected_pods_replicas.min_executer
+          maxReplicas                       = var.nected_pods_replicas.max_executer
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
         }
       }
 
       vidhaan-router = {
-        envVars = {
-          VIDHAAN_PRE_SHARED_KEY = var.nected_pre_shared_key
-          DB_USER                = var.pg_admin_user
-          DB_PASSWORD            = var.pg_admin_passwd
-          DB_HOST                = azurerm_postgresql_flexible_server.postgresql.fqdn
-          SSL_MODE               = "disable"
+        existingSecret = var.nected_existing_secret_name
+        envVars        = merge(local.vidhaan_base_env, lookup(var.nected_env_overrides, "vidhaan", {}))
 
-          REQUEST_PER_MINUTE_LIMIT = "0"
-          WEBHOOK_PER_MINUTE_LIMIT = "0"
-
-          REDIS_TLS_ENABLED = "${local.redis_tls_enabled}"
-          REDIS_HOST        = "${local.redis_endpoint}:${local.redis_port}"
-          REDIS_PASSWORD    = local.redis_password
-
-          ELASTIC_ADDRESSES = "http://${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}:9200"
-          ELASTIC_USERNAME  = var.elasticsearch_admin_username
-          ELASTIC_PASSWORD  = var.elasticsearch_admin_password
-
-          AUDIT_LOG_ENABLED = "true"
-          SKIP_SUBDOMAINS   = local.router_domain
-
-          TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "20"
-          TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "10"
-          TEMPORAL_EXECUTER_WORKFLOW_CONCURRENT_EXECUTION_SIZE       = "1500"
-          TEMPORAL_EXECUTER_ACTIVITY_CONCURRENT_EXECUTION_SIZE       = "1000"
-          TEMPORAL_EXECUTER_LOCAL_ACTIVITY_CONCURRENT_EXECUTION_SIZE = "5000"
-          TEMPORAL_EXECUTER_ACTIVITY_EXECUTION_RPS                   = "100000"
-          TEMPORAL_EXECUTER_LOCAL_ACTIVITY_EXECUTION_RPS             = "200000"
-        }
-
-        resources = {
-          requests = {
-            cpu    = "200m"
-            memory = "256Mi"
-          }
-        }
+        resources = merge(
+          {
+            requests = {
+              cpu    = var.nected_pods_resources.router_cpu_request
+              memory = var.nected_pods_resources.router_memory_request
+            }
+          },
+          var.nected_pods_resources.router_cpu_limit != null || var.nected_pods_resources.router_memory_limit != null ? {
+            limits = merge(
+              var.nected_pods_resources.router_cpu_limit != null ? { cpu = var.nected_pods_resources.router_cpu_limit } : {},
+              var.nected_pods_resources.router_memory_limit != null ? { memory = var.nected_pods_resources.router_memory_limit } : {}
+            )
+          } : {}
+        )
 
         autoscaling = {
-          enabled                           = var.nected_service_autoscale
-          minReplicas                       = var.nected_min_router_pods
-          maxReplicas                       = var.nected_max_router_pods
+          enabled                           = var.nected_pods_replicas.autoscaling
+          minReplicas                       = var.nected_pods_replicas.min_router
+          maxReplicas                       = var.nected_pods_replicas.max_router
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
         }
@@ -272,6 +222,9 @@ resource "helm_release" "nected" {
         }
       }
       medha = {
+        existingSecret = var.nected_existing_secret_name
+        envVars        = merge(local.medha_base_env, lookup(var.nected_env_overrides, "medha", {}))
+
         livenessProbe = {
           failureThreshold = 10
         }
@@ -279,29 +232,81 @@ resource "helm_release" "nected" {
           failureThreshold = 10
         }
 
-        envVars = {
-          DB_ENABLED      = "true"
-          DB_HOST         = azurerm_postgresql_flexible_server.postgresql.fqdn
-          DB_USER         = var.pg_admin_user
-          DB_PASSWORD     = var.pg_admin_passwd
-          DB_SSL_MODE     = "disable"
-          COPILOT_PDF_OCR = "true"
-        }
-
-        resources = {
-          requests = {
-            cpu    = "500m"
-            memory = "1024Mi"
-          }
-        }
+        resources = merge(
+          {
+            requests = {
+              cpu    = var.nected_pods_resources.medha_cpu_request
+              memory = var.nected_pods_resources.medha_memory_request
+            }
+          },
+          var.nected_pods_resources.medha_cpu_limit != null || var.nected_pods_resources.medha_memory_limit != null ? {
+            limits = merge(
+              var.nected_pods_resources.medha_cpu_limit != null ? { cpu = var.nected_pods_resources.medha_cpu_limit } : {},
+              var.nected_pods_resources.medha_memory_limit != null ? { memory = var.nected_pods_resources.medha_memory_limit } : {}
+            )
+          } : {}
+        )
 
         autoscaling = {
-          enabled                           = var.nected_service_autoscale
-          minReplicas                       = var.nected_min_medha_pods
-          maxReplicas                       = var.nected_max_medha_pods
+          enabled                           = var.nected_pods_replicas.autoscaling
+          minReplicas                       = var.nected_pods_replicas.min_medha
+          maxReplicas                       = var.nected_pods_replicas.max_medha
           targetCPUUtilizationPercentage    = 85
           targetMemoryUtilizationPercentage = 85
         }
+      }
+      garuda = {
+        enabled        = var.nected_enable_garuda
+        existingSecret = var.nected_existing_secret_name
+        envVars        = merge(local.garuda_base_env, lookup(var.nected_env_overrides, "garuda", {}))
+
+        livenessProbe = {
+          failureThreshold = 10
+        }
+        readinessProbe = {
+          failureThreshold = 10
+        }
+
+        resources = merge(
+          {
+            requests = {
+              cpu    = var.nected_pods_resources.garuda_cpu_request
+              memory = var.nected_pods_resources.garuda_memory_request
+            }
+          },
+          var.nected_pods_resources.garuda_cpu_limit != null || var.nected_pods_resources.garuda_memory_limit != null ? {
+            limits = merge(
+              var.nected_pods_resources.garuda_cpu_limit != null ? { cpu = var.nected_pods_resources.garuda_cpu_limit } : {},
+              var.nected_pods_resources.garuda_memory_limit != null ? { memory = var.nected_pods_resources.garuda_memory_limit } : {}
+            )
+          } : {}
+        )
+
+        autoscaling = {
+          enabled                           = var.nected_pods_replicas.autoscaling
+          minReplicas                       = var.nected_pods_replicas.min_garuda
+          maxReplicas                       = var.nected_pods_replicas.max_garuda
+          targetCPUUtilizationPercentage    = 85
+          targetMemoryUtilizationPercentage = 85
+        }
+      }
+
+      commonSecret = {
+        secretValue = var.nected_common_secret_value
+        resources = merge(
+          var.nected_pods_resources.secret_job_cpu_request != null || var.nected_pods_resources.secret_job_memory_request != null ? {
+            requests = merge(
+              var.nected_pods_resources.secret_job_cpu_request != null ? { cpu = var.nected_pods_resources.secret_job_cpu_request } : {},
+              var.nected_pods_resources.secret_job_memory_request != null ? { memory = var.nected_pods_resources.secret_job_memory_request } : {}
+            )
+          } : {},
+          var.nected_pods_resources.secret_job_cpu_limit != null || var.nected_pods_resources.secret_job_memory_limit != null ? {
+            limits = merge(
+              var.nected_pods_resources.secret_job_cpu_limit != null ? { cpu = var.nected_pods_resources.secret_job_cpu_limit } : {},
+              var.nected_pods_resources.secret_job_memory_limit != null ? { memory = var.nected_pods_resources.secret_job_memory_limit } : {}
+            )
+          } : {}
+        )
       }
     })
   ]
