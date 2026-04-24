@@ -1,6 +1,6 @@
 resource "helm_release" "temporal" {
   name       = "temporal"
-  repository = "https://nected.github.io/helm-charts"
+  repository = "https://charts.nected.io"
   chart      = "temporal"
   namespace  = "default"
   version    = var.temporal_chart_version
