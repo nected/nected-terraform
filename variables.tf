@@ -215,7 +215,7 @@ variable "temporal_chart_version" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.35"
+  default     = "0.4.37"
 }
 
 variable "datastore_chart_version" {
