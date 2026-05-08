@@ -2,15 +2,11 @@ resource "helm_release" "datastore" {
   count = var.use_managed_redis ? 0 : 1
 
   name       = "datastore"
-  repository = "https://charts.nected.io"
+  repository = "https://nected.github.io/helm-charts"
   chart      = "datastore"
-  namespace  = "default"
+  namespace  = var.namespace
   timeout    = 600
   version    = var.datastore_chart_version
-
-  depends_on = [
-    azurerm_kubernetes_cluster.k8s,
-  ]
 
   values = [
     yamlencode({

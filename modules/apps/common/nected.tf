@@ -1,20 +1,13 @@
 resource "helm_release" "nected" {
   name       = "nected"
-  repository = "https://charts.nected.io"
+  repository = "https://nected.github.io/helm-charts"
   chart      = "nected"
-  namespace  = "default"
+  namespace  = var.namespace
   timeout    = 600
   version    = var.nected_chart_version
 
   depends_on = [
-    azurerm_kubernetes_cluster.k8s,
-    helm_release.agic,
     helm_release.temporal,
-    helm_release.cert-manager,
-    azurerm_postgresql_flexible_server.postgresql,
-    helm_release.datastore,
-    azurerm_redis_cache.redis,
-    time_sleep.wait_for_redis
   ]
 
   values = [
@@ -45,16 +38,11 @@ resource "helm_release" "nected" {
           } : {}
         )
         ingress = {
-          enabled = "true"
-          annotations = {
-            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
-            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
-            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
-            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
-          }
+          enabled     = "true"
+          annotations = var.ingress_annotations
           hosts = [
             {
-              host = local.ui_domain
+              host = var.ui_domain
               paths = [
                 {
                   path     = "/"
@@ -65,7 +53,7 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              hosts = [local.ui_domain]
+              hosts = [var.ui_domain]
             }
           ]
         }
@@ -92,16 +80,11 @@ resource "helm_release" "nected" {
         }
 
         ingress = {
-          enabled = "true"
-          annotations = {
-            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
-            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
-            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
-            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
-          }
+          enabled     = "true"
+          annotations = var.ingress_annotations
           hosts = [
             {
-              host = local.backend_domain
+              host = var.backend_domain
               paths = [
                 {
                   path     = "/"
@@ -112,7 +95,7 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              hosts = [local.backend_domain]
+              hosts = [var.backend_domain]
             }
           ]
         }
@@ -196,16 +179,11 @@ resource "helm_release" "nected" {
           targetMemoryUtilizationPercentage = 85
         }
         ingress = {
-          enabled = "true"
-          annotations = {
-            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
-            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
-            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
-            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
-          }
+          enabled     = "true"
+          annotations = var.ingress_annotations
           hosts = [
             {
-              host = local.router_domain
+              host = var.router_domain
               paths = [
                 {
                   path     = "/"
@@ -216,7 +194,7 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              hosts = [local.router_domain]
+              hosts = [var.router_domain]
             }
           ]
         }

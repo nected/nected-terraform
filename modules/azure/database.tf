@@ -17,9 +17,15 @@ resource "azurerm_private_dns_zone_virtual_network_link" "postgresql" {
   ]
 }
 
+resource "random_string" "suffix" {
+  length  = 5
+  special = false
+  upper   = false
+}
+
 # PostgreSQL Flexible Server
 resource "azurerm_postgresql_flexible_server" "postgresql" {
-  name                   = "${var.project}-psql"
+  name                   = "${var.project}-psql-${random_string.suffix.result}"
   location               = local.resource_group_location
   resource_group_name    = local.resource_group_name
   version                = var.pg_version
@@ -38,10 +44,6 @@ resource "azurerm_postgresql_flexible_server" "postgresql" {
     azurerm_private_dns_zone_virtual_network_link.postgresql,
     azurerm_virtual_network.prod
   ]
-
-  lifecycle {
-    ignore_changes = [zone]
-  }
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "extensions" {

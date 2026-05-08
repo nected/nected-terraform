@@ -1,3 +1,24 @@
+
+####################################
+######### Common Variables #########
+####################################
+variable "cloud_provider" {
+  description = "Provide the cloud where nected needs to deploy"
+  type        = string
+  default     = "aws"
+
+  validation {
+    condition     = contains(["aws", "azure"], var.cloud_provider)
+    error_message = "cloud_provider must be aws or azure"
+  }
+}
+
+variable "app" {
+  type = bool
+  description = "Deploy Apps"
+  default = false
+}
+
 # Project Variable
 variable "project" {
   type        = string
@@ -12,19 +33,78 @@ variable "environment" {
   default     = "dev"
 }
 
+###################################
+###### Kubernetes Variables #######
+###################################
+variable "k8s_version" {
+  type    = string
+  default = "1.33"
+}
+
+variable "k8s_node_count" {
+  type    = number
+  default = 2
+}
+
+variable "k8s_min_node_count" {
+  type    = number
+  default = 2
+}
+
+variable "k8s_max_node_count" {
+  type    = number
+  default = 4
+}
+
+variable "k8s_vm_size" {
+  type        = string
+  description = "K8S VM Size"
+  default     = "Standard_D4s_v6"
+}
+
+
+variable "k8s_private_cluster_enabled" {
+  type        = bool
+  description = "Enable private cluster for Kubernetes. When true, the API server is only accessible from within the Network. Change to true only if you're connected via VPN or a jump box in the Network"
+  default     = false
+}
+
+################################
+####### AWS Variables ##########
+################################
+variable "aws_region" {
+  type = string
+  description = "AWS Region"
+  default = "ap-south-1"
+}
+
+variable "aws_profile" {
+  type = string
+  description = "AWS Profile"
+  default = "ai-dev"
+}
+
+
+##################################
+###### Azure Variables ###########
+##################################
+# # Subscription Variables
+variable "az_subscription_id" {
+  type        = string
+  description = "Subscription ID"
+}
 # Resource Group Variable
-variable "resource_group_name" {
+variable "az_resource_group_name" {
   type        = string
   description = "Azure Resource Group Name"
 }
 
 # Hosted Zone Resource Group name
-variable "hosted_zone_rg" {
+variable "az_hosted_zone_rg" {
   type        = string
   description = "Azure Resource Group Name for Hosted Zone"
   default     = "null"
 }
-
 # Network Varibales.
 # VNet Variables
 variable "existing_subnets" {
@@ -33,15 +113,15 @@ variable "existing_subnets" {
   default     = {}
 }
 
-variable "existing_vnet_name" {
-  description = "Name of an existing VNet to use. If empty, a new VNet will be created."
+variable "existing_network_name" {
+  description = "Name of an existing Network(VPC/Vnet) to use. If empty, a new VNet/VPC will be created."
   type        = string
   default     = ""
 }
 
-variable "vnet_address_space" {
+variable "network_address_space" {
   type        = string
-  description = "The address space of the VNet"
+  description = "The address space of the Network(VPC/Vnet)"
   default     = "10.50.0.0/16"
 }
 
@@ -51,43 +131,15 @@ variable "private_subnets" {
   default     = ["psql", "redis", "private"]
 }
 
-# # Subscription Variables
-variable "subscription_id" {
-  type        = string
-  description = "Subscription ID"
-}
 
-# AKS Variables
-variable "kubernetes_version" {
-  type    = string
-  default = "1.33"
-}
 
-variable "aks_node_count" {
-  type    = number
-  default = 2
-}
+##############################
+###### Postgresql ############
+#############################
 
-variable "aks_min_node_count" {
-  type    = number
-  default = 2
-}
 
-variable "aks_max_node_count" {
-  type    = number
-  default = 4
-}
-variable "aks_vm_size" {
-  type        = string
-  description = "AKS VM Size"
-  default     = "Standard_D4ds_v6"
-}
 
-variable "aks_private_cluster_enabled" {
-  type        = bool
-  description = "Enable private cluster for AKS. When true, the API server is only accessible from within the VNet. Change to true only if you're connected via VPN or a jump box in the VNet"
-  default     = false
-}
+
 
 # Postgresql Variables
 variable "pg_version" {
@@ -215,7 +267,7 @@ variable "temporal_chart_version" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.38"
+  default     = "0.4.35"
 }
 
 variable "datastore_chart_version" {
@@ -418,10 +470,9 @@ variable "nected_env_overrides" {
   }
 }
 
-# Services Base Domain
 variable "base_domain" {
   type        = string
-  description = "Enter Base Domain for services"
+  description = "base domain"
 }
 
 variable "namespace" {
@@ -457,3 +508,105 @@ variable "az_hosted_zone" {
     EOT
   }
 }
+
+
+#
+# Application Gateway Variables
+
+# Application Gateway SKU Configuration
+variable "appgw_sku_name" {
+  type        = string
+  description = "The SKU name of the Application Gateway"
+  default     = "Standard_v2"
+}
+
+variable "appgw_sku_tier" {
+  type        = string
+  description = "The SKU tier of the Application Gateway"
+  default     = "Standard_v2"
+}
+
+variable "appgw_capacity" {
+  type        = number
+  description = "The capacity (instance count) of the Application Gateway"
+  default     = 2
+}
+
+# Autoscaling Configuration
+variable "enable_autoscaling" {
+  type        = bool
+  description = "Enable autoscaling for Application Gateway"
+  default     = true
+}
+
+variable "appgw_min_capacity" {
+  type        = number
+  description = "Minimum capacity for autoscaling"
+  default     = 2
+}
+
+variable "appgw_max_capacity" {
+  type        = number
+  description = "Maximum capacity for autoscaling"
+  default     = 10
+}
+
+# Health Probe Configuration
+variable "health_probe_path" {
+  type        = string
+  description = "Path for health probe"
+  default     = "/"
+}
+
+variable "health_probe_host" {
+  type        = string
+  description = "Host header for health probe"
+  default     = ""
+}
+
+# WAF Configuration
+variable "enable_waf" {
+  type        = bool
+  description = "Enable Web Application Firewall"
+  default     = false
+}
+
+variable "waf_mode" {
+  type        = string
+  description = "WAF mode: Detection or Prevention"
+  default     = "Detection"
+}
+
+variable "waf_rule_set_version" {
+  type        = string
+  description = "WAF rule set version"
+  default     = "3.2"
+}
+
+variable "waf_custom_rules" {
+  type = list(object({
+    name      = string
+    priority  = number
+    rule_type = string
+    action    = string
+    match_conditions = list(object({
+      match_variables = list(object({
+        variable_name = string
+        selector      = optional(string)
+      }))
+      operator           = string
+      negation_condition = optional(bool, false)
+      match_values       = list(string)
+    }))
+  }))
+  description = "List of WAF custom rules for the Application Gateway"
+  default     = []
+}
+
+variable "agic_internal" {
+  type        = bool
+  description = "Application gateway Internal or Public"
+  default     = false
+}
+
+

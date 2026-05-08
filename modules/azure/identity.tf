@@ -54,6 +54,19 @@ resource "azurerm_federated_identity_credential" "keyvault_sync" {
   subject                   = "system:serviceaccount:${var.namespace}:keyvault-sync-sa"
 }
 
+resource "azurerm_federated_identity_credential" "agic" {
+  name                      = "${var.project}-agic-federated-credential-${var.environment}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.identity.id
+  audience                  = ["api://AzureADTokenExchange"]
+  issuer                    = azurerm_kubernetes_cluster.k8s.oidc_issuer_url
+  subject                   = "system:serviceaccount:agic-system:application-gateway-ingress-controller-sa-ingress-azure"
+
+  depends_on = [
+    azurerm_user_assigned_identity.identity,
+    azurerm_kubernetes_cluster.k8s
+  ]
+}
+
 #
 resource "azurerm_key_vault" "ssl_certs_vault" {
   count = var.key_vault_name == "null" ? 1 : 0
@@ -89,5 +102,26 @@ resource "azurerm_role_assignment" "kv_certificate" {
 resource "azurerm_role_assignment" "appgw_kv_secrets" {
   scope                = local.key_vault_id
   role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.identity.principal_id
+}
+
+# Role assignment for AGIC managed identity to read AKS cluster
+resource "azurerm_role_assignment" "appgw_identity_aks_reader" {
+  scope                = azurerm_kubernetes_cluster.k8s.id
+  role_definition_name = "Reader"
+  principal_id         = azurerm_user_assigned_identity.identity.principal_id
+}
+
+# Role assignment for AGIC managed identity to operate on itself (assign to resources)
+resource "azurerm_role_assignment" "appgw_identity_operator" {
+  scope                = azurerm_user_assigned_identity.identity.id
+  role_definition_name = "Managed Identity Operator"
+  principal_id         = azurerm_user_assigned_identity.identity.principal_id
+}
+
+# Role assignment for AGIC to read AKS node resource group (for route tables in Kubenet)
+resource "azurerm_role_assignment" "appgw_identity_node_rg_reader" {
+  scope                = azurerm_kubernetes_cluster.k8s.node_resource_group_id
+  role_definition_name = "Reader"
   principal_id         = azurerm_user_assigned_identity.identity.principal_id
 }

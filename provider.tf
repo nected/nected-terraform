@@ -1,6 +1,6 @@
 provider "azurerm" {
   features {}
-  subscription_id = var.subscription_id
+  subscription_id = var.az_subscription_id
 }
 
 provider "helm" {
@@ -20,3 +20,9 @@ provider "helm" {
 #   client_key             = base64decode(azurerm_kubernetes_cluster.k8s.kube_config[0].client_key)
 #   cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.k8s.kube_config[0].cluster_ca_certificate)
 # }
+
+
+provider "aws" {
+  region  = var.aws_region
+  profile = var.aws_profile
+}

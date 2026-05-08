@@ -1,25 +1,11 @@
 # Azure Application Gateway with SSL and AKS Integration
 
-# Public IP for Application Gateway
-resource "azurerm_public_ip" "appgw_pip" {
-  name                = "${var.project}-appgw-pip-${var.environment}"
-  resource_group_name = local.resource_group_name
-  location            = local.resource_group_location
-  allocation_method   = "Static"
-  sku                 = "Standard"
-
-  tags = {
-    Environment = var.environment
-    createdby   = "terraform"
-  }
-}
-
 # WAF Policy with custom rules
 resource "azurerm_web_application_firewall_policy" "waf_policy" {
   count               = var.enable_waf ? 1 : 0
   name                = "${var.project}-waf-policy-${var.environment}"
-  resource_group_name = local.resource_group_name
-  location            = local.resource_group_location
+  resource_group_name = var.resource_group_name
+  location            = var.resource_group_location
 
   policy_settings {
     enabled = true
@@ -85,8 +71,8 @@ resource "azurerm_web_application_firewall_policy" "waf_policy" {
 # Internal Application Gateway
 resource "azurerm_application_gateway" "appgw" {
   name                = "${var.project}-appgw-${var.environment}"
-  resource_group_name = local.resource_group_name
-  location            = local.resource_group_location
+  resource_group_name = var.resource_group_name
+  location            = var.resource_group_location
 
   sku {
     name     = var.enable_waf ? "WAF_v2" : var.appgw_sku_name
@@ -107,7 +93,7 @@ resource "azurerm_application_gateway" "appgw" {
 
   gateway_ip_configuration {
     name      = "${var.project}-gateway-ip-configuration"
-    subnet_id = var.existing_vnet_name == "" ? azurerm_subnet.subnets["appgw"].id : data.azurerm_subnet.existing["appgw"].id
+    subnet_id = var.appgw_subnet_id
   }
 
   frontend_port {
@@ -122,13 +108,13 @@ resource "azurerm_application_gateway" "appgw" {
 
   frontend_ip_configuration {
     name                 = local.public_frontend_name
-    public_ip_address_id = local.public_app_gateway_id
+    public_ip_address_id = var.public_app_gateway_id
   }
   # Frontend IP configuration
   frontend_ip_configuration {
     name                          = local.private_frontend_name
-    subnet_id                     = var.existing_vnet_name == "" ? azurerm_subnet.subnets["appgw"].id : data.azurerm_subnet.existing["appgw"].id
-    private_ip_address            = local.internal_app_gateway_ip
+    subnet_id                     = var.appgw_subnet_id
+    private_ip_address            = var.internal_app_gateway_ip
     private_ip_address_allocation = "Static"
   }
 
@@ -188,15 +174,15 @@ resource "azurerm_application_gateway" "appgw" {
   }
 
   ssl_certificate {
-    name = local.alb_listener_cert_name
+    name = var.agic_ssl_certificate_identifer
     # Using versionless URI for automatic certificate rotation
-    key_vault_secret_id = local.alb_vault_secret_endpoint
+    key_vault_secret_id = var.alb_vault_secret_endpoint
   }
 
   # Identity for Key Vault access
   identity {
     type         = "UserAssigned"
-    identity_ids = [azurerm_user_assigned_identity.identity.id]
+    identity_ids = [var.identity_id]
   }
 
   tags = {
@@ -228,33 +214,12 @@ resource "azurerm_application_gateway" "appgw" {
 resource "azurerm_role_assignment" "appgw_identity_contributor" {
   scope                = azurerm_application_gateway.appgw.id
   role_definition_name = "Contributor"
-  principal_id         = azurerm_user_assigned_identity.identity.principal_id
-}
-
-# Role assignment for AGIC managed identity to read AKS cluster
-resource "azurerm_role_assignment" "appgw_identity_aks_reader" {
-  scope                = azurerm_kubernetes_cluster.k8s.id
-  role_definition_name = "Reader"
-  principal_id         = azurerm_user_assigned_identity.identity.principal_id
-}
-
-# Role assignment for AGIC managed identity to operate on itself (assign to resources)
-resource "azurerm_role_assignment" "appgw_identity_operator" {
-  scope                = azurerm_user_assigned_identity.identity.id
-  role_definition_name = "Managed Identity Operator"
-  principal_id         = azurerm_user_assigned_identity.identity.principal_id
-}
-
-# Role assignment for AGIC to read AKS node resource group (for route tables in Kubenet)
-resource "azurerm_role_assignment" "appgw_identity_node_rg_reader" {
-  scope                = azurerm_kubernetes_cluster.k8s.node_resource_group_id
-  role_definition_name = "Reader"
-  principal_id         = azurerm_user_assigned_identity.identity.principal_id
+  principal_id         = var.identity_principal_id
 }
 
 # Role assignment for AKS to access App Gateway
 resource "azurerm_role_assignment" "aks_appgw_contributor" {
   scope                = azurerm_application_gateway.appgw.id
   role_definition_name = "Contributor"
-  principal_id         = azurerm_kubernetes_cluster.k8s.identity[0].principal_id
+  principal_id         = var.aks_identity_principal_id
 }
