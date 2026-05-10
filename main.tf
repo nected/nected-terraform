@@ -14,16 +14,16 @@ module "azure" {
 
   # DNS
   az_hosted_zone = var.az_hosted_zone
-  base_domain         = var.base_domain
-  hosted_zone_rg      = var.az_hosted_zone_rg
+  base_domain    = var.base_domain
+  hosted_zone_rg = var.az_hosted_zone_rg
 
   # AKS
-  kubernetes_version           = var.k8s_version
-  aks_node_count               = var.k8s_node_count
-  aks_min_node_count           = var.k8s_min_node_count
-  aks_max_node_count           = var.k8s_max_node_count
-  aks_vm_size                  = var.k8s_vm_size
-  aks_private_cluster_enabled  = var.k8s_private_cluster_enabled
+  kubernetes_version          = var.k8s_version
+  aks_node_count              = var.k8s_node_count
+  aks_min_node_count          = var.k8s_min_node_count
+  aks_max_node_count          = var.k8s_max_node_count
+  aks_vm_size                 = var.k8s_vm_size
+  aks_private_cluster_enabled = var.k8s_private_cluster_enabled
 
 
   pg_version      = var.pg_version
@@ -38,10 +38,10 @@ module "azure" {
   elasticsearch_admin_username = var.elasticsearch_admin_username
   elasticsearch_admin_password = var.elasticsearch_admin_password
 
-  cassandra_node_count = var.cassandra_node_count
-  cassandra_vm_size = var.cassandra_vm_size
-  cassandra_admin_password = var.cassandra_admin_password
-  cassandra_admin_username = var.cassandra_admin_username
+  cassandra_node_count        = var.cassandra_node_count
+  cassandra_vm_size           = var.cassandra_vm_size
+  cassandra_admin_password    = var.cassandra_admin_password
+  cassandra_admin_username    = var.cassandra_admin_username
   cassandra_data_disk_size_gb = var.cassandra_data_disk_size_gb
 
   # Networking
@@ -50,7 +50,7 @@ module "azure" {
 
   # Domain prefixes (used for ingress/DNS)
   ui_domain      = local.ui_domain
-  backend_domain= local.backend_domain
+  backend_domain = local.backend_domain
   router_domain  = local.router_domain
 
   key_vault_name = var.key_vault_name
@@ -73,59 +73,59 @@ module "azure_agic" {
 
   count = local.is_azure && var.app == true ? 1 : 0
 
-  alb_vault_secret_endpoint = module.azure[0].alb_vault_secret_endpoint
-  backend_domain = local.backend_domain
-  router_domain = local.router_domain
-  ui_domain = local.ui_domain
-  resource_group_location =  module.azure[0].resource_group_location
-  resource_group_name = var.az_resource_group_name
-  environment = var.environment
-  base_domain = var.base_domain
-  namespace = var.namespace
-  project = var.project
-  key_vault_name = var.key_vault_name
-  appgw_subnet_id = module.azure[0].subnets["appgw"].id
-  cert_secret_name = module.azure[0].cert_secret_name
-  cert_vault_name  = module.azure[0].cert_vault_name
-  hosted_zone_rg = var.az_hosted_zone_rg
-  console_user_email = var.console_user_email
-  subscription_id = var.az_subscription_id
-  identity_client_id = module.azure[0].identity_client_id
-  identity_principal_id = module.azure[0].identity_principal_id
-  aks_identity_principal_id = module.azure[0].aks_identity_principal_id
-  identity_id = module.azure[0].identity_id
-  az_hosted_zone = var.az_hosted_zone
-  public_app_gateway_id = module.azure[0].public_app_gateway_id
-  public_app_gateway_ip = module.azure[0].public_app_gateway_ip
-  internal_app_gateway_ip = module.azure[0].internal_app_gateway_ip
+  alb_vault_secret_endpoint      = module.azure[0].alb_vault_secret_endpoint
+  backend_domain                 = local.backend_domain
+  router_domain                  = local.router_domain
+  ui_domain                      = local.ui_domain
+  resource_group_location        = module.azure[0].resource_group_location
+  resource_group_name            = var.az_resource_group_name
+  environment                    = var.environment
+  base_domain                    = var.base_domain
+  namespace                      = var.namespace
+  project                        = var.project
+  key_vault_name                 = var.key_vault_name
+  appgw_subnet_id                = module.azure[0].subnets["appgw"].id
+  cert_secret_name               = module.azure[0].cert_secret_name
+  cert_vault_name                = module.azure[0].cert_vault_name
+  hosted_zone_rg                 = var.az_hosted_zone_rg
+  console_user_email             = var.console_user_email
+  subscription_id                = var.az_subscription_id
+  identity_client_id             = module.azure[0].identity_client_id
+  identity_principal_id          = module.azure[0].identity_principal_id
+  aks_identity_principal_id      = module.azure[0].aks_identity_principal_id
+  identity_id                    = module.azure[0].identity_id
+  az_hosted_zone                 = var.az_hosted_zone
+  public_app_gateway_id          = module.azure[0].public_app_gateway_id
+  public_app_gateway_ip          = module.azure[0].public_app_gateway_ip
+  internal_app_gateway_ip        = module.azure[0].internal_app_gateway_ip
   agic_ssl_certificate_identifer = local.agic_ssl_certificate_identifer
 
-  depends_on = [ module.azure ]
+  depends_on = [module.azure]
 }
 
 
 locals {
   agic_ssl_certificate_identifer = "${var.project}-ssl-certificate"
-  elasticsearch_ip = local.is_azure ? module.azure[0].elasticsearch_ip : ""
-  seed_node_list = local.is_azure ? module.azure[0].cassandra_seed_node_list : []
-  postgresql_host = local.is_azure ? module.azure[0].postgresql_host : ""
+  elasticsearch_ip               = local.is_azure ? module.azure[0].elasticsearch_ip : ""
+  seed_node_list                 = local.is_azure ? module.azure[0].cassandra_seed_node_list : []
+  postgresql_host                = local.is_azure ? module.azure[0].postgresql_host : ""
 
   redis_tls_enabled = var.use_managed_redis ? "true" : "false"
-    redis_endpoint = var.use_managed_redis ? (
+  redis_endpoint = var.use_managed_redis ? (
     local.is_azure ? module.azure[0].redis_endpoint :
-    local.is_aws   ? "module.aws[0].redis_endpoint" :
+    local.is_aws ? "module.aws[0].redis_endpoint" :
     "datastore-redis-master"
   ) : "datastore-redis-master"
 
   redis_port = var.use_managed_redis ? (
     local.is_azure ? "6380" :
-    local.is_aws   ? "6379" :
+    local.is_aws ? "6379" :
     "6379"
   ) : "6379"
-  
+
   redis_password = var.use_managed_redis ? (
     local.is_azure ? module.azure[0].primary_access_key :
-    local.is_aws   ? "" :
+    local.is_aws ? "" :
     ""
   ) : ""
 
@@ -138,51 +138,51 @@ locals {
   }
 
   aws_ingress_annotations = {}
-  
+
   ingress_annotations = local.is_azure ? local.az_ingress_annotations : local.aws_ingress_annotations
 }
 
 module "nected_app" {
   source = "./modules/apps/common"
 
-  count = local.is_azure && var.app == true ? 1 : 0
-  elasticsearch_ip = local.elasticsearch_ip
+  count                        = local.is_azure && var.app == true ? 1 : 0
+  elasticsearch_ip             = local.elasticsearch_ip
   elasticsearch_admin_username = var.elasticsearch_admin_username
   elasticsearch_admin_password = var.elasticsearch_admin_password
-  backend_domain = local.backend_domain
-  router_domain = local.router_domain
-  ui_domain = local.ui_domain
-  namespace = var.namespace
+  backend_domain               = local.backend_domain
+  router_domain                = local.router_domain
+  ui_domain                    = local.ui_domain
+  namespace                    = var.namespace
 
-  pg_admin_user = var.pg_admin_user
-  pg_admin_passwd = var.pg_admin_passwd
-  postgresql_host = local.postgresql_host
+  pg_admin_user               = var.pg_admin_user
+  pg_admin_passwd             = var.pg_admin_passwd
+  postgresql_host             = local.postgresql_host
   nected_existing_secret_name = var.nected_existing_secret_name
 
-  temporal_pods_resources = var.temporal_pods_resources
-  temporal_pods_replicas = var.temporal_pods_replicas
-  temporal_task_partitions = var.temporal_task_partitions
-  temporal_history_shards = var.temporal_history_shards
+  temporal_pods_resources    = var.temporal_pods_resources
+  temporal_pods_replicas     = var.temporal_pods_replicas
+  temporal_task_partitions   = var.temporal_task_partitions
+  temporal_history_shards    = var.temporal_history_shards
   temporal_persistant_driver = var.cassandra_node_count != 0 ? "cassandra" : "sql"
 
-  nected_enable_garuda = var.nected_enable_garuda
-  nected_env_overrides = var.nected_env_overrides
-  nected_pods_replicas = var.nected_pods_replicas
+  nected_enable_garuda  = var.nected_enable_garuda
+  nected_env_overrides  = var.nected_env_overrides
+  nected_pods_replicas  = var.nected_pods_replicas
   nected_pods_resources = var.nected_pods_resources
-  seed_node_list = local.seed_node_list
+  seed_node_list        = local.seed_node_list
 
-  use_managed_redis = var.use_managed_redis
-  redis_endpoint = local.redis_endpoint
-  redis_password = local.redis_password
-  redis_port = local.redis_port
-  redis_tls_enabled = local.redis_tls_enabled
-  console_user_email = var.console_user_email
-  console_user_password =  var.console_user_password
-  nected_pre_shared_key = var.nected_pre_shared_key
-  ingress_annotations = local.ingress_annotations
+  use_managed_redis          = var.use_managed_redis
+  redis_endpoint             = local.redis_endpoint
+  redis_password             = local.redis_password
+  redis_port                 = local.redis_port
+  redis_tls_enabled          = local.redis_tls_enabled
+  console_user_email         = var.console_user_email
+  console_user_password      = var.console_user_password
+  nected_pre_shared_key      = var.nected_pre_shared_key
+  ingress_annotations        = local.ingress_annotations
   nected_common_secret_value = var.nected_common_secret_value
 
-  depends_on = [ 
+  depends_on = [
     module.azure_agic,
     module.azure
   ]

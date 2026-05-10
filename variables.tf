@@ -14,9 +14,9 @@ variable "cloud_provider" {
 }
 
 variable "app" {
-  type = bool
+  type        = bool
   description = "Deploy Apps"
-  default = false
+  default     = false
 }
 
 # Project Variable
@@ -73,15 +73,15 @@ variable "k8s_private_cluster_enabled" {
 ####### AWS Variables ##########
 ################################
 variable "aws_region" {
-  type = string
+  type        = string
   description = "AWS Region"
-  default = "ap-south-1"
+  default     = "ap-south-1"
 }
 
 variable "aws_profile" {
-  type = string
+  type        = string
   description = "AWS Profile"
-  default = "ai-dev"
+  default     = "ai-dev"
 }
 
 
