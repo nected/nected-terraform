@@ -251,17 +251,17 @@ variable "base_domain" {
 }
 
 # App Domains Variables
-variable "router_domain" {
+variable "router_domain_prefix" {
   type        = string
   description = "Router Domain"
 }
 
-variable "backend_domain" {
+variable "backend_domain_prefix" {
   type        = string
   description = "Backend Domain"
 }
 
-variable "ui_domain" {
+variable "ui_domain_prefix" {
   type        = string
   description = "UI Domain "
 }

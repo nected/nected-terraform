@@ -49,9 +49,9 @@ module "azure" {
   existing_subnets   = var.existing_subnets
 
   # Domain prefixes (used for ingress/DNS)
-  ui_domain      = local.ui_domain
-  backend_domain = local.backend_domain
-  router_domain  = local.router_domain
+  ui_domain_prefix      = var.ui_domain_prefix
+  backend_domain_prefix = var.backend_domain_prefix
+  router_domain_prefix  = var.router_domain_prefix
 
   key_vault_name = var.key_vault_name
 }
@@ -124,7 +124,7 @@ locals {
   ) : "6379"
 
   redis_password = var.use_managed_redis ? (
-    local.is_azure ? module.azure[0].primary_access_key :
+    local.is_azure ? module.azure[0].redis_access_key :
     local.is_aws ? "" :
     ""
   ) : ""
@@ -154,10 +154,9 @@ module "nected_app" {
   ui_domain                    = local.ui_domain
   namespace                    = var.namespace
 
-  pg_admin_user               = var.pg_admin_user
-  pg_admin_passwd             = var.pg_admin_passwd
-  postgresql_host             = local.postgresql_host
-  nected_existing_secret_name = var.nected_existing_secret_name
+  pg_admin_user   = var.pg_admin_user
+  pg_admin_passwd = var.pg_admin_passwd
+  postgresql_host = local.postgresql_host
 
   temporal_pods_resources    = var.temporal_pods_resources
   temporal_pods_replicas     = var.temporal_pods_replicas
@@ -171,16 +170,17 @@ module "nected_app" {
   nected_pods_resources = var.nected_pods_resources
   seed_node_list        = local.seed_node_list
 
-  use_managed_redis          = var.use_managed_redis
-  redis_endpoint             = local.redis_endpoint
-  redis_password             = local.redis_password
-  redis_port                 = local.redis_port
-  redis_tls_enabled          = local.redis_tls_enabled
-  console_user_email         = var.console_user_email
-  console_user_password      = var.console_user_password
-  nected_pre_shared_key      = var.nected_pre_shared_key
-  ingress_annotations        = local.ingress_annotations
-  nected_common_secret_value = var.nected_common_secret_value
+  use_managed_redis           = var.use_managed_redis
+  redis_endpoint              = local.redis_endpoint
+  redis_password              = local.redis_password
+  redis_port                  = local.redis_port
+  redis_tls_enabled           = local.redis_tls_enabled
+  console_user_email          = var.console_user_email
+  console_user_password       = var.console_user_password
+  nected_pre_shared_key       = var.nected_pre_shared_key
+  ingress_annotations         = local.ingress_annotations
+  nected_existing_secret_name = var.nected_existing_secret_name
+  nected_common_secret_value  = var.nected_common_secret_value
 
   depends_on = [
     module.azure_agic,

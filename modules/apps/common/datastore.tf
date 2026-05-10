@@ -2,7 +2,7 @@ resource "helm_release" "datastore" {
   count = var.use_managed_redis ? 0 : 1
 
   name       = "datastore"
-  repository = "https://nected.github.io/helm-charts"
+  repository = "https://charts.nected.io"
   chart      = "datastore"
   namespace  = var.namespace
   timeout    = 600

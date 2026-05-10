@@ -1,6 +1,6 @@
 resource "helm_release" "nected" {
   name       = "nected"
-  repository = "https://nected.github.io/helm-charts"
+  repository = "https://charts.nected.io"
   chart      = "nected"
   namespace  = var.namespace
   timeout    = 600

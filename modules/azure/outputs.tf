@@ -51,6 +51,10 @@ output "identity_principal_id" {
   value = azurerm_user_assigned_identity.identity.principal_id
 }
 
+output "redis_access_key" {
+  value = local.redis_password
+}
+
 output "elasticsearch_ip" {
   value = azurerm_linux_virtual_machine.elasticsearch.private_ip_address
 }
