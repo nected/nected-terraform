@@ -40,6 +40,8 @@ resource "azurerm_network_interface" "cassandra" {
     subnet_id                     = var.existing_vnet_name == "" ? azurerm_subnet.subnets["private"].id : data.azurerm_subnet.existing["private"].id
     private_ip_address_allocation = "Dynamic"
   }
+
+  depends_on = [azurerm_subnet_nat_gateway_association.this]
 }
 
 # -----------------------------------------------------------

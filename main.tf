@@ -32,6 +32,8 @@ module "azure" {
   pg_sku_name     = var.pg_sku_name
   pg_disk_size    = var.pg_disk_size
 
+  use_managed_redis = var.use_managed_redis
+
 
   elasticsearch_version        = var.elasticsearch_version
   elasticsearch_vm_size        = var.elasticsearch_vm_size
@@ -110,25 +112,10 @@ locals {
   seed_node_list                 = local.is_azure ? module.azure[0].cassandra_seed_node_list : []
   postgresql_host                = local.is_azure ? module.azure[0].postgresql_host : ""
 
-  redis_tls_enabled = var.use_managed_redis ? "true" : "false"
-  redis_endpoint = var.use_managed_redis ? (
-    local.is_azure ? module.azure[0].redis_endpoint :
-    local.is_aws ? "module.aws[0].redis_endpoint" :
-    "datastore-redis-master"
-  ) : "datastore-redis-master"
-
-  redis_port = var.use_managed_redis ? (
-    local.is_azure ? "6380" :
-    local.is_aws ? "6379" :
-    "6379"
-  ) : "6379"
-
-  redis_password = var.use_managed_redis ? (
-    local.is_azure ? module.azure[0].redis_access_key :
-    local.is_aws ? "" :
-    ""
-  ) : ""
-
+  redis_tls_enabled = local.is_azure ? module.azure[0].redis_tls_enabled : ""
+  redis_endpoint    = local.is_azure ? module.azure[0].redis_endpoint : ""
+  redis_port        = local.is_azure ? module.azure[0].redis_port : ""
+  redis_password    = local.is_azure ? module.azure[0].redis_password : ""
 
   az_ingress_annotations = {
     "kubernetes.io/ingress.class"                       = "azure/application-gateway"
