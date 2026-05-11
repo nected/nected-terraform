@@ -26,19 +26,22 @@ module "azure" {
   aks_private_cluster_enabled = var.k8s_private_cluster_enabled
 
 
-  pg_version      = var.pg_version
-  pg_admin_user   = var.pg_admin_user
-  pg_admin_passwd = var.pg_admin_passwd
-  pg_sku_name     = var.pg_sku_name
-  pg_disk_size    = var.pg_disk_size
+  pg_version          = var.pg_version
+  pg_admin_user       = var.pg_admin_user
+  pg_admin_passwd     = var.pg_admin_passwd
+  pg_sku_name         = var.pg_sku_name
+  pg_disk_size        = var.pg_disk_size
+  pg_backup_retention = var.pg_backup_retention
 
   use_managed_redis = var.use_managed_redis
+  redis_capacity    = var.redis_capacity
 
 
-  elasticsearch_version        = var.elasticsearch_version
-  elasticsearch_vm_size        = var.elasticsearch_vm_size
-  elasticsearch_admin_username = var.elasticsearch_admin_username
-  elasticsearch_admin_password = var.elasticsearch_admin_password
+  elasticsearch_version         = var.elasticsearch_version
+  elasticsearch_vm_size         = var.elasticsearch_vm_size
+  elasticsearch_admin_username  = var.elasticsearch_admin_username
+  elasticsearch_admin_password  = var.elasticsearch_admin_password
+  elasticsearch_os_disk_size_gb = var.elasticsearch_os_disk_size_gb
 
   cassandra_node_count        = var.cassandra_node_count
   cassandra_vm_size           = var.cassandra_vm_size
@@ -48,14 +51,19 @@ module "azure" {
 
   # Networking
   vnet_address_space = var.network_address_space
+  existing_vnet_name = var.existing_network_name
   existing_subnets   = var.existing_subnets
+  private_subnets    = var.private_subnets
+
+  agic_internal = var.agic_internal
 
   # Domain prefixes (used for ingress/DNS)
   ui_domain_prefix      = var.ui_domain_prefix
   backend_domain_prefix = var.backend_domain_prefix
   router_domain_prefix  = var.router_domain_prefix
 
-  key_vault_name = var.key_vault_name
+  key_vault_name             = var.key_vault_name
+  key_vault_certificate_name = var.key_vault_certificate_name
 }
 
 # module "aws" {
@@ -101,6 +109,7 @@ module "azure_agic" {
   public_app_gateway_ip          = module.azure[0].public_app_gateway_ip
   internal_app_gateway_ip        = module.azure[0].internal_app_gateway_ip
   agic_ssl_certificate_identifer = local.agic_ssl_certificate_identifer
+  agic_internal                  = var.agic_internal
 
   depends_on = [module.azure]
 }

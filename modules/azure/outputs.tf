@@ -9,7 +9,7 @@ output "vnet" {
 }
 
 output "subnets" {
-  value = {for k, v in azurerm_subnet.subnets: k => v}
+  value = var.existing_vnet_name != "" ? data.azurerm_subnet.existing : {for k, v in azurerm_subnet.subnets: k => v}
 }
 
 # AKS outputs
