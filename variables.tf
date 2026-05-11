@@ -480,13 +480,13 @@ variable "namespace" {
   default = "default"
 }
 
-variable "key_vault_name" {
+variable "az_key_vault_name" {
   type        = string
   description = "Key Vault Name"
   default     = "null"
 }
 
-variable "key_vault_certificate_name" {
+variable "az_key_vault_certificate_name" {
   type        = string
   description = "Key Vault Secrets name for certificate"
   default     = "null"

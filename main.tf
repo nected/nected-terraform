@@ -62,8 +62,8 @@ module "azure" {
   backend_domain_prefix = var.backend_domain_prefix
   router_domain_prefix  = var.router_domain_prefix
 
-  key_vault_name             = var.key_vault_name
-  key_vault_certificate_name = var.key_vault_certificate_name
+  key_vault_name             = var.az_key_vault_name
+  key_vault_certificate_name = var.az_key_vault_certificate_name
 }
 
 # module "aws" {
@@ -93,7 +93,7 @@ module "azure_agic" {
   base_domain                    = var.base_domain
   namespace                      = var.namespace
   project                        = var.project
-  key_vault_name                 = var.key_vault_name
+  key_vault_name                 = var.az_key_vault_name
   appgw_subnet_id                = module.azure[0].subnets["appgw"].id
   cert_secret_name               = module.azure[0].cert_secret_name
   cert_vault_name                = module.azure[0].cert_vault_name

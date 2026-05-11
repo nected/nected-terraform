@@ -63,10 +63,18 @@ Create a `terraform.tfvars` file and populate it with your deployment values.
 ### Example `terraform.tfvars`
 
 ```hcl
-# Prerequisites
-subscription_id     = "<YOUR_SUBSCRIPTION_ID>"
-resource_group_name = "<YOUR_RESOURCE_GROUP>"
-base_domain         = "<YOUR_BASE_DOMAIN>"
+# Project Configuration
+# deploy apps, if set false the only infra will be created
+app         = true
+project     = "nected"
+environment = "dev"
+
+# select cloud provide aws / azure
+cloud_provider = "azure"
+
+# Azure variables
+az_subscription_id     = "<YOUR_SUBSCRIPTION_ID>"
+az_resource_group_name = "<YOUR_RESOURCE_GROUP>"
 
 # Set false if base_domain hosted zone is not available
 # If az_hosted_zone = false
@@ -74,36 +82,38 @@ base_domain         = "<YOUR_BASE_DOMAIN>"
 #  - Required key_vault_name for SSL
 az_hosted_zone      = true
 
-# set hosted_zone_rg if base_domain hosted zone is in different resource group
+# set az_hosted_zone_rg if base_domain hosted zone is in different resource group
 # default: "null" and expect hosted zone in resource_group_name
-# hosted_zone_rg    = "<HOSTED_ZONE_RESOURCE_GROUP>"
+# az_hosted_zone_rg    = "<HOSTED_ZONE_RESOURCE_GROUP>"
 
 # SSL certificates, provide vault name & certificate name
 # default: "null" and generate using Let's Encrypt
-# key_vault_name = "<KEY_VAULT_NAME>"
-# key_vault_certificate_name = "<KEY_VAULT_CERTIFICATE_NAME>"
+# az_key_vault_name = "<KEY_VAULT_NAME>"
+# az_key_vault_certificate_name = "<KEY_VAULT_CERTIFICATE_NAME>"
+
+# Application Gateway private ip
+# default public ip
+agic_internal = false
+
+# Domains
+base_domain         = "<YOUR_BASE_DOMAIN>"
+ui_domain_prefix      = "ui"
+backend_domain_prefix = "backend"
+router_domain_prefix  = "router"
 
 # Nected License (uncomment to use paid version)
 # default: free key with limited usage
 # nected_pre_shared_key = "<NECTED_LICENSE_KEY>"
 
-# Project Information
-project             = "nected"
-environment         = "dev"
-
 # Network Configuration
-vnet_address_space = "10.50.0.0/16"
+network_address_space = "10.50.0.0/16"
 
 # AKS Configuration
-kubernetes_version = "1.33"
-aks_node_count     = 2
-aks_min_node_count = 2
-aks_max_node_count = 4
-aks_vm_size        = "Standard_D4s_v6"
-
-# Application Gateway private ip
-# default public ip
-agic_internal = false
+k8s_version = "1.33"
+k8s_node_count     = 2
+k8s_min_node_count = 2
+k8s_max_node_count = 4
+k8s_vm_size        = "Standard_D4s_v6"
 
 # PostgreSQL
 pg_version          = 17
@@ -123,14 +133,10 @@ elasticsearch_vm_size        = "Standard_D2ds_v4"
 elasticsearch_admin_username = "elastic"
 elasticsearch_admin_password = "<password>"
 
-# Application variables
-# Chart versions
-nected_chart_version = "0.4.38"
-
-# Domain Configuration
-ui_domain_prefix      = "ui"
-backend_domain_prefix = "backend"
-router_domain_prefix  = "router"
+# Console Access
+# username is always an email and password should be alphanumeric at least 8 characters
+console_user_email    = "<<user email>>"
+console_user_password = "<<password>>"
 
 # Serivices env configs
 nected_env_overrides = {
@@ -150,15 +156,7 @@ nected_env_overrides = {
     SIGNUP_DOMAINS = ""
   }
 }
-
-# Console Access
-# username is always an email and password should be alphanumeric at least 8 characters
-console_signup_domains = ""
-console_user_email    = "<<user email>>"
-console_user_password = "<<password>>"
-
 ```
-> ⚠️ Do not commit terraform.tfvars to version control. Add it to .gitignore.
 
 ---
 
