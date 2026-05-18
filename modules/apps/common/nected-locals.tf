@@ -27,7 +27,8 @@ locals {
     VIDHAAN_REDIS_PORT        = format("%s", var.redis_port)
     VIDHAAN_REDIS_PASSWORD    = var.redis_password
 
-    ELASTIC_HOSTS    = "http://${var.elasticsearch_ip}:9200"
+    ELASTIC_HOSTS    = "${var.elasticsearch_scheme}://${var.elasticsearch_ip}:${var.elasticsearch_port}"
+    ELASTIC_PROVIDER = var.elasticsearch_provider
     ELASTIC_USER     = var.elasticsearch_admin_username
     ELASTIC_PASSWORD = var.elasticsearch_admin_password
 
@@ -51,7 +52,8 @@ locals {
     REDIS_HOST        = "${var.redis_endpoint}:${var.redis_port}"
     REDIS_PASSWORD    = var.redis_password
 
-    ELASTIC_ADDRESSES = "http://${var.elasticsearch_ip}:9200"
+    ELASTIC_ADDRESSES = "${var.elasticsearch_scheme}://${var.elasticsearch_ip}:${var.elasticsearch_port}"
+    ELASTIC_PROVIDER  = var.elasticsearch_provider
     ELASTIC_USERNAME  = var.elasticsearch_admin_username
     ELASTIC_PASSWORD  = var.elasticsearch_admin_password
 

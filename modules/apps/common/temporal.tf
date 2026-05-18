@@ -209,8 +209,8 @@ resource "helm_release" "temporal" {
         external = true
         enabled  = false
         host     = "${var.elasticsearch_ip}"
-        scheme   = "http"
-        port     = 9200
+        scheme   = "${var.elasticsearch_scheme}"
+        port     = "${var.elasticsearch_port}"
         version  = "v7"
         username = "${var.elasticsearch_admin_username}"
         password = "${var.elasticsearch_admin_password}"

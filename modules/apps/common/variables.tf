@@ -99,6 +99,12 @@ variable "seed_node_list" {
   default     = []
 }
 
+variable "elasticsearch_provider" {
+  type = string
+  description = "Elasticsearch Provider"
+  default = "managed"
+}
+
 variable "elasticsearch_admin_username" {
   type        = string
   description = "Elasticsearch Admin User"
@@ -109,6 +115,18 @@ variable "elasticsearch_admin_password" {
   type        = string
   description = "Elasticsearch Admin Password"
   default     = ""
+}
+
+variable "elasticsearch_scheme" {
+  type        = string
+  description = "Elasticsearch Scheme"
+  default     = "http"
+}
+
+variable "elasticsearch_port" {
+  type        = number
+  description = "Elasticsearch/Opensearch port"
+  default     = 9200
 }
 
 ########

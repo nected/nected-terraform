@@ -53,15 +53,8 @@ variable "k8s_min_node_count" {
 
 variable "k8s_max_node_count" {
   type    = number
-  default = 4
+  default = 5
 }
-
-variable "k8s_vm_size" {
-  type        = string
-  description = "K8S VM Size"
-  default     = "Standard_D4s_v6"
-}
-
 
 variable "k8s_private_cluster_enabled" {
   type        = bool
@@ -69,77 +62,12 @@ variable "k8s_private_cluster_enabled" {
   default     = false
 }
 
-################################
-####### AWS Variables ##########
-################################
-variable "aws_region" {
-  type        = string
-  description = "AWS Region"
-  default     = "ap-south-1"
+# Cache
+variable "use_managed_cache" {
+  type        = bool
+  description = "Azure Provided managed redis, if set false redis will be installed in aks cluster"
+  default     = false
 }
-
-variable "aws_profile" {
-  type        = string
-  description = "AWS Profile"
-  default     = "ai-dev"
-}
-
-
-##################################
-###### Azure Variables ###########
-##################################
-# # Subscription Variables
-variable "az_subscription_id" {
-  type        = string
-  description = "Subscription ID"
-}
-# Resource Group Variable
-variable "az_resource_group_name" {
-  type        = string
-  description = "Azure Resource Group Name"
-}
-
-# Hosted Zone Resource Group name
-variable "az_hosted_zone_rg" {
-  type        = string
-  description = "Azure Resource Group Name for Hosted Zone"
-  default     = "null"
-}
-# Network Varibales.
-# VNet Variables
-variable "existing_subnets" {
-  description = "Map of subnet names to existing subnet IDs. If provided, the existing subnet will be used instead of creating a new one."
-  type        = map(string)
-  default     = {}
-}
-
-variable "existing_network_name" {
-  description = "Name of an existing Network(VPC/Vnet) to use. If empty, a new VNet/VPC will be created."
-  type        = string
-  default     = ""
-}
-
-variable "network_address_space" {
-  type        = string
-  description = "The address space of the Network(VPC/Vnet)"
-  default     = "10.50.0.0/16"
-}
-
-variable "private_subnets" {
-  description = "List of subnet roles that should have private endpoint configured. Not required for existing vnet"
-  type        = list(string)
-  default     = ["psql", "redis", "private"]
-}
-
-
-
-##############################
-###### Postgresql ############
-#############################
-
-
-
-
 
 # Postgresql Variables
 variable "pg_version" {
@@ -151,7 +79,7 @@ variable "pg_version" {
 variable "pg_admin_user" {
   type        = string
   description = "Posgresql Admin User"
-  default     = "psqladmin"
+  default     = "postgres"
 }
 
 variable "pg_admin_passwd" {
@@ -165,96 +93,12 @@ variable "pg_sku_name" {
   default     = "GP_Standard_D4ds_v5"
 }
 
-variable "pg_disk_size" {
-  type        = number
-  description = "Posgresql Disk Size"
-  default     = 262144
-}
+
 
 variable "pg_backup_retention" {
   type        = number
   description = "Posgresql Backup retention in days"
   default     = 7
-}
-
-# Redis Variables
-variable "redis_capacity" {
-  type        = number
-  description = "Redis Cache capacity"
-  default     = 1
-}
-
-variable "use_managed_redis" {
-  type        = bool
-  description = "Azure Provided managed redis, if set false redis will be installed in aks cluster"
-  default     = false
-}
-
-# Elasticsearch Variables
-variable "elasticsearch_version" {
-  type        = string
-  description = "Elasticsearch Version"
-  default     = "8.12.0"
-}
-
-variable "elasticsearch_vm_size" {
-  type        = string
-  description = "Elasticsearch VM Size"
-  default     = "Standard_D2ds_v4"
-}
-
-variable "elasticsearch_admin_username" {
-  type        = string
-  description = "Elasticsearch Admin Username"
-  default     = "elastic"
-}
-
-variable "elasticsearch_admin_password" {
-  type        = string
-  description = "Elasticsearch Admin Password"
-}
-
-
-variable "elasticsearch_os_disk_size_gb" {
-  type        = number
-  description = "ElasticSearch OS Disk size"
-  default     = 256
-}
-
-# Cassandra Variables
-variable "cassandra_node_count" {
-  description = "Cassandra Node Count"
-  type        = number
-  default     = 0
-
-  validation {
-    condition     = contains([0, 3, 5, 7], var.cassandra_node_count)
-    error_message = "Valid values for cassandra_node_count are (0, 3, 5, 7)."
-  }
-}
-
-variable "cassandra_vm_size" {
-  description = "Azure VM SKU for Cassandra nodes. Standard_D4as_v5 = 4 vCPU / 16GB RAM. Use Standard_A4_v2 for strict 4c/8GB (not recommended for prod)."
-  type        = string
-  default     = "Standard_D4as_v5"
-}
-
-variable "cassandra_admin_password" {
-  description = "SSH admin password for Cassandra VMs"
-  type        = string
-  default     = "Cassandra#123"
-}
-
-variable "cassandra_admin_username" {
-  description = "SSH admin username for Cassandra VMs"
-  type        = string
-  default     = "cassandra"
-}
-
-variable "cassandra_data_disk_size_gb" {
-  description = "Size of data disk per Cassandra node in GB"
-  type        = number
-  default     = 256
 }
 
 # services helm charts versions
@@ -498,13 +342,13 @@ variable "az_hosted_zone" {
   default     = true
 
   validation {
-    condition     = !(var.key_vault_name == "null" && var.az_hosted_zone == false)
+    condition     = !(var.az_key_vault_name == "null" && var.az_hosted_zone == false)
     error_message = <<-EOT
       SSL certificate configuration is missing.
       Nected services require a valid SSL certificate, which must be provided via one of:
         - A hosted zone via cert manager (set az_hosted_zone = true, and valid hosted zone with base_domain)
-        - An existing Key Vault certificate (set key_vault_name, and key_vault_certificate_name)
-      Current state: key_vault_name is "null" and az_hosted_zone is false — no certificate source defined.
+        - An existing Key Vault certificate (set az_key_vault_name, and key_vault_certificate_name)
+      Current state: az_key_vault_name is "null" and az_hosted_zone is false — no certificate source defined.
     EOT
   }
 }
@@ -609,4 +453,7 @@ variable "agic_internal" {
   default     = false
 }
 
-
+variable "aws_certificate_arn" {
+  type        = string
+  description = "AWS Certificate Manager - Cert ARN"
+}

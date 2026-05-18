@@ -2,7 +2,46 @@ locals {
   is_azure = var.cloud_provider == "azure"
   is_aws   = var.cloud_provider == "aws"
 
+  k8s_host                   = local.is_azure ? data.azurerm_kubernetes_cluster.k8s[0].kube_config[0].host : ""
+  k8s_client_certificate     = local.is_azure ? data.azurerm_kubernetes_cluster.k8s[0].kube_config[0].client_certificate : ""
+  k8s_client_key             = local.is_azure ? data.azurerm_kubernetes_cluster.k8s[0].kube_config[0].client_key : ""
+  k8s_cluster_ca_certificate = local.is_azure ? data.azurerm_kubernetes_cluster.k8s[0].kube_config[0].client_key : ""
+
   backend_domain = "${var.backend_domain_prefix}.${var.base_domain}"
   router_domain  = "${var.router_domain_prefix}.${var.base_domain}"
   ui_domain      = "${var.ui_domain_prefix}.${var.base_domain}"
+
+  agic_ssl_certificate_identifer = "${var.project}-ssl-certificate"
+  elasticsearch_ip               = local.is_azure ? module.azure_infra[0].elasticsearch_ip : module.aws_infra[0].opensearch_domain_endpoint
+  elasticsearch_admin_username   = local.is_azure ? var.elasticsearch_admin_username : var.opensearch_admin_username
+  elasticsearch_admin_password   = local.is_azure ? var.elasticsearch_admin_password : var.opensearch_admin_password
+  seed_node_list                 = local.is_azure ? module.azure_infra[0].cassandra_seed_node_list : []
+  postgresql_host                = local.is_azure ? module.azure_infra[0].postgresql_host : module.aws_infra[0].rds_endpoint
+
+  redis_tls_enabled = local.is_azure ? module.azure_infra[0].redis_tls_enabled : true
+  redis_endpoint    = local.is_azure ? module.azure_infra[0].redis_endpoint : module.aws_infra[0].cache_endpoint
+  redis_port        = local.is_azure ? module.azure_infra[0].redis_port : module.aws_infra[0].cache_port
+  redis_password    = local.is_azure ? module.azure_infra[0].redis_password : module.aws_infra[0].cache_auth_token
+
+  az_ingress_annotations = {
+    "kubernetes.io/ingress.class"                       = "azure/application-gateway"
+    "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
+    "appgw.ingress.kubernetes.io/use-private-ip"        = var.agic_internal ? "true" : "false"
+    "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.agic_ssl_certificate_identifer
+  }
+
+  aws_ingress_annotations = {
+    "kubernetes.io/ingress.class"                = "alb"
+    "alb.ingress.kubernetes.io/group.name"       = "${var.project}-alb-${var.environment}"
+    "alb.ingress.kubernetes.io/certificate-arn"  = var.aws_certificate_arn
+    "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}, {\"HTTPS\":443}]"
+    "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
+    "alb.ingress.kubernetes.io/scheme"           = var.agic_internal ? "internal" : "internet-facing"
+    "alb.ingress.kubernetes.io/subnets"          = var.agic_internal ? join(",", module.aws_infra[0].private_subnets) : join(",", module.aws_infra[0].public_subnets)
+    "alb.ingress.kubernetes.io/security-groups"  = module.aws_infra[0].alb_sg
+    "alb.ingress.kubernetes.io/target-type"      = "ip"
+    "alb.ingress.kubernetes.io/healthcheck-path" = "/health"
+  }
+
+  ingress_annotations = local.is_azure ? local.az_ingress_annotations : local.aws_ingress_annotations
 }

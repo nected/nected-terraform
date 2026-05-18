@@ -13,6 +13,31 @@ variable "environment" {
 # -------------------
 # VPC Variables
 # -------------------
+variable "existing_vpc_id" {
+  type        = string
+  description = "Existing VPC Name"
+  default     = "null"
+}
+
+variable "existing_private_subnets" {
+  type        = list(string)
+  description = "Existing Private Subnets"
+  default     = []
+}
+
+variable "existing_database_subnets" {
+  type        = list(string)
+  description = "Existing DB Private Subnets"
+  default     = []
+}
+
+variable "existing_public_subnets" {
+  type        = list(string)
+  description = "Existing Public Private Subnets"
+  default     = []
+}
+
+
 variable "vpc_cidr" {
   description = "VPC CIDR block"
   type        = string
@@ -27,8 +52,12 @@ variable "azs" {
 
 variable "subnet_newbits" {
   description = "How many bits to add to the VPC prefix per subnet"
-  type        = number
-  default     = 8
+  type        = map(number)
+  default = {
+    public  = 8
+    private = 6
+    db      = 10
+  }
 }
 
 variable "enable_nat_gateway" {
@@ -59,24 +88,41 @@ variable "node_instance_types" {
   default     = ["t3.medium"]
 }
 
-variable "node_min_size" {
+variable "node_min_count" {
   description = "Minimum nodes"
   type        = number
   default     = 1
 }
 
-variable "node_max_size" {
+variable "node_max_count" {
   description = "Maximum nodes"
   type        = number
   default     = 3
 }
 
-variable "node_desired_size" {
+variable "node_desired_count" {
   description = "Desired nodes"
   type        = number
   default     = 1
 }
 
+variable "endpoint_private_access" {
+  type        = bool
+  description = "Cluster Endpoint Private Access"
+  default     = true
+}
+
+variable "endpoint_public_access" {
+  type        = bool
+  description = "K8s Cluster Endpoint Public Access"
+  default     = true
+}
+
+variable "enable_cluster_creator_admin_permissions" {
+  type        = bool
+  description = "Enable Cluster Creator Admin"
+  default     = true
+}
 # -------------------
 # Tags
 # -------------------
@@ -189,9 +235,27 @@ variable "backup_retention_period" {
   default     = 7
 }
 
+variable "skip_final_snapshot" {
+  type        = bool
+  description = "Skip final snapshot"
+  default     = true
+}
+
+variable "delete_automated_backups" {
+  type        = bool
+  description = "Delete Automated backup"
+  default     = true
+}
+
+
 #------------------
 # Cache - Valkey
 #------------------
+variable "use_managed_redis" {
+  type        = bool
+  description = "Use managed Cache(Valkey)"
+  default     = true
+}
 variable "valkey_port" {
   type        = number
   description = "Port on which Valkey (Redis-compatible) runs"
@@ -226,6 +290,62 @@ variable "valkey_parameter_group_family" {
   type        = string
   description = "Parameter group family for Valkey"
   default     = "valkey8"
+}
+
+variable "valkey_auth_token" {
+  type        = string
+  description = "Authentication token for Valkey"
+  default     = "YyJgOWW6VSKLwJQUmlvebArysMrm02NYM2au7o"
+}
+
+#----------------------------
+# OpenSearch
+#----------------------------
+variable "opensearch_engine_version" {
+  type        = string
+  description = "OpenSearch Engine Version"
+  default     = "OpenSearch_2.11"
+}
+
+variable "opensearch_instance_type" {
+  type        = string
+  description = "OpenSearch Instance Size"
+  default     = "t3.medium.search"
+}
+
+variable "opensearch_instance_count" {
+  type        = number
+  description = "OpenSearch Instance Count"
+  default     = 1
+}
+
+variable "opensearch_admin_username" {
+  type        = string
+  description = "Elasticsearch Admin Username"
+  default     = "elastic"
+}
+
+variable "opensearch_volume_size" {
+  type        = number
+  description = "Opensearch volume size"
+  default     = 50
+}
+
+variable "opensearch_volume_type" {
+  type        = string
+  description = "Opensearch volume type"
+  default     = "gp3"
+}
+
+variable "opensearch_tls_security_policy" {
+  type        = string
+  description = "Opensearch TLS Security Policy"
+  default     = "Policy-Min-TLS-1-2-2019-07"
+}
+
+variable "opensearch_admin_password" {
+  type        = string
+  description = "Elasticsearch Admin Password"
 }
 
 # ---------------------

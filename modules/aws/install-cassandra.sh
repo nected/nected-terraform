@@ -79,26 +79,38 @@ apt-get install -y cassandra
 # Get this node's private IP
 NODE_IP=$(hostname -I | awk '{print $1}')
 
-# Configure Cassandra (writing the full config is inherently idempotent)
-cat > /etc/cassandra/cassandra.yaml <<EOF
-cluster_name: '${cluster_name}'
-num_tokens: 256
-seed_provider:
-  - class_name: org.apache.cassandra.locator.SimpleSeedProvider
-    parameters:
-      - seeds: "${seeds}"
-listen_address: $NODE_IP
-rpc_address: $NODE_IP
-endpoint_snitch: GossipingPropertyFileSnitch
-data_file_directories:
-  - $MOUNT/data
-commitlog_directory: $MOUNT/commitlog
-commitlog_sync: periodic
-commitlog_sync_period_in_ms: 10000
-partitioner: org.apache.cassandra.dht.Murmur3Partitioner
-hints_directory: $MOUNT/hints
-saved_caches_directory: $MOUNT/saved_caches
-EOF
+CONF=/etc/cassandra/cassandra.yaml
+
+set_yaml() {
+  local key="$1" value="$2"
+  if grep -qE "^[[:space:]]*#?[[:space:]]*$${key}:" "$CONF"; then
+    sed -i -E "s|^[[:space:]]*#?[[:space:]]*$${key}:.*|$${key}: $${value}|" "$CONF"
+  else
+    echo "$${key}: $${value}" >> "$CONF"
+  fi
+}
+
+set_yaml cluster_name "'${cluster_name}'"
+set_yaml num_tokens 256
+set_yaml listen_address "$NODE_IP"
+set_yaml rpc_address "$NODE_IP"
+set_yaml endpoint_snitch GossipingPropertyFileSnitch
+set_yaml commitlog_sync periodic
+set_yaml partitioner org.apache.cassandra.dht.Murmur3Partitioner
+set_yaml commitlog_directory "$MOUNT/commitlog"
+set_yaml hints_directory "$MOUNT/hints"
+set_yaml saved_caches_directory "$MOUNT/saved_caches"
+
+# seeds lives nested under seed_provider.parameters; preserve indentation.
+sed -i -E "s|^([[:space:]]*)#?[[:space:]]*- seeds:.*|\1- seeds: \"${seeds}\"|" "$CONF"
+
+# data_file_directories is a list. If the key is present uncommented, rewrite
+# the next line (the single default entry); otherwise append a fresh block.
+if grep -q '^data_file_directories:' "$CONF"; then
+  sed -i "/^data_file_directories:/{n;s|.*|    - $MOUNT/data|;}" "$CONF"
+else
+  printf 'data_file_directories:\n    - %s/data\n' "$MOUNT" >> "$CONF"
+fi
 
 chown -R cassandra:cassandra "$MOUNT"
 systemctl enable cassandra
