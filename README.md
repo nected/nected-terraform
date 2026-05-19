@@ -8,7 +8,7 @@ A single root module supports both clouds — pick one by setting `cloud_provide
 **Common (both clouds)**
 
 * Managed Kubernetes cluster
-* Managed PostgreSQL (with `pgvector`)
+* Managed PostgreSQL
 * Managed search (Elasticsearch on Azure / OpenSearch on AWS)
 * Managed cache (Azure Redis / Valkey on AWS ElastiCache) — optional, defaults to in-cluster
 * Ingress with TLS termination, DNS records, and SSL via Cert-Manager or pre-provisioned cert
