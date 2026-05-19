@@ -56,19 +56,6 @@ variable "k8s_max_node_count" {
   default = 5
 }
 
-variable "k8s_private_cluster_enabled" {
-  type        = bool
-  description = "Enable private cluster for Kubernetes. When true, the API server is only accessible from within the Network. Change to true only if you're connected via VPN or a jump box in the Network"
-  default     = false
-}
-
-# Cache
-variable "use_managed_cache" {
-  type        = bool
-  description = "Azure Provided managed redis, if set false redis will be installed in aks cluster"
-  default     = false
-}
-
 # Postgresql Variables
 variable "pg_version" {
   type        = number
@@ -87,18 +74,17 @@ variable "pg_admin_passwd" {
   description = "Posgresql Admin Password"
 }
 
-variable "pg_sku_name" {
-  type        = string
-  description = "Posgresql SKU Name"
-  default     = "GP_Standard_D4ds_v5"
-}
-
-
-
 variable "pg_backup_retention" {
   type        = number
   description = "Posgresql Backup retention in days"
   default     = 7
+}
+
+# Cache
+variable "use_managed_cache" {
+  type        = bool
+  description = "Azure Provided managed redis, if set false redis will be installed in aks cluster"
+  default     = false
 }
 
 # services helm charts versions
@@ -324,136 +310,10 @@ variable "namespace" {
   default = "default"
 }
 
-variable "az_key_vault_name" {
-  type        = string
-  description = "Key Vault Name"
-  default     = "null"
-}
-
-variable "az_key_vault_certificate_name" {
-  type        = string
-  description = "Key Vault Secrets name for certificate"
-  default     = "null"
-}
-
-variable "az_hosted_zone" {
-  type        = bool
-  description = "When false, DNS entry and cert-manager certificate will not be created."
-  default     = true
-
-  validation {
-    condition     = !(var.az_key_vault_name == "null" && var.az_hosted_zone == false)
-    error_message = <<-EOT
-      SSL certificate configuration is missing.
-      Nected services require a valid SSL certificate, which must be provided via one of:
-        - A hosted zone via cert manager (set az_hosted_zone = true, and valid hosted zone with base_domain)
-        - An existing Key Vault certificate (set az_key_vault_name, and key_vault_certificate_name)
-      Current state: az_key_vault_name is "null" and az_hosted_zone is false — no certificate source defined.
-    EOT
-  }
-}
-
-
-#
-# Application Gateway Variables
-
-# Application Gateway SKU Configuration
-variable "appgw_sku_name" {
-  type        = string
-  description = "The SKU name of the Application Gateway"
-  default     = "Standard_v2"
-}
-
-variable "appgw_sku_tier" {
-  type        = string
-  description = "The SKU tier of the Application Gateway"
-  default     = "Standard_v2"
-}
-
-variable "appgw_capacity" {
-  type        = number
-  description = "The capacity (instance count) of the Application Gateway"
-  default     = 2
-}
-
-# Autoscaling Configuration
-variable "enable_autoscaling" {
-  type        = bool
-  description = "Enable autoscaling for Application Gateway"
-  default     = true
-}
-
-variable "appgw_min_capacity" {
-  type        = number
-  description = "Minimum capacity for autoscaling"
-  default     = 2
-}
-
-variable "appgw_max_capacity" {
-  type        = number
-  description = "Maximum capacity for autoscaling"
-  default     = 10
-}
-
-# Health Probe Configuration
-variable "health_probe_path" {
-  type        = string
-  description = "Path for health probe"
-  default     = "/"
-}
-
-variable "health_probe_host" {
-  type        = string
-  description = "Host header for health probe"
-  default     = ""
-}
-
-# WAF Configuration
-variable "enable_waf" {
-  type        = bool
-  description = "Enable Web Application Firewall"
-  default     = false
-}
-
-variable "waf_mode" {
-  type        = string
-  description = "WAF mode: Detection or Prevention"
-  default     = "Detection"
-}
-
-variable "waf_rule_set_version" {
-  type        = string
-  description = "WAF rule set version"
-  default     = "3.2"
-}
-
-variable "waf_custom_rules" {
-  type = list(object({
-    name      = string
-    priority  = number
-    rule_type = string
-    action    = string
-    match_conditions = list(object({
-      match_variables = list(object({
-        variable_name = string
-        selector      = optional(string)
-      }))
-      operator           = string
-      negation_condition = optional(bool, false)
-      match_values       = list(string)
-    }))
-  }))
-  description = "List of WAF custom rules for the Application Gateway"
-  default     = []
-}
-
+# use application gateway / load balancer private ip
 variable "agic_internal" {
   type        = bool
   description = "Application gateway Internal or Public"
   default     = false
 }
 
-variable "aws_certificate_arn" {
-  type        = string
-  description = "AWS Certificate Manager - Cert ARN"
-}

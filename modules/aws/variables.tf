@@ -85,25 +85,25 @@ variable "kubernetes_version" {
 variable "node_instance_types" {
   description = "Instance type for node group"
   type        = list(string)
-  default     = ["t3.medium"]
+  default     = ["m6a.xlarge"]
 }
 
 variable "node_min_count" {
   description = "Minimum nodes"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "node_max_count" {
   description = "Maximum nodes"
   type        = number
-  default     = 3
+  default     = 5
 }
 
 variable "node_desired_count" {
   description = "Desired nodes"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "endpoint_private_access" {
@@ -159,14 +159,14 @@ variable "db_family" {
 
 variable "db_instance_class" {
   type        = string
-  description = "RDS instance type (e.g., db.t3.micro)"
-  default     = "db.t3.micro"
+  description = "RDS instance type (e.g., db.m7i.xlarge)"
+  default     = "db.m7i.xlarge"
 }
 
 variable "db_allocated_storage" {
   type        = number
   description = "Initial storage allocated to the database (in GB)"
-  default     = 20
+  default     = 50
 }
 
 variable "db_max_allocated_storage" {
@@ -276,8 +276,8 @@ variable "valkey_engine_version" {
 
 variable "valkey_node_type" {
   type        = string
-  description = "Instance type for cache nodes (e.g., cache.t3.micro)"
-  default     = "cache.t4g.micro"
+  description = "Instance type for cache nodes (e.g., cache.t4g.small)"
+  default     = "cache.t4g.small"
 }
 
 variable "valkey_num_cache_nodes" {

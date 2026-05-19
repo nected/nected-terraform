@@ -17,9 +17,9 @@ provider "helm" {
 # AWS Config
 provider "helm" {
   kubernetes = {
-    host                   = data.aws_eks_cluster.this[0].endpoint
-    cluster_ca_certificate = base64decode(data.aws_eks_cluster.this[0].certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.this[0].token
+    host                   = local.eks_host
+    cluster_ca_certificate = local.eks_ca_cert != "" ? base64decode(local.eks_ca_cert) : ""
+    token                  = local.eks_auth_token
   }
 
   alias = "eks"

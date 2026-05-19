@@ -12,11 +12,17 @@ module "azure_infra" {
   project     = var.project
   environment = var.environment
 
+  # Networking
+  vnet_address_space = var.network_address_space
+  existing_vnet_name = var.az_existing_network_name
+  existing_subnets   = var.az_existing_subnets
+  private_subnets    = var.az_private_subnets
 
   # DNS
   az_hosted_zone = var.az_hosted_zone
   base_domain    = var.base_domain
   hosted_zone_rg = var.az_hosted_zone_rg
+  agic_internal  = var.agic_internal
 
   # AKS
   kubernetes_version          = var.k8s_version
@@ -24,13 +30,13 @@ module "azure_infra" {
   aks_min_node_count          = var.k8s_min_node_count
   aks_max_node_count          = var.k8s_max_node_count
   aks_vm_size                 = var.aks_vm_size
-  aks_private_cluster_enabled = var.k8s_private_cluster_enabled
+  aks_private_cluster_enabled = var.aks_private_cluster_enabled
 
   # Postgresql
   pg_version          = var.pg_version
   pg_admin_user       = var.pg_admin_user
   pg_admin_passwd     = var.pg_admin_passwd
-  pg_sku_name         = var.pg_sku_name
+  pg_sku_name         = var.az_pg_sku_name
   pg_disk_size        = var.az_pg_disk_size
   pg_backup_retention = var.pg_backup_retention
 
@@ -51,14 +57,6 @@ module "azure_infra" {
   cassandra_admin_password    = var.cassandra_admin_password
   cassandra_admin_username    = var.cassandra_admin_username
   cassandra_data_disk_size_gb = var.cassandra_data_disk_size_gb
-
-  # Networking
-  vnet_address_space = var.network_address_space
-  existing_vnet_name = var.az_existing_network_name
-  existing_subnets   = var.az_existing_subnets
-  private_subnets    = var.az_private_subnets
-
-  agic_internal = var.agic_internal
 
   # Domain prefixes (used for ingress/DNS)
   ui_domain_prefix      = var.ui_domain_prefix
@@ -101,6 +99,10 @@ module "azure_agic" {
   internal_app_gateway_ip        = module.azure_infra[0].internal_app_gateway_ip
   agic_ssl_certificate_identifer = local.agic_ssl_certificate_identifer
   agic_internal                  = var.agic_internal
+  enable_waf                     = var.enable_waf
+  waf_mode                       = var.waf_mode
+  waf_rule_set_version           = var.waf_rule_set_version
+  waf_custom_rules               = var.waf_custom_rules
 
   depends_on = [module.azure_infra]
 
@@ -113,7 +115,7 @@ module "azure_nected_app" {
   source = "./modules/apps/common"
 
   count                        = local.is_azure && var.app == true ? 1 : 0
-  elasticsearch_provider       = local.is_azure ? "managed" : "opensearch"
+  elasticsearch_provider       = "managed"
   elasticsearch_ip             = local.elasticsearch_ip
   elasticsearch_admin_username = local.elasticsearch_admin_username
   elasticsearch_admin_password = local.elasticsearch_admin_password
@@ -169,7 +171,7 @@ module "aws_infra" {
   environment = var.environment
 
   # Network
-  vpc_cidr                  = var.network_address_space
+  vpc_cidr                  = var.vpc_cidr
   azs                       = var.azs
   subnet_newbits            = var.subnet_newbits
   single_nat_gateway        = var.single_nat_gateway
@@ -177,6 +179,39 @@ module "aws_infra" {
   existing_private_subnets  = var.existing_private_subnets
   existing_database_subnets = var.existing_database_subnets
   existing_public_subnets   = var.existing_public_subnets
+
+  # EKS
+  node_instance_types    = var.eks_node_instance_types
+  node_desired_count     = var.k8s_node_count
+  node_min_count         = var.k8s_min_node_count
+  node_max_count         = var.k8s_max_node_count
+  endpoint_public_access = var.eks_endpoint_public_access
+
+  # RDS database
+  db_username              = var.pg_admin_user
+  db_password              = var.pg_admin_passwd
+  db_engine_version        = var.pg_version
+  backup_retention_period  = var.pg_backup_retention
+  db_instance_class        = var.db_instance_class
+  db_allocated_storage     = var.db_allocated_storage
+  db_max_allocated_storage = var.db_max_allocated_storage
+  db_multi_az              = var.db_multi_az
+  db_publicly_accessible   = var.db_publicly_accessible
+  db_deletion_protection   = var.db_deletion_protection
+  maintenance_window       = var.maintenance_window
+  backup_window            = var.backup_window
+  skip_final_snapshot      = var.skip_final_snapshot
+  delete_automated_backups = var.delete_automated_backups
+
+  # Valkey Cache
+  use_managed_redis             = var.use_managed_cache
+  valkey_port                   = var.valkey_port
+  valkey_engine                 = var.valkey_engine
+  valkey_engine_version         = var.valkey_engine_version
+  valkey_node_type              = var.valkey_node_type
+  valkey_num_cache_nodes        = var.valkey_num_cache_nodes
+  valkey_parameter_group_family = var.valkey_parameter_group_family
+  valkey_auth_token             = var.valkey_auth_token
 
   # Opensearch
   opensearch_engine_version      = var.opensearch_engine_version
@@ -187,29 +222,6 @@ module "aws_infra" {
   opensearch_volume_size         = var.opensearch_volume_size
   opensearch_volume_type         = var.opensearch_volume_type
   opensearch_tls_security_policy = var.opensearch_tls_security_policy
-
-  # RDS database
-  db_username              = var.pg_admin_user
-  db_password              = var.pg_admin_passwd
-  db_engine_version        = var.pg_version
-  db_instance_class        = var.db_instance_class
-  db_allocated_storage     = var.db_allocated_storage
-  db_max_allocated_storage = var.db_max_allocated_storage
-
-
-  # Valkey Cache
-  use_managed_redis      = var.use_managed_cache
-  valkey_port            = var.valkey_port
-  valkey_engine          = var.valkey_engine
-  valkey_engine_version  = var.valkey_engine_version
-  valkey_node_type       = var.valkey_node_type
-  valkey_num_cache_nodes = var.valkey_num_cache_nodes
-
-  # EKS 
-  node_instance_types = var.eks_node_instance_types
-  node_desired_count  = var.k8s_node_count
-  node_min_count      = var.k8s_min_node_count
-  node_max_count      = var.k8s_max_node_count
 }
 
 
@@ -249,17 +261,17 @@ module "nected_app_aws" {
   pg_admin_passwd = var.pg_admin_passwd
   postgresql_host = local.postgresql_host
 
-  temporal_pods_resources    = var.temporal_pods_resources
-  temporal_pods_replicas     = var.temporal_pods_replicas
-  temporal_task_partitions   = var.temporal_task_partitions
-  temporal_history_shards    = var.temporal_history_shards
-  temporal_persistant_driver = var.cassandra_node_count != 0 ? "cassandra" : "sql"
+  temporal_pods_resources  = var.temporal_pods_resources
+  temporal_pods_replicas   = var.temporal_pods_replicas
+  temporal_task_partitions = var.temporal_task_partitions
+  temporal_history_shards  = var.temporal_history_shards
+  # temporal_persistant_driver = var.cassandra_node_count != 0 ? "cassandra" : "sql"
 
   nected_enable_garuda  = var.nected_enable_garuda
   nected_env_overrides  = var.nected_env_overrides
   nected_pods_replicas  = var.nected_pods_replicas
   nected_pods_resources = var.nected_pods_resources
-  seed_node_list        = local.seed_node_list
+  # seed_node_list        = local.seed_node_list
 
   use_managed_redis           = var.use_managed_cache
   redis_endpoint              = local.redis_endpoint
