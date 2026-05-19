@@ -312,6 +312,12 @@ variable "datastore_chart_version" {
 variable "elasticsearch_ip" {
 }
 
+variable "helm_disable_openapi_validation" {
+  type        = bool
+  description = "Skip client-side OpenAPI validation on the nected helm release. Workaround for K8s API servers that time out serving OpenAPI (commonly AKS after large CRDs are installed)."
+  default     = false
+}
+
 variable "namespace" {
   type = string
   default = "default"

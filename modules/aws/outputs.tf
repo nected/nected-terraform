@@ -44,17 +44,22 @@ output "rds_port" {
 }
 
 output "cache_endpoint" {
-  value = module.valkey[0].replication_group_primary_endpoint_address
+  value = local.cache_endpoint
 }
 
 output "cache_port" {
-  value = module.valkey[0].replication_group_port
+  value = local.cache_port
 }
 
 output "cache_auth_token" {
   value     = var.valkey_auth_token
   sensitive = true
 }
+
+output "cache_tls_enabled" {
+  value     = local.cache_tls_enabled
+}
+
 
 output "alb_sg" {
   value = aws_security_group.alb.id

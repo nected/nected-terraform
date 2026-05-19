@@ -22,7 +22,7 @@ locals {
   seed_node_list                 = local.is_azure ? module.azure_infra[0].cassandra_seed_node_list : []
   postgresql_host                = local.is_azure ? module.azure_infra[0].postgresql_host : module.aws_infra[0].rds_endpoint
 
-  redis_tls_enabled = local.is_azure ? module.azure_infra[0].redis_tls_enabled : true
+  redis_tls_enabled = local.is_azure ? module.azure_infra[0].redis_tls_enabled : module.aws_infra[0].cache_tls_enabled
   redis_endpoint    = local.is_azure ? module.azure_infra[0].redis_endpoint : module.aws_infra[0].cache_endpoint
   redis_port        = local.is_azure ? module.azure_infra[0].redis_port : module.aws_infra[0].cache_port
   redis_password    = local.is_azure ? module.azure_infra[0].redis_password : module.aws_infra[0].cache_auth_token

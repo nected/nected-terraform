@@ -152,6 +152,8 @@ module "azure_nected_app" {
   nected_existing_secret_name = var.nected_existing_secret_name
   nected_common_secret_value  = var.nected_common_secret_value
 
+  helm_disable_openapi_validation = var.az_helm_disable_openapi_validation
+
   depends_on = [
     module.azure_agic,
     module.azure_infra

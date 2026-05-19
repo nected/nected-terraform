@@ -249,6 +249,18 @@ variable "opensearch_tls_security_policy" {
 
 variable "opensearch_admin_password" {
   type        = string
-  description = "Elasticsearch Admin Password"
-  default     = "jeuusbhweh458sgggHGrjfk"
+  description = "OpenSearch master user password. AWS requires >=8 chars with lowercase, uppercase, digit, and special character."
+  sensitive   = true
+  default     = "jeuusbh#weh458sgggHGrjfk"
+
+  validation {
+    condition = var.cloud_provider != "aws" || (
+      length(var.opensearch_admin_password) >= 8 &&
+      can(regex("[a-z]", var.opensearch_admin_password)) &&
+      can(regex("[A-Z]", var.opensearch_admin_password)) &&
+      can(regex("[0-9]", var.opensearch_admin_password)) &&
+      can(regex("[^A-Za-z0-9]", var.opensearch_admin_password))
+    )
+    error_message = "opensearch_admin_password must be at least 8 characters and include lowercase, uppercase, digit, and a special character."
+  }
 }

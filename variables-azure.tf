@@ -249,6 +249,12 @@ variable "waf_rule_set_version" {
   default     = "3.2"
 }
 
+variable "az_helm_disable_openapi_validation" {
+  type        = bool
+  description = "Skip client-side OpenAPI validation for Nected helm release on AKS. AKS API server often times out serving OpenAPI after large CRDs (cert-manager, temporal) are installed."
+  default     = true
+}
+
 variable "waf_custom_rules" {
   type = list(object({
     name      = string

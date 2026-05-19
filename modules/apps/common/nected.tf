@@ -6,6 +6,8 @@ resource "helm_release" "nected" {
   timeout    = 600
   version    = var.nected_chart_version
 
+  disable_openapi_validation = var.helm_disable_openapi_validation
+
   depends_on = [
     helm_release.temporal,
   ]
