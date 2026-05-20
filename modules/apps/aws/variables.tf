@@ -9,6 +9,6 @@ variable "vpc_id" {
 }
 
 variable "environment" {
-  type = string
+  type        = string
   description = "Environment to deploy"
 }

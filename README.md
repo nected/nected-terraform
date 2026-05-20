@@ -219,19 +219,21 @@ eks_node_instance_types    = ["m6a.xlarge"]
 aws_certificate_arn = "arn:aws:acm:ap-south-1:<account-id>:certificate/<cert-id>"
 
 # RDS Postgres
-db_instance_class        = "db.t3.xlarge"
-db_allocated_storage     = 50
-db_max_allocated_storage = 200
+db_instance_class        = "db.m6g.xlarge"
+db_allocated_storage     = 256
+db_max_allocated_storage = 512
+db_multi_az              = false
 
 # Valkey (Redis-compatible ElastiCache)
 valkey_node_type  = "cache.t4g.small"
 valkey_auth_token = "<auth-token>"
 
 # OpenSearch
-opensearch_instance_type  = "t3.medium.search"
-opensearch_instance_count = 1
-opensearch_admin_password = "<password>"
-opensearch_volume_size    = 50
+opensearch_instance_type            = "r6g.large.search"
+opensearch_instance_count           = 1
+opensearch_admin_password           = "<password>"
+opensearch_volume_size              = 256
+opensearch_dedicated_master_enabled = false
 ```
 
 For the full variable list with defaults and descriptions, see [variables.tf](./variables.tf), [variables-aws.tf](./variables-aws.tf), and [variables-azure.tf](./variables-azure.tf).

@@ -39,6 +39,7 @@ module "postgres" {
   instance_class        = var.db_instance_class
   allocated_storage     = var.db_allocated_storage
   max_allocated_storage = var.db_max_allocated_storage
+  storage_type          = var.db_storage_type
 
   manage_master_user_password = false
 

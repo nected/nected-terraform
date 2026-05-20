@@ -1,3 +1,19 @@
+resource "terraform_data" "valkey_multi_az_validation" {
+  count = var.use_managed_redis && var.valkey_multi_az_enabled ? 1 : 0
+
+  lifecycle {
+    precondition {
+      condition     = var.valkey_num_cache_nodes >= 2
+      error_message = "valkey_multi_az_enabled requires valkey_num_cache_nodes >= 2 (got ${var.valkey_num_cache_nodes}); Multi-AZ needs at least one replica."
+    }
+
+    precondition {
+      condition     = length(local.database_subnets) >= 2
+      error_message = "valkey_multi_az_enabled requires at least 2 database subnets across different AZs (got ${length(local.database_subnets)}). For a new VPC set var.azs to >= 2 entries; for an existing VPC provide >= 2 entries in var.existing_database_subnets."
+    }
+  }
+}
+
 resource "aws_security_group" "valkey" {
   count = var.use_managed_redis ? 1 : 0
 
@@ -43,6 +59,9 @@ module "valkey" {
   security_group_ids = [aws_security_group.valkey[0].id]
 
   parameter_group_family = var.valkey_parameter_group_family
+
+  multi_az_enabled           = var.valkey_multi_az_enabled
+  automatic_failover_enabled = var.valkey_multi_az_enabled
 
   transit_encryption_enabled = true
 

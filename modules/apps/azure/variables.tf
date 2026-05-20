@@ -68,24 +68,24 @@ variable "subscription_id" {
 variable "identity_id" {}
 variable "identity_client_id" {}
 variable "alb_vault_secret_endpoint" {
-  
+
 }
 
 variable "public_app_gateway_ip" {
-  
+
 }
 variable "public_app_gateway_id" {
-  
+
 }
 
 variable "aks_identity_principal_id" {
-  
+
 }
 
 variable "identity_principal_id" {
-  
+
 }
 
 variable "agic_ssl_certificate_identifer" {
-  
+
 }

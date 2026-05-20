@@ -12,5 +12,5 @@ locals {
     })
   ]
 
-  hosted_zone_rg  = var.hosted_zone_rg == "null" ? var.resource_group_name : var.hosted_zone_rg
+  hosted_zone_rg = var.hosted_zone_rg == "null" ? var.resource_group_name : var.hosted_zone_rg
 }

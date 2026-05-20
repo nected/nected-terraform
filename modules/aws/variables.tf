@@ -159,20 +159,26 @@ variable "db_family" {
 
 variable "db_instance_class" {
   type        = string
-  description = "RDS instance type (e.g., db.m7i.xlarge)"
-  default     = "db.m7i.xlarge"
+  description = "RDS instance type (e.g., db.t4g.xlarge)"
+  default     = "db.m6g.xlarge"
 }
 
 variable "db_allocated_storage" {
   type        = number
   description = "Initial storage allocated to the database (in GB)"
-  default     = 50
+  default     = 256
 }
 
 variable "db_max_allocated_storage" {
   type        = number
   description = "Maximum storage autoscaling limit (in GB)"
-  default     = 200
+  default     = 512
+}
+
+variable "db_storage_type" {
+  type        = string
+  description = "EBS volume type for RDS storage. gp3 recommended over gp2 for better IOPS/throughput at lower cost."
+  default     = "gp3"
 }
 
 variable "db_port" {
@@ -298,19 +304,25 @@ variable "valkey_auth_token" {
   default     = "YyJgOWW6VSKLwJQUmlvebArysMrm02NYM2au7o"
 }
 
+variable "valkey_multi_az_enabled" {
+  type        = bool
+  description = "Enable Multi-AZ with automatic failover for Valkey. Requires valkey_num_cache_nodes >= 2 and database subnets spanning at least 2 AZs."
+  default     = false
+}
+
 #----------------------------
 # OpenSearch
 #----------------------------
 variable "opensearch_engine_version" {
   type        = string
   description = "OpenSearch Engine Version"
-  default     = "OpenSearch_2.11"
+  default     = "OpenSearch_3.5"
 }
 
 variable "opensearch_instance_type" {
   type        = string
   description = "OpenSearch Instance Size"
-  default     = "t3.medium.search"
+  default     = "r6g.large.search"
 }
 
 variable "opensearch_instance_count" {
@@ -328,7 +340,7 @@ variable "opensearch_admin_username" {
 variable "opensearch_volume_size" {
   type        = number
   description = "Opensearch volume size"
-  default     = 50
+  default     = 256
 }
 
 variable "opensearch_volume_type" {
@@ -346,6 +358,18 @@ variable "opensearch_tls_security_policy" {
 variable "opensearch_admin_password" {
   type        = string
   description = "Elasticsearch Admin Password"
+}
+
+variable "opensearch_dedicated_master_enabled" {
+  type        = bool
+  description = "Elasticsearch Admin Password"
+  default     = false
+}
+
+variable "opensearch_multi_az_enabled" {
+  type        = bool
+  description = "Enable multi-AZ (zone awareness) for OpenSearch. When enabled, nodes are spread across all database subnets (must be 2 or 3) and instance_count must be a multiple of that subnet count."
+  default     = false
 }
 
 # ---------------------

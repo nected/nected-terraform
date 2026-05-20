@@ -57,7 +57,7 @@ output "cache_auth_token" {
 }
 
 output "cache_tls_enabled" {
-  value     = local.cache_tls_enabled
+  value = local.cache_tls_enabled
 }
 
 

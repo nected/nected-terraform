@@ -97,11 +97,11 @@ variable "agic_internal" {
 }
 
 variable "project" {
-  type = string
+  type        = string
   description = "Project Name"
 }
 
 variable "environment" {
-  type = string
+  type        = string
   description = "Environment Name"
 }

@@ -18,7 +18,7 @@ variable "temporal_persistant_driver" {
 }
 
 variable "postgresql_host" {
-  
+
 }
 
 variable "pg_admin_user" {
@@ -100,9 +100,9 @@ variable "seed_node_list" {
 }
 
 variable "elasticsearch_provider" {
-  type = string
+  type        = string
   description = "Elasticsearch Provider"
-  default = "managed"
+  default     = "managed"
 }
 
 variable "elasticsearch_admin_username" {
@@ -319,7 +319,7 @@ variable "helm_disable_openapi_validation" {
 }
 
 variable "namespace" {
-  type = string
-  default = "default"
+  type        = string
+  default     = "default"
   description = "K8s Namespace"
 }

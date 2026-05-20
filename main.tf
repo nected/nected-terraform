@@ -197,6 +197,7 @@ module "aws_infra" {
   db_instance_class        = var.db_instance_class
   db_allocated_storage     = var.db_allocated_storage
   db_max_allocated_storage = var.db_max_allocated_storage
+  db_storage_type          = var.db_storage_type
   db_multi_az              = var.db_multi_az
   db_publicly_accessible   = var.db_publicly_accessible
   db_deletion_protection   = var.db_deletion_protection
@@ -214,16 +215,19 @@ module "aws_infra" {
   valkey_num_cache_nodes        = var.valkey_num_cache_nodes
   valkey_parameter_group_family = var.valkey_parameter_group_family
   valkey_auth_token             = var.valkey_auth_token
+  valkey_multi_az_enabled       = var.valkey_multi_az_enabled
 
   # Opensearch
-  opensearch_engine_version      = var.opensearch_engine_version
-  opensearch_instance_type       = var.opensearch_instance_type
-  opensearch_instance_count      = var.opensearch_instance_count
-  opensearch_admin_username      = var.opensearch_admin_username
-  opensearch_admin_password      = var.opensearch_admin_password
-  opensearch_volume_size         = var.opensearch_volume_size
-  opensearch_volume_type         = var.opensearch_volume_type
-  opensearch_tls_security_policy = var.opensearch_tls_security_policy
+  opensearch_engine_version           = var.opensearch_engine_version
+  opensearch_instance_type            = var.opensearch_instance_type
+  opensearch_instance_count           = var.opensearch_instance_count
+  opensearch_admin_username           = var.opensearch_admin_username
+  opensearch_admin_password           = var.opensearch_admin_password
+  opensearch_volume_size              = var.opensearch_volume_size
+  opensearch_volume_type              = var.opensearch_volume_type
+  opensearch_tls_security_policy      = var.opensearch_tls_security_policy
+  opensearch_dedicated_master_enabled = var.opensearch_dedicated_master_enabled
+  opensearch_multi_az_enabled         = var.opensearch_multi_az_enabled
 }
 
 

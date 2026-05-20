@@ -1,3 +1,17 @@
+resource "terraform_data" "opensearch_multi_az_validation" {
+  lifecycle {
+    precondition {
+      condition     = !var.opensearch_multi_az_enabled || contains([2, 3], length(local.database_subnets))
+      error_message = "opensearch_multi_az_enabled requires 2 or 3 database subnets (got ${length(local.database_subnets)}). For a new VPC set var.azs to 2 or 3 entries; for an existing VPC provide 2 or 3 entries in var.existing_database_subnets."
+    }
+
+    precondition {
+      condition     = !var.opensearch_multi_az_enabled || var.opensearch_instance_count % length(local.database_subnets) == 0
+      error_message = "opensearch_instance_count (${var.opensearch_instance_count}) must be a multiple of the database subnet count (${length(local.database_subnets)}) when opensearch_multi_az_enabled is true."
+    }
+  }
+}
+
 resource "aws_security_group" "opensearch" {
   name        = "${var.project}-search-sg-${var.environment}"
   description = "Allow Openseach access"
@@ -46,8 +60,12 @@ module "opensearch" {
   cluster_config = {
     instance_type            = var.opensearch_instance_type
     instance_count           = var.opensearch_instance_count
-    zone_awareness_enabled   = false
-    dedicated_master_enabled = false
+    zone_awareness_enabled   = var.opensearch_multi_az_enabled
+    dedicated_master_enabled = var.opensearch_dedicated_master_enabled
+
+    zone_awareness_config = var.opensearch_multi_az_enabled ? {
+      availability_zone_count = length(local.opensearch_subnets)
+    } : null
   }
 
   ebs_options = {
@@ -74,7 +92,7 @@ module "opensearch" {
   }
 
   vpc_options = {
-    subnet_ids = [local.opensearch_subnets]
+    subnet_ids = local.opensearch_subnets
 
     security_group_ids = [aws_security_group.opensearch.id]
   }

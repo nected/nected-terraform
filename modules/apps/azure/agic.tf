@@ -7,8 +7,8 @@ resource "helm_release" "agic" {
 
   create_namespace = true
 
-  depends_on = [ 
-    azurerm_application_gateway.appgw 
+  depends_on = [
+    azurerm_application_gateway.appgw
   ]
 
   values = [
