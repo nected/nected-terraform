@@ -5,11 +5,13 @@
 variable "az_subscription_id" {
   type        = string
   description = "Subscription ID"
+  default     = ""
 }
 # Resource Group Variable
 variable "az_resource_group_name" {
   type        = string
   description = "Azure Resource Group Name"
+  default     = ""
 }
 
 # Hosted Zone Resource Group name
@@ -88,6 +90,7 @@ variable "elasticsearch_admin_username" {
 variable "elasticsearch_admin_password" {
   type        = string
   description = "Elasticsearch Admin Password"
+  default     = "jeuusbhweh458sgggHGrjfk"
 }
 
 
