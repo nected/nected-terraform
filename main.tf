@@ -171,6 +171,7 @@ module "aws_infra" {
 
   project     = var.project
   environment = var.environment
+  agic_internal = var.agic_internal
 
   # Network
   vpc_cidr                  = var.vpc_cidr

@@ -393,3 +393,11 @@ variable "key_name" {
   description = "Cassandra Node SSH Keyname"
   default     = "dev-nected"
 }
+
+########
+# use application gateway / load balancer private ip
+variable "agic_internal" {
+  type        = bool
+  description = "Application gateway Internal or Public"
+  default     = false
+}
