@@ -12,3 +12,11 @@ variable "environment" {
   type        = string
   description = "Environment to deploy"
 }
+
+variable "eks_oidc_provider_arn" {
+
+}
+
+variable "eks_oidc_provider_url" {
+
+}

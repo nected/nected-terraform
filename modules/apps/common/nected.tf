@@ -40,7 +40,7 @@ resource "helm_release" "nected" {
           } : {}
         )
         ingress = {
-          enabled     = "true"
+          enabled     = var.ingress_enabled
           annotations = var.ingress_annotations
           hosts = [
             {
@@ -58,6 +58,10 @@ resource "helm_release" "nected" {
               hosts = [var.ui_domain]
             }
           ]
+        }
+        targetGroupBinding = {
+          enabled        = var.targetgroupbinding_enabled
+          targetGroupARN = var.aws_tg_arns["ui"]
         }
       }
       nalanda = {
@@ -82,7 +86,7 @@ resource "helm_release" "nected" {
         }
 
         ingress = {
-          enabled     = "true"
+          enabled     = var.ingress_enabled
           annotations = var.ingress_annotations
           hosts = [
             {
@@ -102,6 +106,10 @@ resource "helm_release" "nected" {
           ]
         }
 
+        targetGroupBinding = {
+          enabled        = var.targetgroupbinding_enabled
+          targetGroupARN = var.aws_tg_arns["backend"]
+        }
         resources = merge(
           {
             requests = {
@@ -181,7 +189,7 @@ resource "helm_release" "nected" {
           targetMemoryUtilizationPercentage = 85
         }
         ingress = {
-          enabled     = "true"
+          enabled     = var.ingress_enabled
           annotations = var.ingress_annotations
           hosts = [
             {
@@ -199,6 +207,10 @@ resource "helm_release" "nected" {
               hosts = [var.router_domain]
             }
           ]
+        }
+        targetGroupBinding = {
+          enabled        = var.targetgroupbinding_enabled
+          targetGroupARN = var.aws_tg_arns["router"]
         }
       }
       medha = {

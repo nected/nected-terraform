@@ -401,3 +401,24 @@ variable "agic_internal" {
   description = "Application gateway Internal or Public"
   default     = false
 }
+
+variable "aws_certificate_arn" {
+  type        = string
+  description = "AWS Certificate Manager - Cert ARN"
+  default     = ""
+}
+
+variable "ui_domain" {
+  type        = string
+  description = "Domain name for the UI service"
+}
+
+variable "backend_domain" {
+  type        = string
+  description = "Domain name for the backend service"
+}
+
+variable "router_domain" {
+  type        = string
+  description = "Domain name for the router service"
+}

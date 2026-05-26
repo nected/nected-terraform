@@ -24,6 +24,8 @@ resource "aws_security_group" "rds" {
     Environment = var.environment
     Name        = "${var.project}-psql-sg-${var.environment}"
   })
+
+  depends_on = [module.vpc]
 }
 
 module "postgres" {
@@ -72,4 +74,6 @@ module "postgres" {
     Environment = var.environment
     Name        = "${var.project}-psql-${var.environment}"
   })
+
+  depends_on = [module.vpc, aws_security_group.rds]
 }

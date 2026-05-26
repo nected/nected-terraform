@@ -38,6 +38,9 @@ resource "aws_security_group" "opensearch" {
     Environment = var.environment
     Name        = "${var.project}-search-sg-${var.environment}"
   })
+  depends_on = [
+    module.vpc
+  ]
 }
 
 module "opensearch" {
@@ -103,4 +106,9 @@ module "opensearch" {
     Environment = var.environment
     Name        = "${var.project}-search-sg-${var.environment}"
   })
+
+  depends_on = [
+    module.vpc,
+    aws_security_group.opensearch
+  ]
 }

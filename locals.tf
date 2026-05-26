@@ -34,19 +34,8 @@ locals {
     "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.agic_ssl_certificate_identifer
   } : {}
 
-  aws_ingress_annotations = local.is_aws ? {
-    "kubernetes.io/ingress.class"                = "alb"
-    "alb.ingress.kubernetes.io/load-balancer-name" = "${var.project}-${var.environment}"
-    "alb.ingress.kubernetes.io/group.name"       = "${var.project}-alb-${var.environment}"
-    "alb.ingress.kubernetes.io/certificate-arn"  = var.aws_certificate_arn
-    "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}, {\"HTTPS\":443}]"
-    "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
-    # "alb.ingress.kubernetes.io/scheme"           = var.agic_internal ? "internal" : "internet-facing"
-    # "alb.ingress.kubernetes.io/subnets"          = var.agic_internal ? join(",", module.aws_infra[0].private_subnets) : join(",", module.aws_infra[0].public_subnets)
-    # "alb.ingress.kubernetes.io/security-groups"  = module.aws_infra[0].alb_sg
-    "alb.ingress.kubernetes.io/target-type"      = "ip"
-    "alb.ingress.kubernetes.io/healthcheck-path" = "/"
-  } : {}
-
-  ingress_annotations = local.is_azure ? local.az_ingress_annotations : local.aws_ingress_annotations
+  ingress_annotations        = local.is_azure ? local.az_ingress_annotations : {}
+  ingress_enabled            = local.is_azure ? true : false
+  targetgroupbinding_enabled = local.is_aws ? true : false
+  aws_tg_arns                = local.is_aws ? module.aws_infra[0].target_group_arns : {}
 }

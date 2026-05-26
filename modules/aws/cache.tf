@@ -35,6 +35,10 @@ resource "aws_security_group" "valkey" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  depends_on = [
+    module.vpc
+  ]
 }
 
 module "valkey" {
@@ -75,4 +79,9 @@ module "valkey" {
     Environment = var.environment
     Name        = "${var.project}-cache-${var.environment}"
   })
+
+  depends_on = [
+    aws_security_group.valkey,
+    module.vpc
+  ]
 }

@@ -4,6 +4,7 @@
 resource "aws_iam_role" "aws_lbc" {
   name               = "${var.eks_cluster_name}-aws-lbc-${var.environment}"
   assume_role_policy = data.aws_iam_policy_document.aws_pod_identity_trust_policy.json
+  #assume_role_policy = data.aws_iam_policy_document.aws_lbc_assume_role_policy.json
 }
 
 resource "aws_iam_policy" "aws_lbc" {

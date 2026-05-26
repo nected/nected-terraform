@@ -169,9 +169,13 @@ module "aws_infra" {
 
   count = local.is_aws ? 1 : 0
 
-  project     = var.project
-  environment = var.environment
-  agic_internal = var.agic_internal
+  project             = var.project
+  environment         = var.environment
+  agic_internal       = var.agic_internal
+  aws_certificate_arn = var.aws_certificate_arn
+  backend_domain      = local.backend_domain
+  router_domain       = local.router_domain
+  ui_domain           = local.ui_domain
 
   # Network
   vpc_cidr                  = var.vpc_cidr
@@ -235,10 +239,12 @@ module "aws_infra" {
 module "aws_alb" {
   count = local.is_aws && var.app == true ? 1 : 0
 
-  source           = "./modules/apps/aws"
-  eks_cluster_name = module.aws_infra[0].eks_cluster_name
-  vpc_id           = module.aws_infra[0].vpc_id
-  environment      = var.environment
+  source                = "./modules/apps/aws"
+  eks_cluster_name      = module.aws_infra[0].eks_cluster_name
+  vpc_id                = module.aws_infra[0].vpc_id
+  environment           = var.environment
+  eks_oidc_provider_arn = module.aws_infra[0].eks_oidc_provider_arn
+  eks_oidc_provider_url = module.aws_infra[0].eks_cluster_oidc_issuer_url
 
   depends_on = [
     module.aws_infra
@@ -291,6 +297,10 @@ module "nected_app_aws" {
   ingress_annotations         = local.ingress_annotations
   nected_existing_secret_name = var.nected_existing_secret_name
   nected_common_secret_value  = var.nected_common_secret_value
+
+  ingress_enabled            = local.ingress_enabled
+  targetgroupbinding_enabled = local.targetgroupbinding_enabled
+  aws_tg_arns                = local.aws_tg_arns
 
   depends_on = [
     module.aws_alb,

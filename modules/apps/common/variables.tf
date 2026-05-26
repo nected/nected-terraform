@@ -133,7 +133,7 @@ variable "elasticsearch_port" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.35"
+  default     = "0.4.43"
 }
 
 variable "scheme" {
@@ -322,4 +322,25 @@ variable "namespace" {
   type        = string
   default     = "default"
   description = "K8s Namespace"
+}
+
+variable "ingress_enabled" {
+  type        = bool
+  description = "Ingress Enabled"
+  default     = true
+}
+
+variable "targetgroupbinding_enabled" {
+  type        = bool
+  description = "Target Group Binding Enabled"
+  default     = false
+}
+
+variable "aws_tg_arns" {
+  type = object({
+    ui      = optional(string, "")
+    backend = optional(string, "")
+    router  = optional(string, "")
+  })
+  default = {}
 }

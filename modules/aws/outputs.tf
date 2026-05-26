@@ -10,6 +10,10 @@ output "eks_oidc_provider" {
   value = module.eks_cluster.oidc_provider
 }
 
+output "eks_oidc_provider_arn" {
+  value = module.eks_cluster.oidc_provider_arn
+}
+
 output "eks_cluster_certificate_authority_data" {
   value = module.eks_cluster.cluster_certificate_authority_data
 }
@@ -63,4 +67,8 @@ output "cache_tls_enabled" {
 
 output "alb_sg" {
   value = aws_security_group.alb.id
+}
+
+output "target_group_arns" {
+  value = { for k, tg in aws_lb_target_group.this : k => tg.arn }
 }
