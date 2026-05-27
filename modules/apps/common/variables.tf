@@ -148,6 +148,51 @@ variable "nected_existing_secret_name" {
   default     = ""
 }
 
+variable "nected_custom_ca" {
+  description = "Custom CA configuration mounted into Nected pods"
+
+  type = object({
+    enabled    = optional(bool, false)
+    secretName = optional(string, "")
+
+    items = optional(list(object({
+      key  = string
+      path = string
+    })), [])
+
+    includeSystemBundle = optional(bool, true)
+
+    trustBundlePaths = optional(
+      list(string),
+      [
+        "/etc/ssl/certs/ca-certificates.crt",
+        "/etc/ssl/cert.pem"
+      ]
+    )
+
+    defaultMode = optional(string, "0444")
+
+    initContainer = optional(object({
+      image           = optional(string, "")
+      imagePullPolicy = optional(string, "")
+
+      resources = optional(object({
+        requests = optional(object({
+          cpu    = optional(string)
+          memory = optional(string)
+        }), {})
+
+        limits = optional(object({
+          cpu    = optional(string)
+          memory = optional(string)
+        }), {})
+      }), {})
+    }), {})
+  })
+
+  default = {}
+}
+
 variable "nected_env_overrides" {
   type        = map(map(string))
   description = "nalanda services envVars keys"

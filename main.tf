@@ -151,6 +151,7 @@ module "azure_nected_app" {
   ingress_annotations         = local.ingress_annotations
   nected_existing_secret_name = var.nected_existing_secret_name
   nected_common_secret_value  = var.nected_common_secret_value
+  nected_custom_ca            = var.nected_custom_ca
 
   helm_disable_openapi_validation = var.az_helm_disable_openapi_validation
 
@@ -296,6 +297,7 @@ module "nected_app_aws" {
   nected_pre_shared_key       = var.nected_pre_shared_key
   ingress_annotations         = local.ingress_annotations
   nected_existing_secret_name = var.nected_existing_secret_name
+  nected_custom_ca            = var.nected_custom_ca
   nected_common_secret_value  = var.nected_common_secret_value
 
   ingress_enabled            = local.ingress_enabled
