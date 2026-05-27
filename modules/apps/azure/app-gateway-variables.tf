@@ -95,3 +95,13 @@ variable "agic_internal" {
   description = "Application gateway Internal or Public"
   default     = false
 }
+
+variable "project" {
+  type        = string
+  description = "Project Name"
+}
+
+variable "environment" {
+  type        = string
+  description = "Environment Name"
+}

@@ -2,15 +2,8 @@ resource "helm_release" "temporal" {
   name       = "temporal"
   repository = "https://charts.nected.io"
   chart      = "temporal"
-  namespace  = "default"
+  namespace  = var.namespace
   version    = var.temporal_chart_version
-
-  depends_on = [
-    azurerm_kubernetes_cluster.k8s,
-    azurerm_postgresql_flexible_server.postgresql,
-    azurerm_linux_virtual_machine.elasticsearch,
-    azurerm_linux_virtual_machine.cassandra
-  ]
 
   values = [
     yamlencode({
@@ -52,11 +45,11 @@ resource "helm_release" "temporal" {
             enableGlobalNamespace    = true
             replicationConsumer      = { type = "rpc" }
             failoverVersionIncrement = 100
-            masterClusterName        = local.temporal_cluster_name
-            currentClusterName       = local.temporal_cluster_name
+            masterClusterName        = var.temporal_cluster_name
+            currentClusterName       = var.temporal_cluster_name
 
             clusterInformation = {
-              "${local.temporal_cluster_name}" = {
+              "${var.temporal_cluster_name}" = {
                 enabled                = true
                 initialFailoverVersion = 1
                 rpcName                = "frontend"
@@ -67,13 +60,13 @@ resource "helm_release" "temporal" {
 
           persistence = {
             default = {
-              driver = "${local.temporal_persistant_driver}"
+              driver = "${var.temporal_persistant_driver}"
               sql = {
                 driver          = "postgres12"
                 maxConns        = 20
                 maxConnLifetime = "30m"
                 connectTimeout  = "5s"
-                host            = azurerm_postgresql_flexible_server.postgresql.fqdn
+                host            = var.postgresql_host
                 port            = 5432
                 user            = var.pg_admin_user
                 password        = var.pg_admin_passwd
@@ -83,7 +76,7 @@ resource "helm_release" "temporal" {
                 }
               }
               cassandra = {
-                hosts    = "${local.seed_node_list}"
+                hosts    = "${var.seed_node_list}"
                 port     = 9042
                 keyspace = "temporal"
                 user     = ""
@@ -215,9 +208,9 @@ resource "helm_release" "temporal" {
       elasticsearch = {
         external = true
         enabled  = false
-        host     = "${azurerm_linux_virtual_machine.elasticsearch.private_ip_address}"
-        scheme   = "http"
-        port     = 9200
+        host     = "${var.elasticsearch_ip}"
+        scheme   = "${var.elasticsearch_scheme}"
+        port     = "${var.elasticsearch_port}"
         version  = "v7"
         username = "${var.elasticsearch_admin_username}"
         password = "${var.elasticsearch_admin_password}"

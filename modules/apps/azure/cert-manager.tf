@@ -7,10 +7,6 @@ resource "helm_release" "cert_manager_crds" {
   version          = "v1.19.1"
   namespace        = "cert-manager"
   create_namespace = true
-
-  depends_on = [
-    azurerm_kubernetes_cluster.k8s
-  ]
 }
 
 resource "helm_release" "cert-manager" {
@@ -20,10 +16,9 @@ resource "helm_release" "cert-manager" {
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
   namespace  = "cert-manager"
-  version    = "1.19.1"
+  version    = "v1.20.2"
 
   depends_on = [
-    azurerm_kubernetes_cluster.k8s,
     helm_release.cert_manager_crds
   ]
 
@@ -58,25 +53,25 @@ resource "helm_release" "cert-manager" {
                   subscriptionID: ${data.azurerm_client_config.current.subscription_id}
                   environment: AzurePublicCloud
                   managedIdentity:
-                    clientID: ${azurerm_user_assigned_identity.identity.client_id}
+                    clientID: ${var.identity_client_id}
 
     - |
       apiVersion: cert-manager.io/v1
       kind: Certificate
       metadata:
-        name: ${local.cert_secret_name}
+        name: ${var.cert_secret_name}
         namespace: ${var.namespace}
       spec:
-        secretName: ${local.cert_secret_name}
+        secretName: ${var.cert_secret_name}
         issuerRef:
           name: letsencrypt-prod
           kind: ClusterIssuer
         commonName: ${var.base_domain}
         dnsNames:
           - ${var.base_domain}
-          - ${local.router_domain}
-          - ${local.ui_domain}
-          - ${local.backend_domain}
+          - ${var.router_domain}
+          - ${var.ui_domain}
+          - ${var.backend_domain}
   EOF
   ]
 }
@@ -94,16 +89,15 @@ resource "helm_release" "azurecert" {
 
   values = [
     yamlencode({
-      KEYVAULT_NAME = "${local.cert_vault_name}"
-      CERT_NAME     = "${local.cert_secret_name}"
-      CLIENT_ID     = "${azurerm_user_assigned_identity.identity.client_id}"
+      KEYVAULT_NAME = "${var.cert_vault_name}"
+      CERT_NAME     = "${var.cert_secret_name}"
+      CLIENT_ID     = "${var.identity_client_id}"
       SCHEDULE      = "0 0 * * 0"
     })
   ]
 
   depends_on = [
     helm_release.cert-manager,
-    azurerm_key_vault.ssl_certs_vault
   ]
 }
 

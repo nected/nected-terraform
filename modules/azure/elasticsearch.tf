@@ -15,7 +15,10 @@ resource "azurerm_network_interface" "elasticsearch" {
     managed-by  = "terraform"
   }
 
-  depends_on = [azurerm_virtual_network.prod]
+  depends_on = [
+    azurerm_virtual_network.prod,
+    azurerm_subnet_nat_gateway_association.this,
+  ]
 }
 
 # Elasticsearch Installation Script

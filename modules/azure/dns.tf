@@ -1,3 +1,17 @@
+# Public IP for Application Gateway
+resource "azurerm_public_ip" "appgw_pip" {
+  name                = "${var.project}-appgw-pip-${var.environment}"
+  resource_group_name = local.resource_group_name
+  location            = local.resource_group_location
+  allocation_method   = "Static"
+  sku                 = "Standard"
+
+  tags = {
+    Environment = var.environment
+    createdby   = "terraform"
+  }
+}
+
 resource "azurerm_dns_a_record" "router" {
   count = var.az_hosted_zone == false ? 0 : 1
 

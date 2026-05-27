@@ -2,19 +2,14 @@ resource "helm_release" "nected" {
   name       = "nected"
   repository = "https://charts.nected.io"
   chart      = "nected"
-  namespace  = "default"
+  namespace  = var.namespace
   timeout    = 600
   version    = var.nected_chart_version
 
+  disable_openapi_validation = var.helm_disable_openapi_validation
+
   depends_on = [
-    azurerm_kubernetes_cluster.k8s,
-    helm_release.agic,
     helm_release.temporal,
-    helm_release.cert-manager,
-    azurerm_postgresql_flexible_server.postgresql,
-    helm_release.datastore,
-    azurerm_redis_cache.redis,
-    time_sleep.wait_for_redis
   ]
 
   values = [
@@ -45,16 +40,11 @@ resource "helm_release" "nected" {
           } : {}
         )
         ingress = {
-          enabled = "true"
-          annotations = {
-            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
-            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
-            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
-            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
-          }
+          enabled     = var.ingress_enabled
+          annotations = var.ingress_annotations
           hosts = [
             {
-              host = local.ui_domain
+              host = var.ui_domain
               paths = [
                 {
                   path     = "/"
@@ -65,13 +55,18 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              hosts = [local.ui_domain]
+              hosts = [var.ui_domain]
             }
           ]
+        }
+        targetGroupBinding = {
+          enabled        = var.targetgroupbinding_enabled
+          targetGroupARN = var.aws_tg_arns["ui"]
         }
       }
       nalanda = {
         existingSecret = var.nected_existing_secret_name
+        customCA       = var.nected_custom_ca
         envVars        = merge(local.nalanda_base_env, lookup(var.nected_env_overrides, "nalanda", {}))
 
         autoSetup = {
@@ -92,16 +87,11 @@ resource "helm_release" "nected" {
         }
 
         ingress = {
-          enabled = "true"
-          annotations = {
-            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
-            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
-            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
-            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
-          }
+          enabled     = var.ingress_enabled
+          annotations = var.ingress_annotations
           hosts = [
             {
-              host = local.backend_domain
+              host = var.backend_domain
               paths = [
                 {
                   path     = "/"
@@ -112,11 +102,15 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              hosts = [local.backend_domain]
+              hosts = [var.backend_domain]
             }
           ]
         }
 
+        targetGroupBinding = {
+          enabled        = var.targetgroupbinding_enabled
+          targetGroupARN = var.aws_tg_arns["backend"]
+        }
         resources = merge(
           {
             requests = {
@@ -143,6 +137,7 @@ resource "helm_release" "nected" {
 
       vidhaan-executer = {
         existingSecret = var.nected_existing_secret_name
+        customCA       = var.nected_custom_ca
         envVars        = merge(local.vidhaan_base_env, lookup(var.nected_env_overrides, "vidhaan", {}))
 
         resources = merge(
@@ -171,6 +166,7 @@ resource "helm_release" "nected" {
 
       vidhaan-router = {
         existingSecret = var.nected_existing_secret_name
+        customCA       = var.nected_custom_ca
         envVars        = merge(local.vidhaan_base_env, lookup(var.nected_env_overrides, "vidhaan", {}))
 
         resources = merge(
@@ -196,16 +192,11 @@ resource "helm_release" "nected" {
           targetMemoryUtilizationPercentage = 85
         }
         ingress = {
-          enabled = "true"
-          annotations = {
-            "kubernetes.io/ingress.class"                       = "azure/application-gateway"
-            "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
-            "appgw.ingress.kubernetes.io/use-private-ip"        = local.ingress_use_private
-            "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.alb_listener_cert_name
-          }
+          enabled     = var.ingress_enabled
+          annotations = var.ingress_annotations
           hosts = [
             {
-              host = local.router_domain
+              host = var.router_domain
               paths = [
                 {
                   path     = "/"
@@ -216,13 +207,18 @@ resource "helm_release" "nected" {
           ]
           tls = [
             {
-              hosts = [local.router_domain]
+              hosts = [var.router_domain]
             }
           ]
+        }
+        targetGroupBinding = {
+          enabled        = var.targetgroupbinding_enabled
+          targetGroupARN = var.aws_tg_arns["router"]
         }
       }
       medha = {
         existingSecret = var.nected_existing_secret_name
+        customCA       = var.nected_custom_ca
         envVars        = merge(local.medha_base_env, lookup(var.nected_env_overrides, "medha", {}))
 
         livenessProbe = {
@@ -258,6 +254,7 @@ resource "helm_release" "nected" {
       garuda = {
         enabled        = var.nected_enable_garuda
         existingSecret = var.nected_existing_secret_name
+        customCA       = var.nected_custom_ca
         envVars        = merge(local.garuda_base_env, lookup(var.nected_env_overrides, "garuda", {}))
 
         livenessProbe = {

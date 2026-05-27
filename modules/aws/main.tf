@@ -1,0 +1,114 @@
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "6.6.1"
+
+  count = var.existing_vpc_id == "null" ? 1 : 0
+
+  name = "${var.project}-${var.environment}"
+  cidr = var.vpc_cidr
+
+  azs              = var.azs
+  public_subnets   = [for k, v in var.azs : cidrsubnet(var.vpc_cidr, var.subnet_newbits["public"], k + length(var.azs))]
+  private_subnets  = [for k, v in var.azs : cidrsubnet(var.vpc_cidr, var.subnet_newbits["private"], k + length(var.azs))]
+  database_subnets = [for k, v in var.azs : cidrsubnet(var.vpc_cidr, var.subnet_newbits["db"], k + length(var.azs))]
+
+  enable_nat_gateway = var.enable_nat_gateway
+  single_nat_gateway = var.single_nat_gateway
+
+  tags = merge(var.tags, {
+    Environment = var.environment
+    Name        = "${var.project}-${var.environment}"
+  })
+}
+
+resource "aws_security_group" "alb" {
+  name   = "${var.project}-alb-${var.environment}"
+  vpc_id = local.vpc_id
+
+  ingress {
+    description = "Allow HTTP Traffic"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "Allow HTTPS Traffic"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  depends_on = [module.vpc]
+}
+
+module "eks_cluster" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 21.17"
+
+  name               = "${var.project}-${var.environment}"
+  kubernetes_version = var.kubernetes_version
+
+  # EKS Addons
+  addons = {
+    coredns = {}
+    eks-pod-identity-agent = {
+      before_compute = true
+    }
+    kube-proxy = {}
+    vpc-cni = {
+      before_compute = true
+    }
+  }
+
+  endpoint_private_access = var.endpoint_private_access
+  endpoint_public_access  = var.endpoint_public_access
+
+  enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
+
+  vpc_id     = local.vpc_id
+  subnet_ids = local.private_subnets
+
+  # Default it will be public
+
+  tags = merge(var.tags, {
+    Environment = var.environment
+    Name        = "${var.project}-${var.environment}"
+  })
+
+  node_security_group_additional_rules = {
+    alb_ingress = {
+      description              = "Allow all traffic from ALB"
+      protocol                 = "-1"
+      from_port                = 0
+      to_port                  = 0
+      type                     = "ingress"
+      source_security_group_id = aws_security_group.alb.id
+    }
+  }
+  eks_managed_node_groups = {
+    default = {
+      name           = "${var.project}-${var.environment}-default"
+      min_size       = var.node_min_count
+      max_size       = var.node_max_count
+      desired_size   = var.node_desired_count
+      instance_types = var.node_instance_types
+
+      labels = {
+        nodegroup = "default"
+        cluster   = "${var.project}-${var.environment}"
+      }
+    }
+  }
+}

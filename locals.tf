@@ -1,145 +1,41 @@
 locals {
-  subscription_id            = data.azurerm_client_config.current.subscription_id
-  resource_group_name        = data.azurerm_resource_group.rg.name
-  resource_group_location    = data.azurerm_resource_group.rg.location
-  hosted_zone_rg             = var.hosted_zone_rg == "null" ? local.resource_group_name : var.hosted_zone_rg
-  temporal_persistant_driver = var.cassandra_node_count != 0 ? "cassandra" : "sql"
+  is_azure = var.cloud_provider == "azure"
+  is_aws   = var.cloud_provider == "aws"
 
-  vnet_name = var.existing_vnet_name != "" ? data.azurerm_virtual_network.existing[0].name : azurerm_virtual_network.prod[0].name
+  k8s_host                   = local.is_azure ? data.azurerm_kubernetes_cluster.k8s[0].kube_config[0].host : ""
+  k8s_client_certificate     = local.is_azure ? data.azurerm_kubernetes_cluster.k8s[0].kube_config[0].client_certificate : ""
+  k8s_client_key             = local.is_azure ? data.azurerm_kubernetes_cluster.k8s[0].kube_config[0].client_key : ""
+  k8s_cluster_ca_certificate = local.is_azure ? data.azurerm_kubernetes_cluster.k8s[0].kube_config[0].cluster_ca_certificate : ""
 
-  vnet_id = var.existing_vnet_name != "" ? data.azurerm_virtual_network.existing[0].id : azurerm_virtual_network.prod[0].id
+  eks_host       = local.is_aws ? data.aws_eks_cluster.this[0].endpoint : ""
+  eks_ca_cert    = local.is_aws ? data.aws_eks_cluster.this[0].certificate_authority[0].data : ""
+  eks_auth_token = local.is_aws ? data.aws_eks_cluster_auth.this[0].token : ""
 
-  subnets_to_create = {
-    for name, subnet in local.subnets : name => subnet
-    if var.existing_vnet_name == ""
-  }
+  backend_domain = "${var.backend_domain_prefix}.${var.base_domain}"
+  router_domain  = "${var.router_domain_prefix}.${var.base_domain}"
+  ui_domain      = "${var.ui_domain_prefix}.${var.base_domain}"
 
-  nsg_to_create = {
-    for name, subnet in local.subnets : name => subnet
-    if lookup(subnet, "security_rules", null) != null
-  }
+  agic_ssl_certificate_identifer = "${var.project}-ssl-certificate"
+  elasticsearch_ip               = local.is_azure ? module.azure_infra[0].elasticsearch_ip : module.aws_infra[0].opensearch_domain_endpoint
+  elasticsearch_admin_username   = local.is_azure ? var.elasticsearch_admin_username : var.opensearch_admin_username
+  elasticsearch_admin_password   = local.is_azure ? var.elasticsearch_admin_password : var.opensearch_admin_password
+  seed_node_list                 = local.is_azure ? module.azure_infra[0].cassandra_seed_node_list : []
+  postgresql_host                = local.is_azure ? module.azure_infra[0].postgresql_host : module.aws_infra[0].rds_endpoint
 
-  subnets_to_private = {
-    for name, subnet in local.subnets_to_create : name => subnet
-    if contains(var.private_subnets, name) && var.existing_vnet_name == ""
-  }
+  redis_tls_enabled = local.is_azure ? module.azure_infra[0].redis_tls_enabled : module.aws_infra[0].cache_tls_enabled
+  redis_endpoint    = local.is_azure ? module.azure_infra[0].redis_endpoint : module.aws_infra[0].cache_endpoint
+  redis_port        = local.is_azure ? module.azure_infra[0].redis_port : module.aws_infra[0].cache_port
+  redis_password    = local.is_azure ? module.azure_infra[0].redis_password : module.aws_infra[0].cache_auth_token
 
-  subnets_to_lookup = var.existing_vnet_name != "" ? var.existing_subnets : {}
+  az_ingress_annotations = local.is_azure ? {
+    "kubernetes.io/ingress.class"                       = "azure/application-gateway"
+    "appgw.ingress.kubernetes.io/ssl-redirect"          = "true"
+    "appgw.ingress.kubernetes.io/use-private-ip"        = var.agic_internal ? "true" : "false"
+    "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.agic_ssl_certificate_identifer
+  } : {}
 
-  # NAT Gateway needed only when there are private subnets being created
-  create_nat_gateway = length(local.subnets_to_private) > 0 && var.existing_vnet_name == ""
-
-  subnets = {
-    psql = {
-      address_prefixes = cidrsubnet(var.vnet_address_space, 8, 1)
-      delegation       = true
-      security_rules = [
-        {
-          port                  = "5432"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        }
-      ]
-      service_endpoints = ["Microsoft.Storage", "Microsoft.KeyVault"]
-    },
-    redis = {
-      address_prefixes = cidrsubnet(var.vnet_address_space, 8, 2)
-      delegation       = false
-      security_rules = [
-        {
-          port                  = "6379"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        },
-        {
-          port                  = "6380"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        }
-      ]
-      service_endpoints = ["Microsoft.Storage"]
-    },
-    aks = {
-      address_prefixes = cidrsubnet(var.vnet_address_space, 6, 1)
-      delegation       = false
-      security_rules = [
-        {
-          port                  = "443"
-          direction             = "Inbound"
-          source_address_prefix = "0.0.0.0/0"
-        },
-        {
-          port                  = "0-65535"
-          direction             = "Outbound"
-          source_address_prefix = "0.0.0.0/0"
-        }
-      ]
-      service_endpoints = ["Microsoft.ContainerRegistry", "Microsoft.Storage", "Microsoft.KeyVault", "Microsoft.AzureActiveDirectory"]
-    }
-    private = {
-      address_prefixes = cidrsubnet(var.vnet_address_space, 6, 2)
-      delegation       = false
-      security_rules = [
-        {
-          port                  = "22"
-          direction             = "Inbound"
-          source_address_prefix = "0.0.0.0/0"
-        },
-        {
-          port                  = "9200"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        },
-        {
-          port                  = "9042"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        },
-        {
-          port                  = "7000"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        },
-        {
-          port                  = "7199"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        }
-      ]
-      service_endpoints = ["Microsoft.ContainerRegistry", "Microsoft.Storage"]
-    }
-    appgw = {
-      address_prefixes  = cidrsubnet(var.vnet_address_space, 8, 3)
-      delegation        = false
-      service_endpoints = []
-      security_rules = [
-        {
-          port                  = "443"
-          direction             = "Inbound"
-          source_address_prefix = "0.0.0.0/0"
-        },
-        {
-          port                  = "65200-65535"
-          direction             = "Inbound"
-          source_address_prefix = "Internet"
-        }
-      ]
-      service_endpoints = ["Microsoft.KeyVault"]
-    }
-  }
-  internal_app_gateway_ip        = var.existing_vnet_name != "" ? cidrhost(data.azurerm_subnet.existing["appgw"].address_prefixes[0], 5) : cidrhost(local.subnets.appgw.address_prefixes, 5)
-  public_app_gateway_ip          = azurerm_public_ip.appgw_pip.ip_address
-  public_app_gateway_id          = azurerm_public_ip.appgw_pip.id
-  dns_record_ip                  = var.agic_internal ? local.internal_app_gateway_ip : local.public_app_gateway_ip
-  frontend_ip_configuration_name = "${var.project}-frontend-ip"
-  ingress_use_private            = var.agic_internal ? "true" : "false"
-
-  private_frontend_name = var.agic_internal ? local.frontend_ip_configuration_name : "${var.project}-frontend-ip-not-use"
-  public_frontend_name  = var.agic_internal ? "${var.project}-frontend-ip-not-use" : local.frontend_ip_configuration_name
-
-  redis_tls_enabled = var.use_managed_redis ? "true" : "false"
-  redis_endpoint    = var.use_managed_redis ? azurerm_redis_cache.redis[0].hostname : "datastore-redis-master"
-  redis_port        = var.use_managed_redis ? "6380" : "6379"
-  redis_password    = var.use_managed_redis ? azurerm_redis_cache.redis[0].primary_access_key : ""
+  ingress_annotations        = local.is_azure ? local.az_ingress_annotations : {}
+  ingress_enabled            = local.is_azure ? true : false
+  targetgroupbinding_enabled = local.is_aws ? true : false
+  aws_tg_arns                = local.is_aws ? module.aws_infra[0].target_group_arns : {}
 }
-
