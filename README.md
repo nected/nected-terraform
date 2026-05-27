@@ -103,6 +103,12 @@ aws configure --profile aws-dev
 
 ---
 
+## 🔐 License Key
+To generate your License Key, click below:
+[Get Your License Key](https://www.nected.ai/?license_key=true)
+
+---
+
 ## ⚙️ Configuration
 
 Create `terraform.tfvars` and fill in your deployment values. The file is split into three logical blocks: **common**, **Azure**, **AWS**. Only the block matching `cloud_provider` is consumed; the other can stay at defaults.
