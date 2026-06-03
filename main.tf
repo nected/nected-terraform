@@ -240,12 +240,11 @@ module "aws_infra" {
 module "aws_alb" {
   count = local.is_aws && var.app == true ? 1 : 0
 
-  source                = "./modules/apps/aws"
-  eks_cluster_name      = module.aws_infra[0].eks_cluster_name
-  vpc_id                = module.aws_infra[0].vpc_id
-  environment           = var.environment
-  eks_oidc_provider_arn = module.aws_infra[0].eks_oidc_provider_arn
-  eks_oidc_provider_url = module.aws_infra[0].eks_cluster_oidc_issuer_url
+  source           = "./modules/apps/aws"
+  eks_cluster_name = module.aws_infra[0].eks_cluster_name
+  vpc_id           = module.aws_infra[0].vpc_id
+  environment      = var.environment
+  aws_region       = var.aws_region
 
   depends_on = [
     module.aws_infra

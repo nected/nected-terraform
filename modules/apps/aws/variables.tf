@@ -13,10 +13,8 @@ variable "environment" {
   description = "Environment to deploy"
 }
 
-variable "eks_oidc_provider_arn" {
-
-}
-
-variable "eks_oidc_provider_url" {
+variable "aws_region" {
+  type = string
+  description = "AWS Region"
 
 }
