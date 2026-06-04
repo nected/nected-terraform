@@ -17,9 +17,7 @@ variable "temporal_persistant_driver" {
   default     = "sql"
 }
 
-variable "postgresql_host" {
-
-}
+variable "postgresql_host" {}
 
 variable "pg_admin_user" {
   type        = string
@@ -133,7 +131,7 @@ variable "elasticsearch_port" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.43"
+  default     = "0.4.44"
 }
 
 variable "scheme" {

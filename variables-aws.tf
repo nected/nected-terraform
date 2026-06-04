@@ -89,6 +89,12 @@ variable "eks_endpoint_public_access" {
   default     = true
 }
 
+variable "route53_hosted_zone" {
+  type        = bool
+  description = "When false, DNS entry and ACM certificate will not be created."
+  default     = true
+}
+
 # SSL certificate ARN
 variable "aws_certificate_arn" {
   type        = string
@@ -96,7 +102,7 @@ variable "aws_certificate_arn" {
   default     = ""
 
   validation {
-    condition     = var.cloud_provider != "aws" || length(trimspace(var.aws_certificate_arn)) > 0
+    condition     = var.cloud_provider != "aws" || length(trimspace(var.aws_certificate_arn)) > 0 || var.route53_hosted_zone
     error_message = "aws_certificate_arn must not be empty when cloud_provider is \"aws\"."
   }
 }

@@ -177,6 +177,8 @@ module "aws_infra" {
   backend_domain      = local.backend_domain
   router_domain       = local.router_domain
   ui_domain           = local.ui_domain
+  hosted_zone_domain  = var.base_domain
+  route53_hosted_zone = var.route53_hosted_zone
 
   # Network
   vpc_cidr                  = var.vpc_cidr

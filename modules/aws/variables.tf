@@ -408,6 +408,16 @@ variable "aws_certificate_arn" {
   default     = ""
 }
 
+variable "hosted_zone_domain" {
+  type        = string
+  description = "Hosted Zone Domain name"
+}
+
+variable "route53_hosted_zone" {
+  type        = bool
+  description = "Is Route53 Hosted zone available"
+}
+
 variable "ui_domain" {
   type        = string
   description = "Domain name for the UI service"
