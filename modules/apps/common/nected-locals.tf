@@ -46,6 +46,8 @@ locals {
     DB_USER                = var.pg_admin_user
     DB_PASSWORD            = var.pg_admin_passwd
     DB_HOST                = var.postgresql_host
+    DB_MAX_IDLE_CONNS      = "20"
+    DB_MAX_OPEN_CONNS      = "30"
     SSL_MODE               = "require"
 
     REDIS_TLS_ENABLED = "${var.redis_tls_enabled}"
@@ -60,13 +62,13 @@ locals {
     AUDIT_LOG_ENABLED = "true"
     SKIP_SUBDOMAINS   = var.router_domain
 
-    TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "8"
-    TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "4"
-    TEMPORAL_EXECUTER_WORKFLOW_CONCURRENT_EXECUTION_SIZE       = "1000"
+    TEMPORAL_EXECUTER_WORKFLOW_TASK_POLLERS                    = "10"
+    TEMPORAL_EXECUTER_ACTIVITY_TASK_POLLERS                    = "10"
+    TEMPORAL_EXECUTER_WORKFLOW_CONCURRENT_EXECUTION_SIZE       = "2000"
     TEMPORAL_EXECUTER_ACTIVITY_CONCURRENT_EXECUTION_SIZE       = "1000"
-    TEMPORAL_EXECUTER_LOCAL_ACTIVITY_CONCURRENT_EXECUTION_SIZE = "3000"
+    TEMPORAL_EXECUTER_LOCAL_ACTIVITY_CONCURRENT_EXECUTION_SIZE = "4000"
     TEMPORAL_EXECUTER_ACTIVITY_EXECUTION_RPS                   = "50000"
-    TEMPORAL_EXECUTER_LOCAL_ACTIVITY_EXECUTION_RPS             = "100000"
+    TEMPORAL_EXECUTER_LOCAL_ACTIVITY_EXECUTION_RPS             = "200000"
   }
   medha_base_env = {
     DB_ENABLED      = "true"

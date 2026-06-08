@@ -19,22 +19,13 @@ resource "helm_release" "temporal" {
             { value = var.temporal_task_partitions, constraints = {} }
           ]
           "history.persistenceMaxQPS" = [
-            { value = 10000, constraints = {} }
+            { value = 18000, constraints = {} }
           ]
           "matching.persistenceMaxQPS" = [
-            { value = 10000, constraints = {} }
+            { value = 6000, constraints = {} }
           ]
           "frontend.persistenceMaxQPS" = [
-            { value = 10000, constraints = {} }
-          ]
-          "frontend.rps" = [
-            { value = 20000, constraints = {} }
-          ]
-          "frontend.namespaceRPS" = [
-            { value = 20000, constraints = {} }
-          ]
-          "frontend.maxNamespaceRPSPerInstance" = [
-            { value = 20000, constraints = {} }
+            { value = 4000, constraints = {} }
           ]
         }
 
@@ -63,7 +54,7 @@ resource "helm_release" "temporal" {
               driver = "${var.temporal_persistant_driver}"
               sql = {
                 driver          = "postgres12"
-                maxConns        = 20
+                maxConns        = 30
                 maxConnLifetime = "30m"
                 connectTimeout  = "5s"
                 host            = var.postgresql_host
