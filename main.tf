@@ -123,6 +123,7 @@ module "azure_nected_app" {
   router_domain                = local.router_domain
   ui_domain                    = local.ui_domain
   namespace                    = var.namespace
+  nected_chart_version         = var.nected_chart_version
 
   pg_admin_user   = var.pg_admin_user
   pg_admin_passwd = var.pg_admin_passwd
@@ -271,6 +272,7 @@ module "nected_app_aws" {
   router_domain                = local.router_domain
   ui_domain                    = local.ui_domain
   namespace                    = var.namespace
+  nected_chart_version         = var.nected_chart_version
 
   pg_admin_user   = var.pg_admin_user
   pg_admin_passwd = var.pg_admin_passwd
