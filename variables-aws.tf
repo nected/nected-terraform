@@ -294,3 +294,20 @@ variable "opensearch_multi_az_enabled" {
   description = "Enable multi-AZ (zone awareness) for OpenSearch. Requires 2 or 3 database subnets; opensearch_instance_count must be a multiple of the subnet count."
   default     = false
 }
+
+## Cassandra
+variable "aws_cassandra_instance_type" {
+  description = "AWS VM Type for Cassandra nodes. c6g.xlage = 4 vCPU / 8GB RAM."
+  type        = string
+  default     = "c6g.xlage"
+}
+
+variable "aws_cassandra_vm_keypair" {
+  type        = string
+  description = "Public Key for Cassandra Node's Login"
+  default     = ""
+  validation {
+    condition     = var.cloud_provider != "aws" || var.cassandra_node_count == 0 || length(var.aws_cassandra_vm_keypair) > 0
+    error_message = "Its mandatory to provide the cassandra vm public key. Generate using:- ssh-keygen -t ed25519 -C '<Descriptive Name>' Then Copy the content from id_ed25519.pub and add in aws_cassandra_vm_keypair in terraform.tfvars"
+  }
+}

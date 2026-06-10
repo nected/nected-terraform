@@ -17,7 +17,10 @@ variable "temporal_persistant_driver" {
   default     = "sql"
 }
 
-variable "postgresql_host" {}
+variable "postgresql_host" {
+  type        = string
+  description = "Postgresql Host"
+}
 
 variable "pg_admin_user" {
   type        = string
@@ -353,6 +356,8 @@ variable "datastore_chart_version" {
 }
 
 variable "elasticsearch_ip" {
+  type        = string
+  description = "ElasticSearch IP"
 }
 
 variable "helm_disable_openapi_validation" {

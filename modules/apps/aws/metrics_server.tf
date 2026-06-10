@@ -6,7 +6,7 @@ resource "helm_release" "metrics_server" {
   namespace  = "kube-system"
   version    = "3.13.0"
 
-  depends_on = [ 
+  depends_on = [
     helm_release.aws_lbc
-   ]
+  ]
 }

@@ -93,46 +93,9 @@ variable "elasticsearch_admin_password" {
   default     = "jeuusbhweh458sgggHGrjfk"
 }
 
-
 variable "elasticsearch_os_disk_size_gb" {
   type        = number
   description = "ElasticSearch OS Disk size"
-  default     = 256
-}
-
-# Cassandra Variables
-variable "cassandra_node_count" {
-  description = "Cassandra Node Count"
-  type        = number
-  default     = 0
-
-  validation {
-    condition     = var.cloud_provider != "azure" || contains([0, 3, 5, 7], var.cassandra_node_count)
-    error_message = "Valid values for cassandra_node_count are (0, 3, 5, 7)."
-  }
-}
-
-variable "cassandra_vm_size" {
-  description = "Azure VM SKU for Cassandra nodes. Standard_D4as_v5 = 4 vCPU / 16GB RAM. Use Standard_A4_v2 for strict 4c/8GB (not recommended for prod)."
-  type        = string
-  default     = "Standard_D4as_v5"
-}
-
-variable "cassandra_admin_password" {
-  description = "SSH admin password for Cassandra VMs"
-  type        = string
-  default     = "Cassandra#123"
-}
-
-variable "cassandra_admin_username" {
-  description = "SSH admin username for Cassandra VMs"
-  type        = string
-  default     = "cassandra"
-}
-
-variable "cassandra_data_disk_size_gb" {
-  description = "Size of data disk per Cassandra node in GB"
-  type        = number
   default     = 256
 }
 
@@ -276,4 +239,23 @@ variable "waf_custom_rules" {
   }))
   description = "List of WAF custom rules for the Application Gateway"
   default     = []
+}
+
+## Cassandra
+variable "az_cassandra_vm_size" {
+  description = "Azure VM SKU for Cassandra nodes. Standard_D4as_v5 = 4 vCPU / 16GB RAM. Use Standard_A4_v2 for strict 4c/8GB (not recommended for prod)."
+  type        = string
+  default     = "Standard_D4as_v5"
+}
+
+variable "cassandra_admin_password" {
+  description = "SSH admin password for Cassandra VMs"
+  type        = string
+  default     = "Cassandra#123"
+}
+
+variable "cassandra_admin_username" {
+  description = "SSH admin username for Cassandra VMs"
+  type        = string
+  default     = "cassandra"
 }

@@ -53,7 +53,7 @@ module "azure_infra" {
 
   # Cassandra
   cassandra_node_count        = var.cassandra_node_count
-  cassandra_vm_size           = var.cassandra_vm_size
+  cassandra_vm_size           = var.az_cassandra_vm_size
   cassandra_admin_password    = var.cassandra_admin_password
   cassandra_admin_username    = var.cassandra_admin_username
   cassandra_data_disk_size_gb = var.cassandra_data_disk_size_gb
@@ -237,6 +237,13 @@ module "aws_infra" {
   opensearch_tls_security_policy      = var.opensearch_tls_security_policy
   opensearch_dedicated_master_enabled = var.opensearch_dedicated_master_enabled
   opensearch_multi_az_enabled         = var.opensearch_multi_az_enabled
+
+  # Cassandra
+  aws_cassandra_vm_keypair    = var.aws_cassandra_vm_keypair
+  cassandra_node_count        = var.cassandra_node_count
+  cassandra_instance_type     = var.aws_cassandra_instance_type
+  cassandra_data_disk_size_gb = var.cassandra_data_disk_size_gb
+
 }
 
 
@@ -278,17 +285,17 @@ module "nected_app_aws" {
   pg_admin_passwd = var.pg_admin_passwd
   postgresql_host = local.postgresql_host
 
-  temporal_pods_resources  = var.temporal_pods_resources
-  temporal_pods_replicas   = var.temporal_pods_replicas
-  temporal_task_partitions = var.temporal_task_partitions
-  temporal_history_shards  = var.temporal_history_shards
-  # temporal_persistant_driver = var.cassandra_node_count != 0 ? "cassandra" : "sql"
+  temporal_pods_resources    = var.temporal_pods_resources
+  temporal_pods_replicas     = var.temporal_pods_replicas
+  temporal_task_partitions   = var.temporal_task_partitions
+  temporal_history_shards    = var.temporal_history_shards
+  temporal_persistant_driver = var.cassandra_node_count != 0 ? "cassandra" : "sql"
+  seed_node_list             = local.seed_node_list
 
   nected_enable_garuda  = var.nected_enable_garuda
   nected_env_overrides  = var.nected_env_overrides
   nected_pods_replicas  = var.nected_pods_replicas
   nected_pods_resources = var.nected_pods_resources
-  # seed_node_list        = local.seed_node_list
 
   use_managed_redis           = var.use_managed_cache
   redis_endpoint              = local.redis_endpoint

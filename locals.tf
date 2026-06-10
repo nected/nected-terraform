@@ -19,7 +19,7 @@ locals {
   elasticsearch_ip               = local.is_azure ? module.azure_infra[0].elasticsearch_ip : module.aws_infra[0].opensearch_domain_endpoint
   elasticsearch_admin_username   = local.is_azure ? var.elasticsearch_admin_username : var.opensearch_admin_username
   elasticsearch_admin_password   = local.is_azure ? var.elasticsearch_admin_password : var.opensearch_admin_password
-  seed_node_list                 = local.is_azure ? module.azure_infra[0].cassandra_seed_node_list : []
+  seed_node_list                 = local.is_azure ? module.azure_infra[0].cassandra_seed_node_list : module.aws_infra[0].seed_node_ips
   postgresql_host                = local.is_azure ? module.azure_infra[0].postgresql_host : module.aws_infra[0].rds_endpoint
 
   redis_tls_enabled = local.is_azure ? module.azure_infra[0].redis_tls_enabled : module.aws_infra[0].cache_tls_enabled

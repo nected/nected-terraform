@@ -33,6 +33,26 @@ variable "environment" {
   default     = "dev"
 }
 
+###############################################
+# Cassandra Variables
+###############################################
+variable "cassandra_node_count" {
+  description = "Cassandra Node Count"
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = contains([0, 3, 5, 7], var.cassandra_node_count)
+    error_message = "Valid values for cassandra_node_count are (0, 3, 5, 7)."
+  }
+}
+
+variable "cassandra_data_disk_size_gb" {
+  description = "Size of data disk per Cassandra node in GB"
+  type        = number
+  default     = 256
+}
+
 ###################################
 ###### Kubernetes Variables #######
 ###################################

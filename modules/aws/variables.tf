@@ -385,13 +385,37 @@ variable "cassandra_node_count" {
 variable "cassandra_instance_type" {
   type        = string
   description = "Cassandra Node Instance Type"
-  default     = "t3.small"
+  default     = "c6g.xlarge"
 }
 
-variable "key_name" {
+variable "aws_cassandra_vm_keypair" {
   type        = string
   description = "Cassandra Node SSH Keyname"
-  default     = "dev-nected"
+  default     = ""
+}
+
+variable "cassandra_root_disk_size_gb" {
+  type        = string
+  description = "Cassandra Data Disk"
+  default     = "100"
+}
+
+variable "cassandra_root_disk_type" {
+  type        = string
+  description = "Cassandra Volume Type"
+  default     = "gp3"
+}
+
+variable "cassandra_data_disk_type" {
+  type        = string
+  description = "Cassandra Volume Type"
+  default     = "gp3"
+}
+
+variable "cassandra_data_disk_size_gb" {
+  type        = string
+  description = "Cassandra Data Disk"
+  default     = "256"
 }
 
 ########

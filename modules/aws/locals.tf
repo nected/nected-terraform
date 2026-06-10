@@ -9,4 +9,7 @@ locals {
   cache_endpoint    = var.use_managed_redis ? module.valkey[0].replication_group_primary_endpoint_address : "datastore-redis-master"
   cache_port        = var.use_managed_redis ? module.valkey[0].replication_group_port : "6379"
 
+  seed_node_ips = [
+    for i in aws_instance.cassandra : i.private_ip if i.tags.Seed == "true"
+  ]
 }
