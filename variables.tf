@@ -382,3 +382,8 @@ variable "agic_internal" {
   default     = false
 }
 
+variable "allowed_lb_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
+  default     = ["0.0.0.0/0"]
+}

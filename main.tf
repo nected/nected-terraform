@@ -175,6 +175,7 @@ module "aws_infra" {
   environment         = var.environment
   agic_internal       = var.agic_internal
   aws_certificate_arn = var.aws_certificate_arn
+  allowed_lb_cidrs    = var.allowed_lb_cidrs
   backend_domain      = local.backend_domain
   router_domain       = local.router_domain
   ui_domain           = local.ui_domain

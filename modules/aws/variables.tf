@@ -456,3 +456,9 @@ variable "router_domain" {
   type        = string
   description = "Domain name for the router service"
 }
+
+variable "allowed_lb_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
+  default     = ["0.0.0.0/0"]
+}

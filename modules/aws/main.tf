@@ -31,7 +31,7 @@ resource "aws_security_group" "alb" {
     to_port     = 80
     protocol    = "tcp"
 
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.allowed_lb_cidrs
   }
 
   ingress {
@@ -40,7 +40,7 @@ resource "aws_security_group" "alb" {
     to_port     = 443
     protocol    = "tcp"
 
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = var.allowed_lb_cidrs
   }
 
   egress {
@@ -88,11 +88,27 @@ module "eks_cluster" {
   })
 
   node_security_group_additional_rules = {
-    alb_ingress = {
-      description              = "Allow all traffic from ALB"
-      protocol                 = "-1"
-      from_port                = 0
-      to_port                  = 0
+    nalanda_ingress_8001 = {
+      description              = "Allow Nalanda traffic from ALB"
+      protocol                 = "TCP"
+      from_port                = 8001
+      to_port                  = 8001
+      type                     = "ingress"
+      source_security_group_id = aws_security_group.alb.id
+    }
+    vidhan_ingress_8002 = {
+      description              = "Allow Vidhan traffic from ALB"
+      protocol                 = "TCP"
+      from_port                = 8002
+      to_port                  = 8002
+      type                     = "ingress"
+      source_security_group_id = aws_security_group.alb.id
+    }
+    konark_ingress_8080 = {
+      description              = "Allow konark traffic from ALB"
+      protocol                 = "TCP"
+      from_port                = 8080
+      to_port                  = 8080
       type                     = "ingress"
       source_security_group_id = aws_security_group.alb.id
     }
