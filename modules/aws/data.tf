@@ -14,7 +14,7 @@ data "aws_iam_policy_document" "opensearch" {
 }
 
 data "aws_route53_zone" "primary" {
-  count = var.route53_hosted_zone && var.aws_certificate_arn == "" ? 1 : 0
+  count = var.route53_hosted_zone ? 1 : 0
 
   name = var.hosted_zone_domain
 }

@@ -74,6 +74,8 @@ module "eks_cluster" {
 
   endpoint_private_access = var.endpoint_private_access
   endpoint_public_access  = var.endpoint_public_access
+  endpoint_public_access_cidrs = var.allowed_eks_cidrs
+
 
   enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 
@@ -86,6 +88,17 @@ module "eks_cluster" {
     Environment = var.environment
     Name        = "${var.project}-${var.environment}"
   })
+
+  security_group_additional_rules = {
+    ingress_443 = {
+      description                = "Access cluster API from External"
+      protocol                   = "tcp"
+      from_port                  = 443
+      to_port                    = 443
+      type                       = "ingress"
+      cidr_blocks                = var.allowed_eks_cidrs
+    }
+  }
 
   node_security_group_additional_rules = {
     nalanda_ingress_8001 = {

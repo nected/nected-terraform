@@ -459,6 +459,10 @@ variable "router_domain" {
 
 variable "allowed_lb_cidrs" {
   type        = list(string)
-  description = "Allowed CIDRS"
-  default     = ["0.0.0.0/0"]
+  description = "Allowed CIDRS to access ALB"
+}
+
+variable "allowed_eks_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS to access EKS Cluster"
 }

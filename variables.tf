@@ -76,6 +76,12 @@ variable "k8s_max_node_count" {
   default = 5
 }
 
+variable "allowed_k8s_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
+  default     = ["0.0.0.0/0"]
+}
+
 # Postgresql Variables
 variable "pg_version" {
   type        = number
