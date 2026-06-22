@@ -10,14 +10,3 @@
 #     # dynamodb_table = "<LOCK_TABLE>" # alternative for Terraform < 1.10
 #   }
 # }
-
-terraform {
-  backend "s3" {
-    bucket       = "nected-tfstate"
-    key          = "nected/terraform.tfstate"
-    region       = "ap-south-1"
-    profile      = "aws-dev"
-    encrypt      = true
-    use_lockfile = true
-  }
-}
