@@ -51,7 +51,7 @@ module "valkey" {
   engine               = var.valkey_engine
   engine_version       = var.valkey_engine_version
   node_type            = var.valkey_node_type
-  num_cache_nodes      = var.valkey_num_cache_nodes
+  num_cache_clusters   = var.valkey_multi_az_enabled ? var.valkey_num_cache_nodes : 1
   port                 = var.valkey_port
 
   subnet_ids = local.database_subnets

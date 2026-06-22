@@ -126,10 +126,10 @@ variable "pg_backup_retention" {
 }
 
 # Redis Variables
-variable "redis_capacity" {
-  type        = number
-  description = "Redis Cache capacity"
-  default     = 1
+variable "redis_sku_name" {
+  type        = string
+  description = "Azure Managed Redis SKU (e.g. Balanced_B0, Balanced_B1, MemoryOptimized_M10)"
+  default     = "Balanced_B0"
 }
 
 variable "use_managed_redis" {
@@ -264,4 +264,14 @@ variable "backend_domain_prefix" {
 variable "ui_domain_prefix" {
   type        = string
   description = "UI Domain "
+}
+
+variable "allowed_gw_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
+}
+
+variable "allowed_aks_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
 }

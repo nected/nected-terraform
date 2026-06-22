@@ -21,11 +21,14 @@ locals {
     REDIS_HOST        = var.redis_endpoint
     REDIS_PORT        = format("%s", var.redis_port)
     REDIS_PASSWORD    = var.redis_password
+    # Azure Managed Redis supports only DB index 0, so pin every service to 0.
+    REDIS_DATABASE = "0"
 
     VIDHAAN_REDIS_TLS_ENABLED = "${var.redis_tls_enabled}"
     VIDHAAN_REDIS_HOST        = var.redis_endpoint
     VIDHAAN_REDIS_PORT        = format("%s", var.redis_port)
     VIDHAAN_REDIS_PASSWORD    = var.redis_password
+    VIDHAAN_REDIS_DATABASE    = "0"
 
     ELASTIC_HOSTS    = "${var.elasticsearch_scheme}://${var.elasticsearch_ip}:${var.elasticsearch_port}"
     ELASTIC_PROVIDER = var.elasticsearch_provider
@@ -53,6 +56,7 @@ locals {
     REDIS_TLS_ENABLED = "${var.redis_tls_enabled}"
     REDIS_HOST        = "${var.redis_endpoint}:${var.redis_port}"
     REDIS_PASSWORD    = var.redis_password
+    REDIS_DATABASE    = "0"
 
     ELASTIC_ADDRESSES = "${var.elasticsearch_scheme}://${var.elasticsearch_ip}:${var.elasticsearch_port}"
     ELASTIC_PROVIDER  = var.elasticsearch_provider
@@ -84,7 +88,7 @@ locals {
     REDIS_HOST        = "${var.redis_endpoint}"
     REDIS_PORT        = "${var.redis_port}"
     REDIS_PASSWORD    = var.redis_password
-    REDIS_DB          = "2"
+    REDIS_DB          = "0"
   }
 }
 
