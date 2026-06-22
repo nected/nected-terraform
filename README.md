@@ -1,7 +1,7 @@
 # 🚀 Nected Terraform Deployment — AWS & Azure
 
 This repository contains Terraform configurations to deploy the full **Nected Platform** stack on **AWS** or **Microsoft Azure**.
-A single root module supports both clouds — pick one by setting `cloud_provider` in `terraform.tfvars`.
+Each cloud has its **own standalone root module** in a dedicated folder — [`aws/`](./aws/) and [`azure/`](./azure/). Pick a cloud by `cd`-ing into its folder and running Terraform there; each folder carries its own `terraform.tfvars`, `backend.tf`, `provider.tf`, and variable definitions. Both roots share the reusable infrastructure under [`modules/`](./modules/).
 
 ## What it deploys
 
@@ -36,20 +36,28 @@ A single root module supports both clouds — pick one by setting `cloud_provide
 
 ```
 .
-├── main.tf, locals.tf, data.tf, provider.tf, outputs.tf
-├── variables.tf                # common variables
-├── variables-aws.tf            # AWS-only variables
-├── variables-azure.tf          # Azure-only variables
-├── terraform.tfvars            # your deployment values
-├── backend.tf                  # remote state config
-└── modules/
-    ├── aws/                    # AWS infra (VPC, EKS, RDS, OpenSearch, ElastiCache)
+├── aws/                        # ── AWS root module (run terraform here for AWS) ──
+│   ├── main.tf, locals.tf, data.tf, provider.tf, outputs.tf
+│   ├── variables.tf            # AWS deployment variables
+│   ├── terraform.tfvars        # your AWS deployment values
+│   └── backend.tf              # AWS S3 remote state config
+│
+├── azure/                      # ── Azure root module (run terraform here for Azure) ──
+│   ├── main.tf, locals.tf, data.tf, provider.tf, outputs.tf
+│   ├── variables.tf            # Azure deployment variables
+│   ├── terraform.tfvars        # your Azure deployment values
+│   └── backend.tf              # Azure Blob remote state config
+│
+└── modules/                    # ── shared, reusable infra (referenced by both roots) ──
+    ├── aws/                    # AWS infra (VPC, EKS, RDS, OpenSearch, ElastiCache, Cassandra)
     ├── azure/                  # Azure infra (VNet, AKS, PG Flexible, Elasticsearch, Cassandra)
-    ├── apps/
-    │   ├── aws/                # ALB + AWS Load Balancer Controller
-    │   ├── azure/              # App Gateway + AGIC + Cert-Manager + WAF
-    │   └── common/             # Nected Helm chart, datastore, Temporal
+    └── apps/
+        ├── aws/                # ALB + AWS Load Balancer Controller
+        ├── azure/              # App Gateway + AGIC + Cert-Manager + WAF
+        └── common/            # Nected Helm chart, datastore, Temporal
 ```
+
+> There is **no `cloud_provider` variable**. The cloud is determined by which folder you run Terraform in.
 
 ---
 
@@ -111,100 +119,39 @@ To generate your License Key, click below:
 
 ## ⚙️ Configuration
 
-Create `terraform.tfvars` and fill in your deployment values. The file is split into three logical blocks: **common**, **Azure**, **AWS**. Only the block matching `cloud_provider` is consumed; the other can stay at defaults.
+Each cloud has its own `terraform.tfvars` inside its folder. Edit only the one for the cloud you're deploying:
 
-### Example `terraform.tfvars`
+* AWS → [`aws/terraform.tfvars`](./aws/terraform.tfvars)
+* Azure → [`azure/terraform.tfvars`](./azure/terraform.tfvars)
+
+Replace the secret placeholders (`<...>`) with your real values. Cassandra backs Temporal by default — set `cassandra_node_count = 0` to fall back to PostgreSQL.
+
+### AWS — `aws/terraform.tfvars`
 
 ```hcl
 ########## Project Configuration ##########
-project        = "nected"
-environment    = "dev"
-app            = true     # deploy apps; false = infra only
-cloud_provider = "azure"  # "aws" or "azure"
+project     = "nected"
+environment = "dev"
+app         = true # deploy apps; false = infra only
 
-######### Common variables ##################
-# K8s
-k8s_version        = "1.33"
-k8s_node_count     = 2
-k8s_min_node_count = 2
-k8s_max_node_count = 5
-
-# PostgreSQL
-pg_version      = 17
-pg_admin_user   = "psqladmin"
-pg_admin_passwd = "<password>"
-
-# Use managed cache (Azure Redis / AWS Valkey). Default deploys redis in-cluster.
-use_managed_cache = false
-
-# Application gateway / ALB private vs public
-agic_internal = false
-
-# Domains
-base_domain           = "<<YOUR_BASE_DOMAIN>>"
+# Domains and load balancer
+agic_internal         = false           # true = internal ALB, false = internet-facing
+allowed_lb_cidrs      = ["0.0.0.0/0"]
+base_domain           = "dev.example.com"
 ui_domain_prefix      = "ui"
 backend_domain_prefix = "backend"
 router_domain_prefix  = "router"
 
 # Console (initial admin user for the Nected UI)
-console_user_email    = "<admin@example.com>"
+console_user_email    = "admin@example.com"
 console_user_password = "<password>"
 
+# ACM certificate for the ALB — REQUIRED for AWS
+# if left blank Terraform will generate the certificate
+aws_certificate_arn = "arn:aws:acm:ap-south-1:<account-id>:certificate/<cert-id>"
+
 # Nected app
-nected_pre_shared_key  = "<NECTED_LICENSE_KEY>"
-temporal_task_partitions = 10
-nected_env_overrides = {
-  nalanda = {
-    # notifications setiings
-    SEND_EMAIL         = "false"
-    EMAIL_PROVIDER     = "smtp"
-    SENDER_EMAIL       = ""
-    SENDER_NAME        = ""
-    EMAIL_INSECURE_TLS = ""
-    EMAIL_HOST         = ""
-    EMAIL_PORT         = ""
-    EMAIL_USERNAME     = ""
-    EMAIL_PASSWORD     = ""
-
-    # to restrict signup/invite user email domain
-    SIGNUP_DOMAINS = ""
-  }
-}
-
-######### Azure variables ##################
-az_subscription_id     = "<SUBSCRIPTION_ID>"
-az_resource_group_name = "<RESOURCE_GROUP>"
-
-# Hosted zone in same or different RG. Set false to skip DNS+cert automation.
-az_hosted_zone = true
-# az_hosted_zone_rg = "<HOSTED_ZONE_RG>"   # if hosted zone lives in another RG
-
-# AKS
-aks_vm_size = "Standard_D4s_v6"
-
-# Postgres
-az_pg_sku_name  = "GP_Standard_D4ds_v5"
-az_pg_disk_size = 65536
-
-# Network — reuse existing or create new
-network_address_space    = "10.5.0.0/16"
-# az_existing_network_name = "my-existing-vnet"
-# az_existing_subnets = {
-#   psql    = "ex-psql"
-#   redis   = "ex-redis"
-#   aks     = "ex-aks"
-#   appgw   = "ex-appgw"
-#   private = "ex-private"
-# }
-
-# SSL — default uses Let's Encrypt via Cert-Manager.
-# To use a pre-uploaded Key Vault certificate instead:
-# az_key_vault_name             = "<KEY_VAULT_NAME>"
-# az_key_vault_certificate_name = "<CERT_NAME>"
-
-# Elasticsearch
-elasticsearch_vm_size        = "Standard_D2ds_v4"
-elasticsearch_admin_password = "<password>"
+nected_pre_shared_key = "<NECTED_LICENSE_KEY>"
 
 ######### AWS variables ##################
 aws_profile = "aws-dev"
@@ -212,43 +159,119 @@ aws_region  = "ap-south-1"
 azs         = ["ap-south-1a", "ap-south-1b"]
 
 # Network — create new VPC or reuse existing
-vpc_cidr = "10.0.0.0/16"
+vpc_cidr                  = "10.0.0.0/16"
 # existing_vpc_id           = "vpc-xxxx"
-# existing_public_subnets   = ["subnet-aaa", "subnet-bbb"]
-# existing_private_subnets  = ["subnet-ccc", "subnet-ddd"]
-# existing_database_subnets = ["subnet-eee", "subnet-fff"]
+# existing_public_subnets   = []
+# existing_private_subnets  = ["subnet-aaa", "subnet-bbb"]
+# existing_database_subnets = ["subnet-aaa", "subnet-bbb"]
 
 # EKS
+k8s_version                = "1.35"
+k8s_node_count             = 2
+k8s_min_node_count         = 2
+k8s_max_node_count         = 5
 eks_node_instance_types    = ["m6a.xlarge"]
+eks_endpoint_public_access = true
+allowed_k8s_cidrs          = ["0.0.0.0/0"]
 
-# ACM certificate for the ALB — REQUIRED when cloud_provider = "aws"
-aws_certificate_arn = "arn:aws:acm:ap-south-1:<account-id>:certificate/<cert-id>"
-
-# RDS Postgres
+# RDS PostgreSQL
+pg_version               = 17
+pg_admin_user            = "psqladmin"
+pg_admin_passwd          = "<password>"
 db_instance_class        = "db.m6g.xlarge"
 db_allocated_storage     = 256
 db_max_allocated_storage = 512
 db_multi_az              = false
 
-# Valkey (Redis-compatible ElastiCache)
-valkey_node_type  = "cache.t4g.small"
-valkey_auth_token = "<auth-token>"
+# Cache — Valkey 
+use_managed_cache       = false
+valkey_engine_version   = "8.0"
+valkey_node_type        = "cache.t4g.small"
+valkey_auth_token       = "<auth-token>"
+valkey_num_cache_nodes  = 1
+valkey_multi_az_enabled = false
 
 # OpenSearch
-opensearch_instance_type            = "r6g.large.search"
-opensearch_instance_count           = 1
-opensearch_admin_password           = "<password>"
-opensearch_volume_size              = 256
-opensearch_dedicated_master_enabled = false
+opensearch_instance_type    = "r6g.large.search"
+opensearch_instance_count   = 1
+opensearch_admin_username   = "elastic"
+opensearch_admin_password   = "<password>"
+opensearch_volume_size      = 256
+opensearch_multi_az_enabled = false
+
 ```
 
-For the full variable list with defaults and descriptions, see [variables.tf](./variables.tf), [variables-aws.tf](./variables-aws.tf), and [variables-azure.tf](./variables-azure.tf).
+### Azure — `azure/terraform.tfvars`
+
+```hcl
+########## Project Configuration ##########
+project     = "nected"
+environment = "dev"
+app         = true # deploy apps; false = infra only
+
+# Domains and application gateway
+agic_internal         = true            # true = internal App Gateway, false = public
+base_domain           = "dev.example.com"
+ui_domain_prefix      = "ui"
+backend_domain_prefix = "backend"
+router_domain_prefix  = "router"
+
+# Console (initial admin user for the Nected UI)
+console_user_email    = "admin@example.com"
+console_user_password = "<password>"
+
+# SSL — default uses Let's Encrypt via Cert-Manager.
+# To use a pre-uploaded Key Vault certificate instead:
+# az_key_vault_name             = "<KEY_VAULT_NAME>"
+# az_key_vault_certificate_name = "<CERT_NAME>"
+
+# Nected app
+nected_pre_shared_key    = "<NECTED_LICENSE_KEY>"
+
+######### Azure variables ##################
+az_subscription_id     = "<SUBSCRIPTION_ID>"
+az_resource_group_name = "<RESOURCE_GROUP>"
+
+# Hosted zone in same or different RG. Set false to skip DNS + cert automation.
+az_hosted_zone = true
+# az_hosted_zone_rg = "<HOSTED_ZONE_RG>"   # if hosted zone lives in another RG
+
+# Network — create new vNet or reuse existing
+network_address_space    = "10.0.0.0/16"
+
+# AKS
+k8s_version        = "1.33"
+k8s_node_count     = 2
+k8s_min_node_count = 2
+k8s_max_node_count = 5
+aks_vm_size        = "Standard_D4ds_v5"
+
+# PostgreSQL Flexible Server
+pg_version      = 17
+pg_admin_user   = "psqladmin"
+pg_admin_passwd = "<password>"
+az_pg_sku_name  = "GP_Standard_D4ds_v5"
+az_pg_disk_size = 65536
+
+# Cache — managed Azure Redis. Default deploys redis in-cluster.
+use_managed_cache = true
+
+# Elasticsearch
+elasticsearch_version         = "8.12.0"
+elasticsearch_vm_size         = "Standard_D2ds_v4"
+elasticsearch_admin_username  = "elastic"
+elasticsearch_admin_password  = "<password>"
+elasticsearch_os_disk_size_gb = 256
+
+```
+
+For the full variable list with defaults and descriptions, see [`aws/variables.tf`](./aws/variables.tf) and [`azure/variables.tf`](./azure/variables.tf).
 
 ---
 
 ## 📦 Remote Terraform State
 
-Pick the backend matching your `cloud_provider`. Edit [backend.tf](./backend.tf) before `terraform init`.
+Each root has its own backend file. Edit the one for the cloud you're deploying before `terraform init`: [`aws/backend.tf`](./aws/backend.tf) or [`azure/backend.tf`](./azure/backend.tf).
 
 ### Azure Blob backend
 
@@ -283,20 +306,35 @@ terraform {
 
 Create the S3 bucket (with versioning enabled) before `init`. If you're on Terraform ≥ 1.10 you can skip the DynamoDB lock table and use `use_lockfile = true` instead.
 
-> Only one `backend` block can be active at a time. Keep the other commented in the file or in a sibling `.tf.example`.
+> The S3 / azurerm backend block is commented out by default so the root inits with local state. Uncomment and fill it in to use remote state.
 
 ---
 
 ## 🏗️ Deployment Steps
 
+Run Terraform from inside the folder for your target cloud.
+
+**AWS**
+
 ```bash
+cd aws
 terraform init
 terraform validate
 terraform plan -out=tfplan
 terraform apply tfplan
 ```
 
-> Validation blocks gated on `cloud_provider` will only enforce per-cloud rules — e.g., `azs`, `aws_certificate_arn` are only required when deploying AWS; `az_hosted_zone`/`az_key_vault_name` cross-checks only fire on Azure.
+**Azure**
+
+```bash
+cd azure
+terraform init
+terraform validate
+terraform plan -out=tfplan
+terraform apply tfplan
+```
+
+> Required values differ per cloud — e.g., `aws_certificate_arn` is required for AWS; `az_subscription_id` / `az_resource_group_name` are required for Azure.
 
 ---
 
