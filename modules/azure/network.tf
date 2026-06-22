@@ -110,8 +110,9 @@ resource "azurerm_network_security_group" "nsg" {
       access                     = "Allow"
       protocol                   = "Tcp"
       source_port_range          = "*"
-      destination_port_ranges    = [security_rule.value.port]
-      source_address_prefix      = security_rule.value.source_address_prefix
+      destination_port_range     = security_rule.value.port
+      source_address_prefix      = lookup(security_rule.value, "source_address_prefix", "") != "" ? security_rule.value.source_address_prefix : ""
+      source_address_prefixes    = lookup(security_rule.value, "source_address_prefixes", []) != [] ? security_rule.value.source_address_prefixes : []
       destination_address_prefix = "*"
     }
   }

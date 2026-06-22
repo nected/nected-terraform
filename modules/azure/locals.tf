@@ -66,7 +66,7 @@ locals {
         {
           port                  = "443"
           direction             = "Inbound"
-          source_address_prefix = "0.0.0.0/0"
+          source_address_prefixes = var.allowed_aks_cidrs
         },
         {
           port                  = "0-65535"
@@ -83,7 +83,7 @@ locals {
         {
           port                  = "22"
           direction             = "Inbound"
-          source_address_prefix = "0.0.0.0/0"
+          source_address_prefix = var.vnet_address_space
         },
         {
           port                  = "9200"
@@ -116,7 +116,7 @@ locals {
         {
           port                  = "443"
           direction             = "Inbound"
-          source_address_prefix = "0.0.0.0/0"
+          source_address_prefixes = var.allowed_gw_cidrs
         },
         {
           port                  = "65200-65535"

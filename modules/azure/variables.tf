@@ -265,3 +265,13 @@ variable "ui_domain_prefix" {
   type        = string
   description = "UI Domain "
 }
+
+variable "allowed_gw_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
+}
+
+variable "allowed_aks_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
+}
