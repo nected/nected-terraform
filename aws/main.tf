@@ -131,11 +131,11 @@ module "nected_app_aws" {
   nected_pods_replicas  = var.nected_pods_replicas
   nected_pods_resources = var.nected_pods_resources
 
-  use_managed_redis           = var.use_managed_cache
-  redis_endpoint              = module.aws_infra.cache_endpoint
-  redis_password              = module.aws_infra.cache_auth_token
-  redis_port                  = module.aws_infra.cache_port
-  redis_tls_enabled           = module.aws_infra.cache_tls_enabled
+  use_managed_redis = var.use_managed_cache
+  redis_endpoint    = module.aws_infra.cache_endpoint
+  redis_password    = module.aws_infra.cache_auth_token
+  redis_port        = module.aws_infra.cache_port
+  redis_tls_enabled = module.aws_infra.cache_tls_enabled
 
   console_user_email          = var.console_user_email
   console_user_password       = var.console_user_password

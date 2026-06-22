@@ -1,18 +1,6 @@
-
-####################################
-######### Common Variables #########
-####################################
-variable "cloud_provider" {
-  description = "Provide the cloud where nected needs to deploy"
-  type        = string
-  default     = "aws"
-
-  validation {
-    condition     = contains(["aws", "azure"], var.cloud_provider)
-    error_message = "cloud_provider must be aws or azure"
-  }
-}
-
+#####################################
+######### Project Variables #########
+#####################################
 variable "app" {
   type        = bool
   description = "Deploy Apps"
@@ -33,24 +21,158 @@ variable "environment" {
   default     = "dev"
 }
 
-###############################################
-# Cassandra Variables
-###############################################
-variable "cassandra_node_count" {
-  description = "Cassandra Node Count"
-  type        = number
-  default     = 0
+################################
+####### AWS Variables ##########
+################################
+variable "aws_region" {
+  type        = string
+  description = "AWS Region"
+  default     = "ap-south-1"
+}
+
+variable "aws_profile" {
+  type        = string
+  description = "AWS Profile"
+  default     = "default"
+}
+
+variable "route53_hosted_zone" {
+  type        = bool
+  description = "When false, DNS entry and ACM certificate will not be created."
+  default     = true
+}
+
+variable "aws_certificate_arn" {
+  type        = string
+  description = "AWS Certificate Manager - Cert ARN"
+  default     = ""
 
   validation {
-    condition     = contains([0, 3, 5, 7], var.cassandra_node_count)
-    error_message = "Valid values for cassandra_node_count are (0, 3, 5, 7)."
+    condition     = length(trimspace(var.aws_certificate_arn)) > 0 || var.route53_hosted_zone
+    error_message = "aws_certificate_arn must not be empty or route53 hosted zone should be available to generate certificate"
   }
 }
 
-variable "cassandra_data_disk_size_gb" {
-  description = "Size of data disk per Cassandra node in GB"
-  type        = number
-  default     = 256
+######################################
+######### App Main Variables #########
+######################################
+# Nected license key
+variable "nected_pre_shared_key" {
+  type    = string
+  default = "1182d659-8c9b-4541-90ac-8546372c326f"
+}
+
+# use load balancer private endpoint
+variable "agic_internal" {
+  type        = bool
+  description = "Loadbalancer Internal or Public"
+  default     = false
+}
+
+# allowed cidrs on lb
+variable "allowed_lb_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
+  default     = ["0.0.0.0/0"]
+}
+
+# App Domains Variables
+variable "base_domain" {
+  type        = string
+  description = "base domain"
+}
+variable "router_domain_prefix" {
+  type        = string
+  description = "Router Domain Prefix"
+  default     = "router"
+}
+
+variable "backend_domain_prefix" {
+  type        = string
+  description = "Backend Domain Prefix"
+  default     = "backend"
+}
+
+variable "ui_domain_prefix" {
+  type        = string
+  description = "UI Domain prefix"
+  default     = "ui"
+}
+variable "console_user_email" {
+  type        = string
+  description = "Console User Email"
+  default     = "dev@nected.ai"
+}
+
+variable "console_user_password" {
+  type        = string
+  description = "Console User Password"
+  default     = "P@ssw0rd#123"
+}
+
+####################################
+####### Network Variables ##########
+####################################
+
+variable "existing_vpc_id" {
+  type        = string
+  description = "Existing VPC Name"
+  default     = "null"
+}
+
+variable "existing_private_subnets" {
+  type        = list(string)
+  description = "Existing Private Subnets"
+  default     = []
+}
+variable "existing_database_subnets" {
+  type        = list(string)
+  description = "Existing DB Private Subnets"
+  default     = []
+}
+
+variable "existing_public_subnets" {
+  type        = list(string)
+  description = "Existing DB Public Subnets"
+  default     = []
+}
+
+variable "vpc_cidr" {
+  description = "VPC CIDR block"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "azs" {
+  description = "Availability zones"
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = length(var.azs) > 0
+    error_message = "provide at least one availability zone in var.azs"
+  }
+
+  validation {
+    condition     = alltrue([for az in var.azs : startswith(az, var.aws_region)])
+    error_message = "every AZ in var.azs must belong to var.aws_region (e.g., ${var.aws_region}a)"
+  }
+}
+
+variable "subnet_newbits" {
+  description = "How many bits to add to the VPC prefix per subnet"
+  type        = map(number)
+  default = {
+    public  = 8
+    private = 6
+    db      = 10
+  }
+}
+
+variable "single_nat_gateway" {
+  description = "Use single NAT Gateway"
+  type        = bool
+  default     = true
 }
 
 ###################################
@@ -82,7 +204,21 @@ variable "allowed_k8s_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
-# Postgresql Variables
+variable "eks_node_instance_types" {
+  type        = list(string)
+  description = "EKS Instance types"
+  default     = ["m6a.xlarge"]
+}
+
+variable "eks_endpoint_public_access" {
+  type        = bool
+  description = "K8s Cluster Endpoint Public Access"
+  default     = true
+}
+
+###################################
+####### Postgresql Variables ######
+###################################
 variable "pg_version" {
   type        = number
   description = "Posgresql Version"
@@ -106,14 +242,249 @@ variable "pg_backup_retention" {
   default     = 7
 }
 
-# Cache
+variable "db_instance_class" {
+  type        = string
+  description = "RDS instance type (e.g., db.t4g.xlarge)"
+  default     = "db.m6g.xlarge"
+}
+variable "db_allocated_storage" {
+  type        = number
+  description = "Posgresql Disk Size"
+  default     = 256
+}
+
+variable "db_max_allocated_storage" {
+  type        = number
+  description = "Posgresql Disk Size"
+  default     = 512
+}
+
+variable "db_storage_type" {
+  type        = string
+  description = "EBS volume type for RDS storage. gp3 recommended over gp2 for better IOPS/throughput at lower cost."
+  default     = "gp3"
+}
+
+variable "db_multi_az" {
+  type        = bool
+  description = "Enable Multi-AZ deployment for high availability"
+  default     = false
+}
+
+variable "db_publicly_accessible" {
+  type        = bool
+  description = "Whether the DB instance is publicly accessible"
+  default     = false
+}
+
+variable "db_deletion_protection" {
+  type        = bool
+  description = "Enable deletion protection for the DB instance"
+  default     = false
+}
+
+variable "maintenance_window" {
+  type        = string
+  description = "Weekly maintenance window (UTC)"
+  default     = "Mon:00:00-Mon:03:00"
+}
+
+variable "backup_window" {
+  type        = string
+  description = "Daily backup window (UTC)"
+  default     = "03:00-06:00"
+}
+
+variable "skip_final_snapshot" {
+  type        = bool
+  description = "Skip final snapshot"
+  default     = true
+}
+
+variable "delete_automated_backups" {
+  type        = bool
+  description = "Delete Automated backup"
+  default     = true
+}
+
+###################################
+########## Valkey Cache ###########
+###################################
 variable "use_managed_cache" {
   type        = bool
   description = "Azure Provided managed redis, if set false redis will be installed in aks cluster"
   default     = false
 }
 
+variable "valkey_port" {
+  type        = number
+  description = "Port on which Valkey (Redis-compatible) runs"
+  default     = 6379
+}
+
+variable "valkey_engine" {
+  type        = string
+  description = "Cache engine type"
+  default     = "valkey"
+}
+
+variable "valkey_engine_version" {
+  type        = string
+  description = "Version of Valkey engine"
+  default     = "8.0"
+}
+
+variable "valkey_node_type" {
+  type        = string
+  description = "Instance type for cache nodes (e.g., cache.t4g.small)"
+  default     = "cache.t4g.small"
+}
+
+variable "valkey_num_cache_nodes" {
+  type        = number
+  description = "Number of cache nodes in the cluster"
+  default     = 1
+}
+
+variable "valkey_parameter_group_family" {
+  type        = string
+  description = "Parameter group family for Valkey"
+  default     = "valkey8"
+}
+
+variable "valkey_auth_token" {
+  type        = string
+  description = "Authentication token for Valkey"
+  default     = "YyJgOWW6VSKLwJQUmlvebArysMrm02NYM2au7o"
+}
+
+variable "valkey_multi_az_enabled" {
+  type        = bool
+  description = "Enable Multi-AZ with automatic failover for Valkey. Requires valkey_num_cache_nodes >= 2 and database subnets across >= 2 AZs."
+  default     = false
+}
+
+#######################################
+######## OpenSearch Variables #########
+#######################################
+variable "opensearch_engine_version" {
+  type        = string
+  description = "OpenSearch Engine Version"
+  default     = "OpenSearch_3.5"
+}
+
+variable "opensearch_instance_type" {
+  type        = string
+  description = "OpenSearch Instance Size"
+  default     = "r6g.large.search"
+}
+
+variable "opensearch_instance_count" {
+  type        = number
+  description = "OpenSearch Instance Count"
+  default     = 1
+}
+
+variable "opensearch_admin_username" {
+  type        = string
+  description = "Elasticsearch Admin Username"
+  default     = "elastic"
+}
+
+variable "opensearch_volume_size" {
+  type        = number
+  description = "Opensearch volume size"
+  default     = 256
+}
+
+variable "opensearch_volume_type" {
+  type        = string
+  description = "Opensearch volume type"
+  default     = "gp3"
+}
+
+variable "opensearch_tls_security_policy" {
+  type        = string
+  description = "Opensearch TLS Security Policy"
+  default     = "Policy-Min-TLS-1-2-2019-07"
+}
+
+variable "opensearch_admin_password" {
+  type        = string
+  description = "OpenSearch master user password. AWS requires >=8 chars with lowercase, uppercase, digit, and special character."
+  sensitive   = true
+  default     = "jeuusbh#weh458sgggHGrjfk"
+
+  validation {
+    condition = (
+      length(var.opensearch_admin_password) >= 8 &&
+      can(regex("[a-z]", var.opensearch_admin_password)) &&
+      can(regex("[A-Z]", var.opensearch_admin_password)) &&
+      can(regex("[0-9]", var.opensearch_admin_password)) &&
+      can(regex("[^A-Za-z0-9]", var.opensearch_admin_password))
+    )
+    error_message = "opensearch_admin_password must be at least 8 characters and include lowercase, uppercase, digit, and a special character."
+  }
+}
+
+variable "opensearch_dedicated_master_enabled" {
+  type        = bool
+  description = "Elasticsearch Admin Password"
+  default     = false
+}
+
+variable "opensearch_multi_az_enabled" {
+  type        = bool
+  description = "Enable multi-AZ (zone awareness) for OpenSearch. Requires 2 or 3 database subnets; opensearch_instance_count must be a multiple of the subnet count."
+  default     = false
+}
+
+#######################################
+######### Cassandra Variables #########
+#######################################
+variable "cassandra_node_count" {
+  description = "Cassandra Node Count"
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = contains([0, 3, 5, 7], var.cassandra_node_count)
+    error_message = "Valid values for cassandra_node_count are (0, 3, 5, 7)."
+  }
+}
+
+variable "cassandra_data_disk_size_gb" {
+  description = "Size of data disk per Cassandra node in GB"
+  type        = number
+  default     = 256
+}
+
+variable "aws_cassandra_instance_type" {
+  description = "AWS VM Type for Cassandra nodes. c6g.xlage = 4 vCPU / 8GB RAM."
+  type        = string
+  default     = "c6g.xlage"
+}
+
+variable "aws_cassandra_vm_keypair" {
+  type        = string
+  description = "Public Key for Cassandra Node's Login"
+  default     = ""
+  validation {
+    condition     = var.cassandra_node_count == 0 || length(var.aws_cassandra_vm_keypair) > 0
+    error_message = "Its mandatory to provide the cassandra vm public key. Generate using:- ssh-keygen -t ed25519 -C '<Descriptive Name>' Then Copy the content from id_ed25519.pub and add in aws_cassandra_vm_keypair in terraform.tfvars"
+  }
+}
+
+#######################################
+######### Apps Variables ##############
+#######################################
+
 # services helm charts versions
+variable "namespace" {
+  type    = string
+  default = "default"
+}
+
 variable "temporal_chart_version" {
   type        = string
   description = "Temporal Helm Chart Version"
@@ -264,42 +635,17 @@ variable "nected_pods_replicas" {
   default = {}
 }
 
-# Nected license pre shared key
-variable "nected_pre_shared_key" {
-  type    = string
-  default = "1182d659-8c9b-4541-90ac-8546372c326f"
-}
-
-# App Domains Variables
-variable "router_domain_prefix" {
-  type        = string
-  description = "Router Domain Prefix"
-  default     = "router"
-}
-
-variable "backend_domain_prefix" {
-  type        = string
-  description = "Backend Domain Prefix"
-  default     = "backend"
-}
-
-variable "ui_domain_prefix" {
-  type        = string
-  description = "UI Domain prefix"
-  default     = "ui"
-}
-
 # Nected app env configuration variables
-variable "console_user_email" {
-  type        = string
-  description = "Console User Email"
-  default     = "dev@nected.ai"
-}
-
-variable "console_user_password" {
-  type        = string
-  description = "Console User Password"
-  default     = "P@ssw0rd#123"
+variable "nected_env_overrides" {
+  type        = map(map(string))
+  description = "nalanda services envVars keys"
+  default = {
+    "konark"  = {}
+    "nalanda" = {}
+    "vidhaan" = {}
+    "medha"   = {}
+    "garuda"  = {}
+  }
 }
 
 variable "nected_existing_secret_name" {
@@ -357,39 +703,4 @@ variable "nected_custom_ca" {
   })
 
   default = {}
-}
-
-variable "nected_env_overrides" {
-  type        = map(map(string))
-  description = "nalanda services envVars keys"
-  default = {
-    "konark"  = {}
-    "nalanda" = {}
-    "vidhaan" = {}
-    "medha"   = {}
-    "garuda"  = {}
-  }
-}
-
-variable "base_domain" {
-  type        = string
-  description = "base domain"
-}
-
-variable "namespace" {
-  type    = string
-  default = "default"
-}
-
-# use application gateway / load balancer private ip
-variable "agic_internal" {
-  type        = bool
-  description = "Application gateway Internal or Public"
-  default     = false
-}
-
-variable "allowed_lb_cidrs" {
-  type        = list(string)
-  description = "Allowed CIDRS"
-  default     = ["0.0.0.0/0"]
 }

@@ -8,7 +8,7 @@ locals {
   ui_domain      = "${var.ui_domain_prefix}.${var.base_domain}"
 
   ingress_annotations        = {}
-  ingress_enabled            = false 
-  targetgroupbinding_enabled = true 
-  aws_tg_arns                =  module.aws_infra.target_group_arns
+  ingress_enabled            = false
+  targetgroupbinding_enabled = true
+  aws_tg_arns                = module.aws_infra.target_group_arns
 }

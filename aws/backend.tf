@@ -1,8 +1,4 @@
-# Remote state backend.
-# Uncomment ONE of the blocks below based on cloud_provider in terraform.tfvars.
-# Only one terraform { backend "..." } block can be active at a time.
-
-# ----- AWS S3 backend (cloud_provider = "aws") -----
+# ----- AWS S3 backend -----
 # terraform {
 #   backend "s3" {
 #     bucket       = "<TFSTATE_BUCKET>"
