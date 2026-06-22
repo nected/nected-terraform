@@ -462,7 +462,7 @@ variable "cassandra_data_disk_size_gb" {
 variable "aws_cassandra_instance_type" {
   description = "AWS VM Type for Cassandra nodes. c6g.xlage = 4 vCPU / 8GB RAM."
   type        = string
-  default     = "c6g.xlage"
+  default     = "c6g.xlarge"
 }
 
 variable "aws_cassandra_vm_keypair" {

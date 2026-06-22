@@ -44,12 +44,14 @@ locals {
 
 # Cassadnra Keypair
 resource "aws_key_pair" "deployer" {
+  count      = local.cassandra_node_count > 0 ? 1 : 0
   key_name   = "${var.project}-${var.environment}"
   public_key = var.aws_cassandra_vm_keypair
 }
 
 # Cassandra Security Group
 resource "aws_security_group" "cassandra" {
+  count       = local.cassandra_node_count > 0 ? 1 : 0
   name        = "${var.project}-cassandra-sg-${var.environment}"
   description = "Cassandra SG"
   vpc_id      = local.vpc_id
@@ -85,7 +87,8 @@ resource "aws_security_group" "cassandra" {
 
 # IAM Role
 resource "aws_iam_role" "cassandra" {
-  name = "${var.project}-cass-${var.environment}"
+  count = local.cassandra_node_count > 0 ? 1 : 0
+  name  = "${var.project}-cass-${var.environment}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -106,6 +109,7 @@ resource "aws_iam_role" "cassandra" {
 }
 
 resource "aws_iam_policy" "cassandra_seed_discovery" {
+  count       = local.cassandra_node_count > 0 ? 1 : 0
   name        = "${var.project}-cass-${var.environment}"
   description = "Allows Cassandra nodes to discover peers via EC2 tags"
 
@@ -126,13 +130,15 @@ resource "aws_iam_policy" "cassandra_seed_discovery" {
 }
 
 resource "aws_iam_role_policy_attachment" "cassandra_seed_discovery" {
-  role       = aws_iam_role.cassandra.name
-  policy_arn = aws_iam_policy.cassandra_seed_discovery.arn
+  count      = local.cassandra_node_count > 0 ? 1 : 0
+  role       = aws_iam_role.cassandra[0].name
+  policy_arn = aws_iam_policy.cassandra_seed_discovery[0].arn
 }
 
 resource "aws_iam_instance_profile" "cassandra" {
-  name = "${var.project}-cass-${var.environment}"
-  role = aws_iam_role.cassandra.name
+  count = local.cassandra_node_count > 0 ? 1 : 0
+  name  = "${var.project}-cass-${var.environment}"
+  role  = aws_iam_role.cassandra[0].name
 
   tags = {
     Name        = "${var.project}-cass-${var.environment}"
@@ -149,9 +155,9 @@ resource "aws_instance" "cassandra" {
   instance_type = var.cassandra_instance_type
   subnet_id     = element(local.private_subnets, each.value.index % length(local.private_subnets))
 
-  vpc_security_group_ids = [aws_security_group.cassandra.id]
-  iam_instance_profile   = aws_iam_instance_profile.cassandra.name
-  key_name               = aws_key_pair.deployer.key_name
+  vpc_security_group_ids = [aws_security_group.cassandra[0].id]
+  iam_instance_profile   = aws_iam_instance_profile.cassandra[0].name
+  key_name               = aws_key_pair.deployer[0].key_name
 
   root_block_device {
     volume_size = var.cassandra_root_disk_size_gb
