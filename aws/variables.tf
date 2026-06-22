@@ -62,20 +62,6 @@ variable "nected_pre_shared_key" {
   default = "1182d659-8c9b-4541-90ac-8546372c326f"
 }
 
-# use load balancer private endpoint
-variable "agic_internal" {
-  type        = bool
-  description = "Loadbalancer Internal or Public"
-  default     = false
-}
-
-# allowed cidrs on lb
-variable "allowed_lb_cidrs" {
-  type        = list(string)
-  description = "Allowed CIDRS"
-  default     = ["0.0.0.0/0"]
-}
-
 # App Domains Variables
 variable "base_domain" {
   type        = string
@@ -214,6 +200,24 @@ variable "eks_endpoint_public_access" {
   type        = bool
   description = "K8s Cluster Endpoint Public Access"
   default     = true
+}
+
+###################################
+########### ALB Variables #########
+###################################
+
+# use load balancer private endpoint
+variable "agic_internal" {
+  type        = bool
+  description = "Loadbalancer Internal or Public"
+  default     = false
+}
+
+# allowed cidrs on lb
+variable "allowed_lb_cidrs" {
+  type        = list(string)
+  description = "Allowed CIDRS"
+  default     = ["0.0.0.0/0"]
 }
 
 ###################################

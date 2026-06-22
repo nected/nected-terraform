@@ -47,12 +47,8 @@ locals {
       delegation       = false
       security_rules = [
         {
-          port                  = "6379"
-          direction             = "Inbound"
-          source_address_prefix = var.vnet_address_space
-        },
-        {
-          port                  = "6380"
+          # Azure Managed Redis private endpoint listens on 10000.
+          port                  = "10000"
           direction             = "Inbound"
           source_address_prefix = var.vnet_address_space
         }
@@ -133,9 +129,9 @@ locals {
   dns_record_ip           = var.agic_internal ? local.internal_app_gateway_ip : azurerm_public_ip.appgw_pip.ip_address
 
   redis_tls_enabled = var.use_managed_redis ? "true" : "false"
-  redis_endpoint    = var.use_managed_redis ? azurerm_redis_cache.redis[0].hostname : "datastore-redis-master"
-  redis_port        = var.use_managed_redis ? "6380" : "6379"
-  redis_password    = var.use_managed_redis ? azurerm_redis_cache.redis[0].primary_access_key : ""
+  redis_endpoint    = var.use_managed_redis ? azurerm_managed_redis.redis[0].hostname : "datastore-redis-master"
+  redis_port        = var.use_managed_redis ? tostring(azurerm_managed_redis.redis[0].default_database[0].port) : "6379"
+  redis_password    = var.use_managed_redis ? azurerm_managed_redis.redis[0].default_database[0].primary_access_key : ""
 
 
   cert_secret_name          = "${var.project}-tls-${var.environment}"

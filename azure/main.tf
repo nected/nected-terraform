@@ -43,7 +43,7 @@ module "azure_infra" {
 
   # Cache
   use_managed_redis = var.use_managed_cache
-  redis_capacity    = var.az_redis_capacity
+  redis_sku_name    = var.az_redis_sku
 
   # ElasticSearch
   elasticsearch_version         = var.elasticsearch_version
