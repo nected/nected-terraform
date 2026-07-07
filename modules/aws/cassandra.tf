@@ -67,14 +67,14 @@ resource "aws_security_group" "cassandra" {
     from_port   = 9042
     to_port     = 9042
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = var.vpc_cidr
   }
 
   ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = var.vpc_cidr
   }
 
   egress {

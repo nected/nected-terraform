@@ -23,7 +23,7 @@ resource "aws_security_group" "opensearch" {
     to_port     = 443
     protocol    = "tcp"
 
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = var.vpc_cidr
   }
 
   egress {

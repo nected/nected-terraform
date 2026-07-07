@@ -125,8 +125,13 @@ variable "existing_public_subnets" {
 
 variable "vpc_cidr" {
   description = "VPC CIDR block"
-  type        = string
-  default     = "10.0.0.0/16"
+  type        = list(string)
+  default     = ["10.0.0.0/16"]
+
+  validation {
+    condition     = var.existing_vpc_id != "null" || length(var.vpc_cidr) == 1
+    error_message = "You can Only Provide Single CIDR with New VPC"
+  }
 }
 
 variable "azs" {

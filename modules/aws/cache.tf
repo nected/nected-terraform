@@ -26,7 +26,7 @@ resource "aws_security_group" "valkey" {
     to_port     = var.valkey_port
     protocol    = "tcp"
 
-    cidr_blocks = [var.vpc_cidr]
+    cidr_blocks = var.vpc_cidr
   }
 
   egress {

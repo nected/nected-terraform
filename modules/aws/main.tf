@@ -5,19 +5,22 @@ module "vpc" {
   count = var.existing_vpc_id == "null" ? 1 : 0
 
   name = "${var.project}-${var.environment}"
-  cidr = var.vpc_cidr
+  cidr = var.vpc_cidr[0]
 
   azs              = var.azs
-  public_subnets   = [for k, v in var.azs : cidrsubnet(var.vpc_cidr, var.subnet_newbits["public"], k + length(var.azs))]
-  private_subnets  = [for k, v in var.azs : cidrsubnet(var.vpc_cidr, var.subnet_newbits["private"], k + length(var.azs))]
-  database_subnets = [for k, v in var.azs : cidrsubnet(var.vpc_cidr, var.subnet_newbits["db"], k + length(var.azs))]
+  public_subnets   = [for k, v in var.azs : cidrsubnet(var.vpc_cidr[0], var.subnet_newbits["public"], k + length(var.azs))]
+  private_subnets  = [for k, v in var.azs : cidrsubnet(var.vpc_cidr[0], var.subnet_newbits["private"], k + length(var.azs))]
+  database_subnets = [for k, v in var.azs : cidrsubnet(var.vpc_cidr[0], var.subnet_newbits["db"], k + length(var.azs))]
+
+  public_subnet_suffix   = "public"
+  private_subnet_suffix  = "private"
+  database_subnet_suffix = "database"
 
   enable_nat_gateway = var.enable_nat_gateway
   single_nat_gateway = var.single_nat_gateway
 
   tags = merge(var.tags, {
     Environment = var.environment
-    Name        = "${var.project}-${var.environment}"
   })
 }
 
@@ -72,8 +75,8 @@ module "eks_cluster" {
     }
   }
 
-  endpoint_private_access = var.endpoint_private_access
-  endpoint_public_access  = var.endpoint_public_access
+  endpoint_private_access      = var.endpoint_private_access
+  endpoint_public_access       = var.endpoint_public_access
   endpoint_public_access_cidrs = var.allowed_eks_cidrs
 
 
@@ -91,12 +94,12 @@ module "eks_cluster" {
 
   security_group_additional_rules = {
     ingress_443 = {
-      description                = "Access cluster API from External"
-      protocol                   = "tcp"
-      from_port                  = 443
-      to_port                    = 443
-      type                       = "ingress"
-      cidr_blocks                = var.allowed_eks_cidrs
+      description = "Access cluster API from External"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = var.allowed_eks_cidrs
     }
   }
 
