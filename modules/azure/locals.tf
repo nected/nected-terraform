@@ -60,8 +60,8 @@ locals {
       delegation       = false
       security_rules = [
         {
-          port                  = "443"
-          direction             = "Inbound"
+          port                    = "443"
+          direction               = "Inbound"
           source_address_prefixes = var.allowed_aks_cidrs
         },
         {
@@ -110,8 +110,8 @@ locals {
       service_endpoints = []
       security_rules = [
         {
-          port                  = "443"
-          direction             = "Inbound"
+          port                    = "443"
+          direction               = "Inbound"
           source_address_prefixes = var.allowed_gw_cidrs
         },
         {

@@ -17,6 +17,7 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     max_pods             = 110
     os_disk_size_gb      = 128
     type                 = "VirtualMachineScaleSets"
+    zones                = var.aks_zones
 
     upgrade_settings {
       max_surge = "10%"

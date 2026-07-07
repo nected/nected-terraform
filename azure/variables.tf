@@ -192,6 +192,12 @@ variable "aks_private_cluster_enabled" {
   default     = false
 }
 
+variable "aks_zones" {
+  type        = list(string)
+  description = "Availability Zones for the AKS default node pool. Leave empty ([]) in regions without zone support, e.g. South India (southindia). Use [\"1\",\"2\",\"3\"] in zone-capable regions like Central India."
+  default     = []
+}
+
 ###################################
 ########### AppGW Variables #######
 ###################################

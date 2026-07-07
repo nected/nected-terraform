@@ -83,6 +83,12 @@ variable "aks_vm_size" {
   default     = "Standard_D4ds_v6"
 }
 
+variable "aks_zones" {
+  type        = list(string)
+  description = "Availability Zones for the AKS default node pool. Leave empty ([]) for regions that don't support zones, e.g. South India (southindia)."
+  default     = []
+}
+
 variable "aks_private_cluster_enabled" {
   type        = bool
   description = "Enable private cluster for AKS. When true, the API server is only accessible from within the VNet. Change to true only if you're connected via VPN or a jump box in the VNet"

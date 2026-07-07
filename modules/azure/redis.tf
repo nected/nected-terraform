@@ -18,7 +18,7 @@ resource "azurerm_managed_redis" "redis" {
     # Encrypted = TLS. EnterpriseCluster presents a single endpoint so
     # non-cluster-aware clients keep working like the old Premium instance.
     client_protocol                    = "Encrypted"
-    clustering_policy                   = "EnterpriseCluster"
+    clustering_policy                  = "EnterpriseCluster"
     access_keys_authentication_enabled = true
   }
 

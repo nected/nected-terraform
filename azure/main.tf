@@ -16,8 +16,8 @@ module "azure_infra" {
   existing_subnets   = var.az_existing_subnets
   private_subnets    = var.az_private_subnets
 
-  allowed_gw_cidrs    = var.allowed_lb_cidrs
-  allowed_aks_cidrs   = var.allowed_k8s_cidrs
+  allowed_gw_cidrs  = var.allowed_lb_cidrs
+  allowed_aks_cidrs = var.allowed_k8s_cidrs
 
   # DNS
   az_hosted_zone = var.az_hosted_zone
@@ -32,6 +32,7 @@ module "azure_infra" {
   aks_max_node_count          = var.k8s_max_node_count
   aks_vm_size                 = var.aks_vm_size
   aks_private_cluster_enabled = var.aks_private_cluster_enabled
+  aks_zones                   = var.aks_zones
 
   # Postgresql
   pg_version          = var.pg_version
