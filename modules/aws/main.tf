@@ -63,17 +63,33 @@ module "eks_cluster" {
   name               = "${var.project}-${var.environment}"
   kubernetes_version = var.kubernetes_version
 
+  # Control plane logging -> CloudWatch (/aws/eks/<cluster>/cluster)
+  enabled_log_types                      = var.eks_control_plane_log_types
+  create_cloudwatch_log_group            = true
+  cloudwatch_log_group_retention_in_days = var.eks_log_retention_days
+
   # EKS Addons
-  addons = {
-    coredns = {}
-    eks-pod-identity-agent = {
-      before_compute = true
-    }
-    kube-proxy = {}
-    vpc-cni = {
-      before_compute = true
-    }
-  }
+  addons = merge(
+    {
+      coredns = {}
+      eks-pod-identity-agent = {
+        before_compute = true
+      }
+      kube-proxy = {}
+      vpc-cni = {
+        before_compute = true
+      }
+    },
+    var.enable_cloudwatch_logging ? {
+      # Managed CloudWatch agent + Fluent Bit (Container Insights + application logs)
+      amazon-cloudwatch-observability = {
+        pod_identity_association = [{
+          role_arn        = aws_iam_role.cw_observability[0].arn
+          service_account = "cloudwatch-agent"
+        }]
+      }
+    } : {}
+  )
 
   endpoint_private_access      = var.endpoint_private_access
   endpoint_public_access       = var.endpoint_public_access

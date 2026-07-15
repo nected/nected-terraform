@@ -32,6 +32,14 @@ module "aws_infra" {
   node_max_count         = var.k8s_max_node_count
   endpoint_public_access = var.eks_endpoint_public_access
 
+  # CloudWatch logging & alerting
+  enable_cloudwatch_logging   = var.enable_cloudwatch_logging
+  eks_log_retention_days      = var.eks_log_retention_days
+  app_log_retention_days      = var.app_log_retention_days
+  alert_emails                = var.alert_emails
+  app_error_alarm_threshold   = var.app_error_alarm_threshold
+  eks_control_plane_log_types = var.eks_control_plane_log_types
+
   # RDS database
   db_username              = var.pg_admin_user
   db_password              = var.pg_admin_passwd

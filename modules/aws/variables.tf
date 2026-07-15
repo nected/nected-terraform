@@ -466,3 +466,54 @@ variable "allowed_eks_cidrs" {
   type        = list(string)
   description = "Allowed CIDRS to access EKS Cluster"
 }
+
+# -------------------
+# CloudWatch Logging & Alerting
+# -------------------
+variable "enable_cloudwatch_logging" {
+  type        = bool
+  description = "Enable CloudWatch container/application logging (amazon-cloudwatch-observability add-on) and alerting"
+  default     = true
+}
+
+variable "eks_control_plane_log_types" {
+  type        = list(string)
+  description = "EKS control plane log types to ship to CloudWatch"
+  default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+}
+
+variable "eks_log_retention_days" {
+  type        = number
+  description = "Retention (days) for the EKS control plane log group"
+  default     = 30
+}
+
+variable "app_log_retention_days" {
+  type        = number
+  description = "Retention (days) for Container Insights application/dataplane/host log groups"
+  default     = 30
+}
+
+variable "alert_emails" {
+  type        = list(string)
+  description = "Email addresses subscribed to the CloudWatch alerts SNS topic (each must confirm the subscription)"
+  default     = []
+}
+
+variable "app_error_log_pattern" {
+  type        = string
+  description = "CloudWatch Logs filter pattern used to count application error log lines"
+  default     = "?ERROR ?Error ?error ?Exception ?exception ?panic ?FATAL ?Fatal"
+}
+
+variable "app_error_alarm_threshold" {
+  type        = number
+  description = "Number of error log lines within one evaluation period that triggers the alarm"
+  default     = 10
+}
+
+variable "app_error_alarm_period" {
+  type        = number
+  description = "Evaluation period (seconds) for the application error alarm"
+  default     = 300
+}

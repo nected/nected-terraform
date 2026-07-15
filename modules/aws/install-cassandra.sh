@@ -189,7 +189,7 @@ set_yaml partitioner                org.apache.cassandra.dht.Murmur3Partitioner
 set_yaml commitlog_directory        "$MOUNT/commitlog"
 set_yaml hints_directory            "$MOUNT/hints"
 set_yaml saved_caches_directory     "$MOUNT/saved_caches"
-
+set_yaml allocate_tokens_for_local_replication_factor 2
 # Use python to replace seeds — avoids sed misinterpreting dots/commas in IP list
 python3 - <<EOF
 import re

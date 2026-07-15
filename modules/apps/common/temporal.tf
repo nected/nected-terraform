@@ -4,13 +4,28 @@ resource "helm_release" "temporal" {
   chart      = "temporal"
   namespace  = var.namespace
   version    = var.temporal_chart_version
+  timeout = 100
 
   values = [
     yamlencode({
       nameOverride     = "nected-temporal"
       fullnameOverride = "nected-temporal"
+      additionalAnnotations = {
+        "instrumentation.opentelemetry.io/inject-java"   = "false"
+        "instrumentation.opentelemetry.io/inject-dotnet" = "false"
+        "instrumentation.opentelemetry.io/inject-nodejs" = "false"
+        "instrumentation.opentelemetry.io/inject-python" = "false"
+      }
 
       server = {
+        # additionalEnv = [
+        #   { name = "OTEL_TRACES_EXPORTER", value = "otlp" },
+        #   { name = "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", value = "grpc" },
+        #   { name = "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", value = "http://cloudwatch-agent.amazon-cloudwatch:4315" },
+        #   { name = "OTEL_EXPORTER_OTLP_TRACES_INSECURE", value = "true" },
+        #   { name = "OTEL_SERVICE_NAME", value = "nected-temporal-frontend" },
+        #   { name = "OTEL_RESOURCE_ATTRIBUTES", value = "service.name=nected-temporal-frontend" },
+        # ]
         dynamicConfig = {
           "matching.numTaskqueueReadPartitions" = [
             { value = var.temporal_task_partitions, constraints = {} }

@@ -76,3 +76,13 @@ output "target_group_arns" {
 output "seed_node_ips" {
   value = local.seed_node_ips
 }
+
+output "alerts_sns_topic_arn" {
+  value       = var.enable_cloudwatch_logging ? aws_sns_topic.alerts[0].arn : null
+  description = "SNS topic ARN for CloudWatch alarms"
+}
+
+output "app_log_group_name" {
+  value       = var.enable_cloudwatch_logging ? aws_cloudwatch_log_group.container_insights["application"].name : null
+  description = "Container Insights application log group"
+}

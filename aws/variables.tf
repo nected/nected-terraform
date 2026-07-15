@@ -21,6 +21,45 @@ variable "environment" {
   default     = "dev"
 }
 
+#####################################
+##### CloudWatch Observability ######
+#####################################
+variable "enable_cloudwatch_logging" {
+  type        = bool
+  description = "Enable CloudWatch container/application logging and alerting"
+  default     = false
+}
+
+variable "eks_log_retention_days" {
+  type        = number
+  description = "Retention (days) for the EKS control plane log group"
+  default     = 7
+}
+
+variable "app_log_retention_days" {
+  type        = number
+  description = "Retention (days) for Container Insights log groups"
+  default     = 30
+}
+
+variable "alert_emails" {
+  type        = list(string)
+  description = "Emails subscribed to the CloudWatch alerts SNS topic"
+  default     = []
+}
+
+variable "app_error_alarm_threshold" {
+  type        = number
+  description = "Error log lines per period that trigger the app error alarm"
+  default     = 10
+}
+
+variable "eks_control_plane_log_types" {
+  type        = list(string)
+  description = "EKS control plane log types to ship to CloudWatch"
+  default     = ["api", "authenticator"]
+}
+
 ################################
 ####### AWS Variables ##########
 ################################
