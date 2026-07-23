@@ -83,10 +83,9 @@ module "eks_cluster" {
     var.enable_cloudwatch_logging ? {
       # Managed CloudWatch agent + Fluent Bit (Container Insights + application logs)
       amazon-cloudwatch-observability = {
-        pod_identity_association = [{
-          role_arn        = aws_iam_role.cw_observability[0].arn
-          service_account = "cloudwatch-agent"
-        }]
+        resolve_conflicts_on_create = "OVERWRITE"
+        resolve_conflicts_on_update = "OVERWRITE"
+        preserve                    = false
       }
     } : {}
   )
@@ -94,7 +93,6 @@ module "eks_cluster" {
   endpoint_private_access      = var.endpoint_private_access
   endpoint_public_access       = var.endpoint_public_access
   endpoint_public_access_cidrs = var.allowed_eks_cidrs
-
 
   enable_cluster_creator_admin_permissions = var.enable_cluster_creator_admin_permissions
 

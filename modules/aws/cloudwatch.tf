@@ -39,19 +39,14 @@ resource "aws_iam_role_policy_attachment" "cw_observability" {
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 }
 
-# -------------------
-# Container Insights log groups (own them so retention is enforced)
-# -------------------
-resource "aws_cloudwatch_log_group" "container_insights" {
-  for_each = var.enable_cloudwatch_logging ? toset(["application", "dataplane", "host", "performance"]) : toset([])
+resource "aws_eks_pod_identity_association" "cw_observability" {
+  count           = local.cw_enabled
+  cluster_name    = module.eks_cluster.cluster_name
+  namespace       = "amazon-cloudwatch"
+  service_account = "cloudwatch-agent"
+  role_arn        = aws_iam_role.cw_observability[0].arn
 
-  name              = "${local.container_insights}/${each.value}"
-  retention_in_days = var.app_log_retention_days
-
-  tags = merge(var.tags, {
-    Environment = var.environment
-    Name        = "${var.project}-${var.environment}-ci-${each.value}"
-  })
+  tags = merge(var.tags, { Environment = var.environment })
 }
 
 # -------------------
@@ -78,7 +73,7 @@ resource "aws_sns_topic_subscription" "alerts_email" {
 resource "aws_cloudwatch_log_metric_filter" "app_errors" {
   count          = local.cw_enabled
   name           = "${var.project}-${var.environment}-app-errors"
-  log_group_name = aws_cloudwatch_log_group.container_insights["application"].name
+  log_group_name = "/aws/containerinsights/${var.project}-${var.environment}/application"
   pattern        = var.app_error_log_pattern
 
   metric_transformation {
@@ -87,6 +82,8 @@ resource "aws_cloudwatch_log_metric_filter" "app_errors" {
     value         = "1"
     default_value = "0"
   }
+
+  depends_on = [module.eks_cluster]
 }
 
 resource "aws_cloudwatch_metric_alarm" "app_error_rate" {
