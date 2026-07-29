@@ -210,7 +210,7 @@ variable "single_nat_gateway" {
 ###################################
 variable "k8s_version" {
   type    = string
-  default = "1.33"
+  default = "1.35"
 }
 
 variable "k8s_node_count" {
