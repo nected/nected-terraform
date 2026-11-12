@@ -47,15 +47,6 @@ resource "helm_release" "temporal" {
           "matching.numTaskqueueWritePartitions" = [
             { value = var.temporal_task_partitions, constraints = {} }
           ]
-          "history.persistenceMaxQPS" = [
-            { value = 18000, constraints = {} }
-          ]
-          "matching.persistenceMaxQPS" = [
-            { value = 6000, constraints = {} }
-          ]
-          "frontend.persistenceMaxQPS" = [
-            { value = 4000, constraints = {} }
-          ]
         }
 
         config = {
@@ -84,6 +75,7 @@ resource "helm_release" "temporal" {
               sql = merge({
                 driver          = "postgres12"
                 maxConns        = 30
+                maxIdleConns    = 10
                 maxConnLifetime = "30m"
                 connectTimeout  = "5s"
                 host            = var.postgresql_host
