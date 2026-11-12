@@ -21,6 +21,39 @@ variable "environment" {
   default     = "dev"
 }
 
+#####################################
+######### Azure Monitoring ##########
+#####################################
+variable "enable_azure_monitoring" {
+  type        = bool
+  description = "Enable Log Analytics + Container Insights + alerting on AKS"
+  default     = false
+}
+
+variable "enable_managed_prometheus" {
+  type        = bool
+  description = "Enable Azure Monitor managed Prometheus metrics"
+  default     = true
+}
+
+variable "enable_managed_grafana" {
+  type        = bool
+  description = "Provision Azure Managed Grafana wired to the Monitor workspace"
+  default     = false
+}
+
+variable "log_analytics_retention_days" {
+  type        = number
+  description = "Retention (days) for the Log Analytics workspace"
+  default     = 30
+}
+
+variable "monitoring_alert_emails" {
+  type        = list(string)
+  description = "Emails added to the Azure Monitor action group"
+  default     = []
+}
+
 ################################
 ####### AWS Variables ##########
 ################################
@@ -83,6 +116,10 @@ variable "az_helm_disable_openapi_validation" {
 ######### App Main Variables #########
 ######################################
 # Nected license pre shared key
+# VIDHAAN_PRE_SHARED_KEY is the licence key. Not generated: a random value
+# would not be a valid licence. The default is the demo licence the charts
+# ship; replace the real one in the vault item <name_prefix>/license (see
+# secrets.tf), not here.
 variable "nected_pre_shared_key" {
   type    = string
   default = "1182d659-8c9b-4541-90ac-8546372c326f"
@@ -122,7 +159,7 @@ variable "console_user_email" {
 variable "console_user_password" {
   type        = string
   description = "Console User Password"
-  default     = "P@ssw0rd#123"
+  default     = null
 }
 
 ####################################
@@ -323,6 +360,7 @@ variable "pg_admin_user" {
 variable "pg_admin_passwd" {
   type        = string
   description = "Posgresql Admin Password"
+  default     = null
 }
 
 variable "pg_backup_retention" {
@@ -340,7 +378,7 @@ variable "az_pg_disk_size" {
 variable "az_pg_sku_name" {
   type        = string
   description = "Posgresql SKU Name"
-  default     = "GP_Standard_D4ds_v5"
+  default     = "GP_Standard_D2ds_v5"
 }
 
 ###################################
@@ -381,8 +419,9 @@ variable "elasticsearch_admin_username" {
 
 variable "elasticsearch_admin_password" {
   type        = string
-  description = "Elasticsearch Admin Password"
-  default     = "jeuusbhweh458sgggHGrjfk"
+  description = "Elasticsearch admin password. null = generate."
+  default     = null
+  sensitive   = true
 }
 
 variable "elasticsearch_os_disk_size_gb" {
@@ -442,13 +481,13 @@ variable "namespace" {
 variable "temporal_chart_version" {
   type        = string
   description = "Temporal Helm Chart Version"
-  default     = "0.54.2"
+  default     = "0.54.7"
 }
 
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.47"
+  default     = "0.4.70"
 }
 
 variable "datastore_chart_version" {
@@ -657,3 +696,145 @@ variable "nected_custom_ca" {
 
   default = {}
 }
+variable "grant_terraform_vault_access" {
+  description = <<-EOT
+    Let terraform grant its own identity "Key Vault Secrets Officer" on the
+    vault holding the application credentials.
+
+    Needed because the vault is RBAC-mode: subscription Owner/Contributor
+    grants nothing over secret values. Set false only when the principal
+    running terraform cannot create role assignments, and have the role granted
+    out of band instead.
+  EOT
+  type        = bool
+  default     = true
+}
+
+variable "secret_manager" {
+  description = <<-EOT
+    Sync Nected's credentials from Azure Key Vault into a Kubernetes Secret via
+    the secretsmanager subchart.
+
+    Terraform creates <name_prefix>-app in the vault and pushes the generated
+    credentials into it, adds a federated credential on the shared managed
+    identity, and grants it Key Vault access.
+
+    It does NOT create <name_prefix>-encryption-at-rest, and the chart never
+    writes to the vault: that item is only a restore source. A generated key
+    lives only in the Kubernetes Secret until you copy it out and store it
+    there (or pass it as nected_common_secret_value).
+
+    Key Vault secret names allow [a-zA-Z0-9-] only, so name_prefix must not
+    contain slashes.
+  EOT
+
+  type = object({
+    enabled = optional(bool, false)
+
+    name_prefix   = optional(string, "nected-prod")
+    target_secret = optional(string, "nected-credential")
+
+    # Vault holding the credentials. Both empty uses the vault
+    # modules/azure manages (azurerm_key_vault.ssl_certs_vault, or the vault
+    # named by key_vault_name). Set both to use a separate vault, which keeps
+    # TLS certificates and application credentials under different scopes.
+    key_vault_id = optional(string, null)
+    vault_url    = optional(string, "")
+
+    required_keys = optional(list(string), [
+      "DB_PASSWORD",
+      "MASTER_DB_PASSWORD",
+      "REDIS_PASSWORD",
+      "ELASTIC_PASSWORD",
+      "AES_SECRET",
+      "JWT_SECRET",
+      "NECTED_USER_PASSWORD",
+    ])
+
+    aliases = optional(map(string), {
+      MASTER_DB_PASSWORD     = "DB_PASSWORD"
+      VIDHAAN_REDIS_PASSWORD = "REDIS_PASSWORD"
+    })
+    fail_open = optional(bool, true)
+
+    temporal_password_key = optional(string, "MASTER_DB_PASSWORD")
+    service_account_name  = optional(string, "nected-secret-sync")
+  })
+
+  default = {}
+
+  validation {
+    condition     = (var.secret_manager.key_vault_id == null) == (var.secret_manager.vault_url == "")
+    error_message = "Set secret_manager.key_vault_id and vault_url together, or neither: the id is what terraform writes to and the url is what the in-cluster job reads from, so pointing them at different vaults silently splits the secrets."
+  }
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9-]+$", var.secret_manager.name_prefix))
+    error_message = "secret_manager.name_prefix must contain only letters, digits and hyphens: Key Vault secret names allow nothing else."
+  }
+}
+
+# ---------------------------------------------------------------------------
+# Generated credentials
+#
+# Every variable below defaults to null, meaning "generate it". Supply one in
+# tfvars to use your own value instead. Nothing ships a default password.
+# ---------------------------------------------------------------------------
+
+variable "datastore_password_version" {
+  description = <<-EOT
+    Bump to rotate the generated Postgres, Elasticsearch and Redis passwords.
+
+    A rolling pod restart is not atomic, so expect a brief window where some
+    pods hold the old password.
+  EOT
+  type        = number
+  default     = 1
+}
+
+variable "app_password_version" {
+  description = <<-EOT
+    Bump to rotate the generated JWT secret, console password and default
+    vidhaan secret key. Rotating the JWT secret logs every user out.
+
+    AES_SECRET is deliberately NOT covered: changing it makes previously
+    encrypted data unreadable.
+  EOT
+  type        = number
+  default     = 1
+}
+
+variable "nected_jwt_secret" {
+  description = "JWT signing secret. null = generate."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "nected_aes_secret" {
+  description = <<-EOT
+    AES secret used to encrypt stored data. null = generate once.
+
+    Treat as immutable: changing it makes anything encrypted under the old
+    value unreadable. For an existing environment, pass the value already in
+    use rather than letting a new one be generated.
+  EOT
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "nected_email_password" {
+  description = "SMTP password. null/empty = email disabled."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "nected_ses_secret_key" {
+  description = "AWS_SECRET_KEY for SES, when EMAIL_PROVIDER is ses (valid on Azure too)."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+

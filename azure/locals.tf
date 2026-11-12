@@ -18,6 +18,6 @@ locals {
     "appgw.ingress.kubernetes.io/appgw-ssl-certificate" = local.agic_ssl_certificate_identifer
   }
 
-  ingress_annotations        = local.az_ingress_annotations
-  ingress_enabled            = true 
+  ingress_annotations = local.az_ingress_annotations
+  ingress_enabled     = true
 }

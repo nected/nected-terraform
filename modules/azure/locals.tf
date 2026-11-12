@@ -137,5 +137,6 @@ locals {
   cert_secret_name          = "${var.project}-tls-${var.environment}"
   cert_vault_name           = "${var.project}-vault-${var.environment}"
   key_vault_id              = var.key_vault_name == "null" ? azurerm_key_vault.ssl_certs_vault[0].id : data.azurerm_key_vault.vault[0].id
+  key_vault_uri             = var.key_vault_name == "null" ? azurerm_key_vault.ssl_certs_vault[0].vault_uri : data.azurerm_key_vault.vault[0].vault_uri
   alb_vault_secret_endpoint = var.key_vault_name == "null" ? "https://${azurerm_key_vault.ssl_certs_vault[0].name}.vault.azure.net/secrets/${local.cert_secret_name}" : "https://${var.key_vault_name}.vault.azure.net/secrets/${var.key_vault_certificate_name}"
 }

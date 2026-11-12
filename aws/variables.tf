@@ -96,6 +96,10 @@ variable "aws_certificate_arn" {
 ######### App Main Variables #########
 ######################################
 # Nected license key
+# VIDHAAN_PRE_SHARED_KEY is the licence key. Not generated: a random value
+# would not be a valid licence. The default is the demo licence the charts
+# ship; replace the real one in the vault item <name_prefix>/license (see
+# secrets.tf), not here.
 variable "nected_pre_shared_key" {
   type    = string
   default = "1182d659-8c9b-4541-90ac-8546372c326f"
@@ -132,7 +136,7 @@ variable "console_user_email" {
 variable "console_user_password" {
   type        = string
   description = "Console User Password"
-  default     = "P@ssw0rd#123"
+  default     = null
 }
 
 ####################################
@@ -210,7 +214,7 @@ variable "single_nat_gateway" {
 ###################################
 variable "k8s_version" {
   type    = string
-  default = "1.33"
+  default = "1.35"
 }
 
 variable "k8s_node_count" {
@@ -281,7 +285,9 @@ variable "pg_admin_user" {
 
 variable "pg_admin_passwd" {
   type        = string
-  description = "Posgresql Admin Password"
+  description = "Postgresql admin password. null = generate."
+  default     = null
+  sensitive   = true
 }
 
 variable "pg_backup_retention" {
@@ -403,7 +409,7 @@ variable "valkey_parameter_group_family" {
 variable "valkey_auth_token" {
   type        = string
   description = "Authentication token for Valkey"
-  default     = "YyJgOWW6VSKLwJQUmlvebArysMrm02NYM2au7o"
+  default     = null
 }
 
 variable "valkey_multi_az_enabled" {
@@ -461,10 +467,12 @@ variable "opensearch_admin_password" {
   type        = string
   description = "OpenSearch master user password. AWS requires >=8 chars with lowercase, uppercase, digit, and special character."
   sensitive   = true
-  default     = "jeuusbh#weh458sgggHGrjfk"
+  default     = null
 
   validation {
+    # null means "generate it", and the generator already satisfies the rule.
     condition = (
+      var.opensearch_admin_password == null ||
       length(var.opensearch_admin_password) >= 8 &&
       can(regex("[a-z]", var.opensearch_admin_password)) &&
       can(regex("[A-Z]", var.opensearch_admin_password)) &&
@@ -536,13 +544,13 @@ variable "namespace" {
 variable "temporal_chart_version" {
   type        = string
   description = "Temporal Helm Chart Version"
-  default     = "0.54.2"
+  default     = "0.54.7"
 }
 
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.48"
+  default     = "0.4.70"
 }
 
 variable "datastore_chart_version" {
@@ -752,3 +760,119 @@ variable "nected_custom_ca" {
 
   default = {}
 }
+
+variable "secret_manager" {
+  description = <<-EOT
+    Sync Nected's credentials from AWS Secrets Manager into a Kubernetes Secret
+    via the secretsmanager subchart.
+
+    Terraform creates <name_prefix>/app and pushes the generated credentials
+    into it, creates an IAM role with read access, and binds it to the chart's
+    service account with EKS Pod Identity.
+
+    It does NOT create <name_prefix>/encryption-at-rest, and the chart never
+    writes to the vault: that item is only a restore source. A generated key
+    lives only in the Kubernetes Secret until you copy it out and store it
+    there (or pass it as nected_common_secret_value).
+  EOT
+
+  type = object({
+    enabled = optional(bool, false)
+
+    # Item names are derived: <name_prefix>/app and
+    # <name_prefix>/encryption-at-rest.
+    name_prefix   = optional(string, "nected/prod")
+    target_secret = optional(string, "nected-credential")
+
+    required_keys = optional(list(string), [
+      "DB_PASSWORD",
+      "MASTER_DB_PASSWORD",
+      "REDIS_PASSWORD",
+      "ELASTIC_PASSWORD",
+      "AES_SECRET",
+      "JWT_SECRET",
+      "NECTED_USER_PASSWORD",
+    ])
+
+    aliases = optional(map(string), {
+      MASTER_DB_PASSWORD     = "DB_PASSWORD"
+      VIDHAAN_REDIS_PASSWORD = "REDIS_PASSWORD"
+    })
+    fail_open = optional(bool, true)
+
+    temporal_password_key = optional(string, "MASTER_DB_PASSWORD")
+    service_account_name  = optional(string, "nected-secret-sync")
+
+    # Customer-managed key for the secret, and how long a delete is recoverable.
+    kms_key_arn             = optional(string, null)
+    recovery_window_in_days = optional(number, 30)
+  })
+
+  default = {}
+}
+
+# ---------------------------------------------------------------------------
+# Generated credentials
+#
+# Every variable below defaults to null, meaning "generate it". Supply one in
+# tfvars to use your own value instead. Nothing ships a default password.
+# ---------------------------------------------------------------------------
+
+variable "datastore_password_version" {
+  description = <<-EOT
+    Bump to rotate the generated Postgres, OpenSearch and Valkey passwords.
+
+    The engine and the vault must change together, so this also feeds
+    db_password_version on the RDS instance. A rolling pod restart is not
+    atomic, so expect a brief window where some pods hold the old password.
+  EOT
+  type        = number
+  default     = 1
+}
+
+variable "app_password_version" {
+  description = <<-EOT
+    Bump to rotate the generated JWT secret, console password and default
+    vidhaan secret key. Rotating the JWT secret logs every user out.
+
+    AES_SECRET is deliberately NOT covered: changing it makes previously
+    encrypted data unreadable.
+  EOT
+  type        = number
+  default     = 1
+}
+
+variable "nected_jwt_secret" {
+  description = "JWT signing secret. null = generate."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "nected_aes_secret" {
+  description = <<-EOT
+    AES secret used to encrypt stored data. null = generate once.
+
+    Treat as immutable: changing it makes anything encrypted under the old
+    value unreadable. For an existing environment, pass the value already in
+    use rather than letting a new one be generated.
+  EOT
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "nected_email_password" {
+  description = "SMTP password. null/empty = email disabled."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "nected_ses_secret_key" {
+  description = "AWS_SECRET_KEY for SES, when EMAIL_PROVIDER is ses."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+

@@ -24,8 +24,12 @@ resource "azurerm_network_interface" "elasticsearch" {
 # Elasticsearch Installation Script
 locals {
   elasticsearch_script = base64encode(templatefile("${path.module}/install-elasticsearch.sh", {
-    elasticsearch_password = var.elasticsearch_admin_password
-    elasticsearch_version  = var.elasticsearch_version
+    # Base64 so the value reaches the VM byte-for-byte. templatefile()
+    # substitutes the literal text and bash then expands it, so a password
+    # containing $, `, \ or ' is silently altered and the VM ends up with a
+    # different password from the one terraform records.
+    elasticsearch_password_b64 = base64encode(var.elasticsearch_admin_password)
+    elasticsearch_version      = var.elasticsearch_version
   }))
 }
 

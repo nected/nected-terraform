@@ -34,6 +34,22 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   identity {
     type = "SystemAssigned"
   }
+
+  # Container Insights -> Log Analytics (application/container logs)
+  dynamic "oms_agent" {
+    for_each = var.enable_azure_monitoring ? [1] : []
+    content {
+      log_analytics_workspace_id      = azurerm_log_analytics_workspace.main[0].id
+      msi_auth_for_monitoring_enabled = true
+    }
+  }
+
+  # Azure Monitor managed Prometheus metrics scraping
+  dynamic "monitor_metrics" {
+    for_each = var.enable_azure_monitoring && var.enable_managed_prometheus ? [1] : []
+    content {}
+  }
+
   private_cluster_enabled = var.aks_private_cluster_enabled
   azure_policy_enabled    = true
 

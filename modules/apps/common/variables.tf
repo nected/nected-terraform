@@ -2,7 +2,7 @@
 variable "temporal_chart_version" {
   type        = string
   description = "Temporal Helm Chart Version"
-  default     = "0.54.2"
+  default     = "0.54.7"
 }
 
 variable "temporal_cluster_name" {
@@ -134,7 +134,7 @@ variable "elasticsearch_port" {
 variable "nected_chart_version" {
   type        = string
   description = "Nected Helm Chart Version"
-  default     = "0.4.44"
+  default     = "0.4.70"
 }
 
 variable "scheme" {
@@ -391,4 +391,84 @@ variable "aws_tg_arns" {
     router  = optional(string, "")
   })
   default = {}
+}
+variable "secret_manager" {
+  description = <<-EOT
+    Drives the secretsmanager subchart carried by the nected and temporal
+    charts: one pre-install job that ensures the encryption-at-rest key exists
+    and reads the application credentials into a Kubernetes Secret.
+
+    `provider` selects the vault; it does not switch the job on. With no
+    provider the encryption-at-rest key is still generated in-cluster, which is
+    what the nected chart's own job used to do.
+  EOT
+
+  type = object({
+    # false keeps the credentials sync off; the encryption-at-rest key is still
+    # managed, because every nected install needs it.
+    enabled = optional(bool, false)
+
+    # "" = local only | aws | azure
+    provider = optional(string, "")
+
+    # The Kubernetes Secret the job writes and the services read.
+    target_secret = optional(string, "nected-credential")
+
+    # Vault items holding the credentials blob, merged in order.
+    remote_keys = optional(list(string), [])
+
+    # Verified against the merged payload before anything is written.
+    required_keys = optional(list(string), [
+      "DB_PASSWORD",
+      "MASTER_DB_PASSWORD",
+      "REDIS_PASSWORD",
+      "ELASTIC_PASSWORD",
+      "AES_SECRET",
+      "JWT_SECRET",
+      "NECTED_USER_PASSWORD",
+    ])
+
+    # TARGET = SOURCE. nalanda reads MASTER_DB_PASSWORD, the vidhaan services
+    # and medha read DB_PASSWORD, and both are the same Postgres password.
+    aliases = optional(map(string), { MASTER_DB_PASSWORD = "DB_PASSWORD" })
+
+    # Vault unreachable on an upgrade: continue when the Secret already exists.
+    fail_open = optional(bool, true)
+
+    # ---- encryption-at-rest key ----
+    # Base64 of the PEM. Supplying it restores a known key; leaving it empty
+    # lets the job restore from the vault or generate one.
+    ear_secret_value = optional(string, "")
+    # Restore source only. The chart never writes to the vault, so this item is
+    # whatever you stored under that name; empty means generate in-cluster.
+    ear_remote_key = optional(string, "")
+
+    # Key within the blob that temporal reads as its store password.
+    temporal_password_key = optional(string, "MASTER_DB_PASSWORD")
+
+    aws_region      = optional(string, "")
+    azure_vault_url = optional(string, "")
+
+    service_account_name = optional(string, "nected-secret-sync")
+    # EKS Pod Identity needs neither. IRSA -> role_arn. Azure -> client_id.
+    service_account_role_arn  = optional(string, "")
+    service_account_client_id = optional(string, "")
+  })
+
+  default = {}
+
+  validation {
+    condition     = contains(["", "aws", "azure"], var.secret_manager.provider)
+    error_message = "secret_manager.provider must be empty, \"aws\" or \"azure\"."
+  }
+
+  validation {
+    condition     = var.secret_manager.enabled == false || var.secret_manager.provider != ""
+    error_message = "secret_manager.enabled requires a provider (aws or azure)."
+  }
+
+  validation {
+    condition     = var.secret_manager.enabled == false || length(var.secret_manager.remote_keys) > 0
+    error_message = "secret_manager.enabled requires at least one remote_keys entry."
+  }
 }

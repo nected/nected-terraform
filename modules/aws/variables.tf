@@ -202,7 +202,9 @@ variable "db_username" {
 variable "db_password" {
   description = "The database password"
   type        = string
-  default     = "FZv6r6s13LHLZeNj8TpMcxjH"
+  # No default: the root module generates one and passes it in. A shipped
+  # default here would quietly become a real password.
+  default = null
 }
 
 variable "db_multi_az" {
@@ -301,7 +303,9 @@ variable "valkey_parameter_group_family" {
 variable "valkey_auth_token" {
   type        = string
   description = "Authentication token for Valkey"
-  default     = "YyJgOWW6VSKLwJQUmlvebArysMrm02NYM2au7o"
+  # No default: the root module generates one and passes it in. A shipped
+  # default here would quietly become a real password.
+  default = null
 }
 
 variable "valkey_multi_az_enabled" {
@@ -516,4 +520,13 @@ variable "app_error_alarm_period" {
   type        = number
   description = "Evaluation period (seconds) for the application error alarm"
   default     = 300
+}
+variable "db_password_version" {
+  description = <<-EOT
+    Version for the RDS write-only password argument. Bump together with the
+    generated password: password_wo is only transmitted when this changes, so
+    leaving it fixed would let the vault and the database diverge silently.
+  EOT
+  type        = number
+  default     = 1
 }

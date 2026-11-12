@@ -281,3 +281,71 @@ variable "allowed_aks_cidrs" {
   type        = list(string)
   description = "Allowed CIDRS"
 }
+
+# -------------------
+# Monitoring (Azure Monitor / Log Analytics / Managed Prometheus)
+# -------------------
+variable "enable_azure_monitoring" {
+  type        = bool
+  description = "Enable Log Analytics + Container Insights + alerting (and Managed Prometheus/Grafana per their flags)"
+  default     = false
+}
+
+variable "enable_managed_prometheus" {
+  type        = bool
+  description = "Enable Azure Monitor managed Prometheus metrics for AKS (requires enable_azure_monitoring)"
+  default     = true
+}
+
+variable "enable_managed_grafana" {
+  type        = bool
+  description = "Provision an Azure Managed Grafana instance wired to the Monitor workspace (requires managed Prometheus)"
+  default     = false
+}
+
+variable "log_analytics_retention_days" {
+  type        = number
+  description = "Retention (days) for the Log Analytics workspace"
+  default     = 30
+}
+
+variable "monitoring_alert_emails" {
+  type        = list(string)
+  description = "Email addresses added to the Azure Monitor action group"
+  default     = []
+}
+
+variable "app_error_alert_threshold" {
+  type        = number
+  description = "Container error log lines within the evaluation window that trigger the app error alert"
+  default     = 10
+}
+
+variable "node_cpu_alert_threshold" {
+  type        = number
+  description = "AKS node CPU percentage that triggers the high-CPU alert"
+  default     = 85
+}
+
+variable "node_memory_alert_threshold" {
+  type        = number
+  description = "AKS node working-set memory percentage that triggers the high-memory alert"
+  default     = 85
+}
+variable "secret_manager" {
+  description = <<-EOT
+    Workload Identity for the nected-secret-sync job. When enabled, adds a
+    federated credential on the shared user-assigned identity for
+    (namespace, service_account_name) and grants it read access to the vault
+    holding the application credentials.
+  EOT
+
+  type = object({
+    enabled              = optional(bool, false)
+    service_account_name = optional(string, "nected-secret-sync")
+    # Vault holding the app credentials. Defaults to the certificate vault.
+    key_vault_id = optional(string, null)
+  })
+
+  default = {}
+}

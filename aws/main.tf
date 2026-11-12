@@ -42,7 +42,7 @@ module "aws_infra" {
 
   # RDS database
   db_username              = var.pg_admin_user
-  db_password              = var.pg_admin_passwd
+  db_password              = local.pg_admin_passwd
   db_engine_version        = var.pg_version
   backup_retention_period  = var.pg_backup_retention
   db_instance_class        = var.db_instance_class
@@ -65,7 +65,7 @@ module "aws_infra" {
   valkey_node_type              = var.valkey_node_type
   valkey_num_cache_nodes        = var.valkey_num_cache_nodes
   valkey_parameter_group_family = var.valkey_parameter_group_family
-  valkey_auth_token             = var.valkey_auth_token
+  valkey_auth_token             = local.valkey_auth_token
   valkey_multi_az_enabled       = var.valkey_multi_az_enabled
 
   # Opensearch
@@ -73,7 +73,7 @@ module "aws_infra" {
   opensearch_instance_type            = var.opensearch_instance_type
   opensearch_instance_count           = var.opensearch_instance_count
   opensearch_admin_username           = var.opensearch_admin_username
-  opensearch_admin_password           = var.opensearch_admin_password
+  opensearch_admin_password           = local.opensearch_admin_password
   opensearch_volume_size              = var.opensearch_volume_size
   opensearch_volume_type              = var.opensearch_volume_type
   opensearch_tls_security_policy      = var.opensearch_tls_security_policy
@@ -98,6 +98,22 @@ module "aws_alb" {
   environment      = var.environment
   aws_region       = var.aws_region
 
+  secret_manager = {
+    enabled              = var.secret_manager.enabled
+    namespace            = var.namespace
+    service_account_name = var.secret_manager.service_account_name
+
+    # Read-only, on both items the job may read. Secret ARNs carry a random
+    # 6-character suffix, so the encryption-at-rest pattern ends in a wildcard.
+    secret_arns = local.sm_enabled ? [
+      aws_secretsmanager_secret.app[0].arn,
+      aws_secretsmanager_secret.license[0].arn,
+      "arn:aws:secretsmanager:${var.aws_region}:${data.aws_caller_identity.current.account_id}:secret:${local.sm_ear_id}-*",
+    ] : []
+
+    kms_key_arn = var.secret_manager.kms_key_arn
+  }
+
   depends_on = [
     module.aws_infra
   ]
@@ -116,7 +132,7 @@ module "nected_app_aws" {
   elasticsearch_port           = 443
   elasticsearch_scheme         = "https"
   elasticsearch_admin_username = var.opensearch_admin_username
-  elasticsearch_admin_password = var.opensearch_admin_password
+  elasticsearch_admin_password = local.opensearch_admin_password
   backend_domain               = local.backend_domain
   router_domain                = local.router_domain
   ui_domain                    = local.ui_domain
@@ -124,7 +140,7 @@ module "nected_app_aws" {
   nected_chart_version         = var.nected_chart_version
 
   pg_admin_user   = var.pg_admin_user
-  pg_admin_passwd = var.pg_admin_passwd
+  pg_admin_passwd = local.pg_admin_passwd
   postgresql_host = module.aws_infra.rds_endpoint
 
   temporal_pods_resources    = var.temporal_pods_resources
@@ -146,20 +162,51 @@ module "nected_app_aws" {
   redis_tls_enabled = module.aws_infra.cache_tls_enabled
 
   console_user_email          = var.console_user_email
-  console_user_password       = var.console_user_password
+  console_user_password       = local.console_user_passwd
   nected_pre_shared_key       = var.nected_pre_shared_key
   ingress_annotations         = local.ingress_annotations
   nected_existing_secret_name = var.nected_existing_secret_name
   nected_custom_ca            = var.nected_custom_ca
-  nected_common_secret_value  = var.nected_common_secret_value
+
+  secret_manager = {
+    enabled       = var.secret_manager.enabled
+    provider      = "aws"
+    target_secret = var.secret_manager.target_secret
+
+    # The item terraform created and populated.
+    # app first, license second: later entries win.
+    remote_keys   = local.sm_enabled ? [aws_secretsmanager_secret.app[0].name, aws_secretsmanager_secret.license[0].name] : []
+    required_keys = var.secret_manager.required_keys
+    aliases       = var.secret_manager.aliases
+    fail_open     = var.secret_manager.fail_open
+    aws_region    = var.aws_region
+
+    # The chart owns the encryption-at-rest key and only ever READS this item.
+    # Nothing populates it: terraform does not hold the key, and the job no
+    # longer backs it up, so a generated key lives only in the Kubernetes
+    # Secret until someone copies it out. See the chart's values.yaml.
+    ear_secret_value = var.nected_common_secret_value == null ? "" : var.nected_common_secret_value
+    ear_remote_key   = local.sm_enabled ? local.sm_ear_id : ""
+
+    temporal_password_key = var.secret_manager.temporal_password_key
+    service_account_name  = var.secret_manager.service_account_name
+
+    # EKS Pod Identity binds the role to (namespace, service account)
+    # server-side, so there is no annotation to set.
+    service_account_role_arn = ""
+  }
 
   ingress_enabled            = local.ingress_enabled
   targetgroupbinding_enabled = local.targetgroupbinding_enabled
   aws_tg_arns                = local.aws_tg_arns
 
+  # The secret version, not just the secret: remote_keys only names the secret,
+  # so without this the chart's hook can run before the value is written.
   depends_on = [
     module.aws_alb,
-    module.aws_infra
+    module.aws_infra,
+    aws_secretsmanager_secret_version.app,
+    aws_secretsmanager_secret_version.license,
   ]
 
   providers = {
