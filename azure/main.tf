@@ -2,6 +2,12 @@
 module "azure_infra" {
   source = "./../modules/azure"
 
+  secret_manager = {
+    enabled              = var.secret_manager.enabled
+    service_account_name = var.secret_manager.service_account_name
+    key_vault_id         = var.secret_manager.key_vault_id
+  }
+
   # Core
   subscription_id     = var.az_subscription_id
   resource_group_name = var.az_resource_group_name
@@ -34,10 +40,17 @@ module "azure_infra" {
   aks_private_cluster_enabled = var.aks_private_cluster_enabled
   aks_zones                   = var.aks_zones
 
+  # Monitoring
+  enable_azure_monitoring      = var.enable_azure_monitoring
+  enable_managed_prometheus    = var.enable_managed_prometheus
+  enable_managed_grafana       = var.enable_managed_grafana
+  log_analytics_retention_days = var.log_analytics_retention_days
+  monitoring_alert_emails      = var.monitoring_alert_emails
+
   # Postgresql
   pg_version          = var.pg_version
   pg_admin_user       = var.pg_admin_user
-  pg_admin_passwd     = var.pg_admin_passwd
+  pg_admin_passwd     = local.pg_admin_passwd
   pg_sku_name         = var.az_pg_sku_name
   pg_disk_size        = var.az_pg_disk_size
   pg_backup_retention = var.pg_backup_retention
@@ -50,7 +63,7 @@ module "azure_infra" {
   elasticsearch_version         = var.elasticsearch_version
   elasticsearch_vm_size         = var.elasticsearch_vm_size
   elasticsearch_admin_username  = var.elasticsearch_admin_username
-  elasticsearch_admin_password  = var.elasticsearch_admin_password
+  elasticsearch_admin_password  = local.elasticsearch_admin_password
   elasticsearch_os_disk_size_gb = var.elasticsearch_os_disk_size_gb
 
   # Cassandra
@@ -120,7 +133,7 @@ module "azure_nected_app" {
   elasticsearch_provider       = "managed"
   elasticsearch_ip             = module.azure_infra.elasticsearch_ip
   elasticsearch_admin_username = var.elasticsearch_admin_username
-  elasticsearch_admin_password = var.elasticsearch_admin_password
+  elasticsearch_admin_password = local.elasticsearch_admin_password
   backend_domain               = local.backend_domain
   router_domain                = local.router_domain
   ui_domain                    = local.ui_domain
@@ -128,7 +141,7 @@ module "azure_nected_app" {
   nected_chart_version         = var.nected_chart_version
 
   pg_admin_user   = var.pg_admin_user
-  pg_admin_passwd = var.pg_admin_passwd
+  pg_admin_passwd = local.pg_admin_passwd
   postgresql_host = module.azure_infra.postgresql_host
 
   temporal_pods_resources    = var.temporal_pods_resources
@@ -149,12 +162,40 @@ module "azure_nected_app" {
   redis_port                  = module.azure_infra.redis_port
   redis_tls_enabled           = module.azure_infra.redis_tls_enabled
   console_user_email          = var.console_user_email
-  console_user_password       = var.console_user_password
+  console_user_password       = local.console_user_passwd
   nected_pre_shared_key       = var.nected_pre_shared_key
   ingress_annotations         = local.ingress_annotations
   nected_existing_secret_name = var.nected_existing_secret_name
-  nected_common_secret_value  = var.nected_common_secret_value
   nected_custom_ca            = var.nected_custom_ca
+
+  secret_manager = {
+    enabled       = var.secret_manager.enabled
+    provider      = "azure"
+    target_secret = var.secret_manager.target_secret
+
+    # app first, license second: later entries win.
+    remote_keys = local.sm_enabled ? [azurerm_key_vault_secret.app[0].name, azurerm_key_vault_secret.license[0].name] : []
+    required_keys = var.use_managed_cache ? var.secret_manager.required_keys : [
+      for k in var.secret_manager.required_keys : k if k != "REDIS_PASSWORD"
+    ]
+    aliases         = var.secret_manager.aliases
+    fail_open       = var.secret_manager.fail_open
+    azure_vault_url = local.sm_enabled ? local.sm_vault_url : ""
+
+    # The chart owns the encryption-at-rest key and only ever READS this item.
+    # Nothing populates it: terraform does not hold the key, and the job no
+    # longer backs it up, so a generated key lives only in the Kubernetes
+    # Secret until someone copies it out. See the chart's values.yaml.
+    ear_secret_value = var.nected_common_secret_value == null ? "" : var.nected_common_secret_value
+    ear_remote_key   = local.sm_enabled ? local.sm_ear_id : ""
+
+    temporal_password_key = var.secret_manager.temporal_password_key
+    service_account_name  = var.secret_manager.service_account_name
+
+    # Workload Identity is annotation-driven, unlike EKS Pod Identity: the
+    # client id has to reach the service account the chart renders.
+    service_account_client_id = local.sm_enabled ? module.azure_infra.secret_sync_client_id : ""
+  }
 
   helm_disable_openapi_validation = var.az_helm_disable_openapi_validation
 

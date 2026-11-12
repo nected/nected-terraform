@@ -45,10 +45,13 @@ module "postgres" {
 
   manage_master_user_password = false
 
-  db_name             = var.db_name
-  username            = var.db_username
-  password_wo         = var.db_password
-  password_wo_version = 1
+  db_name     = var.db_name
+  username    = var.db_username
+  password_wo = var.db_password
+  # A write-only argument is only transmitted when its version changes, so a
+  # hardcoded 1 means a regenerated password would reach Secrets Manager but
+  # never the database. Driven by the same knob that regenerates it.
+  password_wo_version = var.db_password_version
   port                = var.db_port
 
   multi_az            = var.db_multi_az

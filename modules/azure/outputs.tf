@@ -84,6 +84,10 @@ output "key_vault_id" {
   value = local.key_vault_id
 }
 
+output "key_vault_uri" {
+  value = local.key_vault_uri
+}
+
 output "alb_vault_secret_endpoint" {
   value = local.alb_vault_secret_endpoint
 }
@@ -106,4 +110,28 @@ output "public_app_gateway_ip" {
 
 output "public_app_gateway_id" {
   value = azurerm_public_ip.appgw_pip.id
+}
+
+output "log_analytics_workspace_id" {
+  value       = var.enable_azure_monitoring ? azurerm_log_analytics_workspace.main[0].id : null
+  description = "Log Analytics workspace backing Container Insights"
+}
+
+output "monitor_workspace_id" {
+  value       = var.enable_azure_monitoring && var.enable_managed_prometheus ? azurerm_monitor_workspace.prometheus[0].id : null
+  description = "Azure Monitor (managed Prometheus) workspace ID"
+}
+
+output "grafana_endpoint" {
+  value       = var.enable_azure_monitoring && var.enable_managed_prometheus && var.enable_managed_grafana ? azurerm_dashboard_grafana.main[0].endpoint : null
+  description = "Azure Managed Grafana endpoint URL"
+}
+output "secret_sync_client_id" {
+  description = "Client id to annotate the nected-secret-sync service account with (null when disabled)"
+  value       = var.secret_manager.enabled ? azurerm_user_assigned_identity.identity.client_id : null
+}
+
+output "secret_sync_federated_credential_id" {
+  description = "Federated credential, for use in depends_on so the hook does not run before the binding exists"
+  value       = var.secret_manager.enabled ? azurerm_federated_identity_credential.secret_sync[0].id : null
 }

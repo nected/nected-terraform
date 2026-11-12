@@ -1,7 +1,7 @@
 resource "helm_release" "nected" {
   name       = "nected"
-  repository = "https://charts.nected.io"
-  chart      = "nected"
+  #repository = "https://charts.nected.io"
+  chart      = "/tmp/nected-charts-local/charts/nected"
   namespace  = var.namespace
   timeout    = 600
   version    = var.nected_chart_version
@@ -14,8 +14,42 @@ resource "helm_release" "nected" {
 
   values = [
     yamlencode({
+      # Top level: the secret-manager hook validates that this matches its
+      # target, so the services cannot be left pointing at a stale secret.
+      existingSecret = local.nected_secret_name
+      # Filters these keys out of the ConfigMap that envVars renders into.
+      secretKeys = local.nected_secret_keys
+      # One job, running before everything else in this release. The
+      # encryption-at-rest key is always managed here; credentials only when a
+      # provider is configured.
+      secretsmanager = merge(local.secretsmanager_values, {
+        commonSecret = {
+          enabled     = true
+          secretValue = var.secret_manager.ear_secret_value
+          remoteKey   = var.secret_manager.ear_remote_key
+        }
+        credentials = merge(local.secretsmanager_values.credentials, {
+          nectedReleaseName = "nected"
+          temporalFullname  = "nected-temporal"
+        })
+        resources = merge(
+          var.nected_pods_resources.secret_job_cpu_request != null || var.nected_pods_resources.secret_job_memory_request != null ? {
+            requests = merge(
+              var.nected_pods_resources.secret_job_cpu_request != null ? { cpu = var.nected_pods_resources.secret_job_cpu_request } : {},
+              var.nected_pods_resources.secret_job_memory_request != null ? { memory = var.nected_pods_resources.secret_job_memory_request } : {}
+            )
+          } : {},
+          var.nected_pods_resources.secret_job_cpu_limit != null || var.nected_pods_resources.secret_job_memory_limit != null ? {
+            limits = merge(
+              var.nected_pods_resources.secret_job_cpu_limit != null ? { cpu = var.nected_pods_resources.secret_job_cpu_limit } : {},
+              var.nected_pods_resources.secret_job_memory_limit != null ? { memory = var.nected_pods_resources.secret_job_memory_limit } : {}
+            )
+          } : {}
+        )
+      })
+
       konark = {
-        envVars = merge(local.konark_base_env, lookup(var.nected_env_overrides, "konark", {}))
+        envVars = local.konark_env
 
         livenessProbe = {
           failureThreshold = 10
@@ -65,9 +99,10 @@ resource "helm_release" "nected" {
         }
       }
       nalanda = {
-        existingSecret = var.nected_existing_secret_name
+        existingSecret = local.nected_secret_name
+        secretKeys     = local.nected_secret_keys
         customCA       = var.nected_custom_ca
-        envVars        = merge(local.nalanda_base_env, lookup(var.nected_env_overrides, "nalanda", {}))
+        envVars        = local.nalanda_env
 
         autoSetup = {
           resources = merge(
@@ -136,9 +171,10 @@ resource "helm_release" "nected" {
       }
 
       vidhaan-executer = {
-        existingSecret = var.nected_existing_secret_name
+        existingSecret = local.nected_secret_name
+        secretKeys     = local.nected_secret_keys
         customCA       = var.nected_custom_ca
-        envVars        = merge(local.vidhaan_base_env, lookup(var.nected_env_overrides, "vidhaan", {}))
+        envVars        = local.vidhaan_env
 
         resources = merge(
           {
@@ -165,9 +201,10 @@ resource "helm_release" "nected" {
       }
 
       vidhaan-router = {
-        existingSecret = var.nected_existing_secret_name
+        existingSecret = local.nected_secret_name
+        secretKeys     = local.nected_secret_keys
         customCA       = var.nected_custom_ca
-        envVars        = merge(local.vidhaan_base_env, lookup(var.nected_env_overrides, "vidhaan", {}))
+        envVars        = local.vidhaan_env
 
         resources = merge(
           {
@@ -217,9 +254,10 @@ resource "helm_release" "nected" {
         }
       }
       medha = {
-        existingSecret = var.nected_existing_secret_name
+        existingSecret = local.nected_secret_name
+        secretKeys     = local.nected_secret_keys
         customCA       = var.nected_custom_ca
-        envVars        = merge(local.medha_base_env, lookup(var.nected_env_overrides, "medha", {}))
+        envVars        = local.medha_env
 
         livenessProbe = {
           failureThreshold = 10
@@ -253,9 +291,10 @@ resource "helm_release" "nected" {
       }
       garuda = {
         enabled        = var.nected_enable_garuda
-        existingSecret = var.nected_existing_secret_name
+        existingSecret = local.nected_secret_name
+        secretKeys     = local.nected_secret_keys
         customCA       = var.nected_custom_ca
-        envVars        = merge(local.garuda_base_env, lookup(var.nected_env_overrides, "garuda", {}))
+        envVars        = local.garuda_env
 
         livenessProbe = {
           failureThreshold = 10
@@ -288,23 +327,6 @@ resource "helm_release" "nected" {
         }
       }
 
-      commonSecret = {
-        secretValue = var.nected_common_secret_value
-        resources = merge(
-          var.nected_pods_resources.secret_job_cpu_request != null || var.nected_pods_resources.secret_job_memory_request != null ? {
-            requests = merge(
-              var.nected_pods_resources.secret_job_cpu_request != null ? { cpu = var.nected_pods_resources.secret_job_cpu_request } : {},
-              var.nected_pods_resources.secret_job_memory_request != null ? { memory = var.nected_pods_resources.secret_job_memory_request } : {}
-            )
-          } : {},
-          var.nected_pods_resources.secret_job_cpu_limit != null || var.nected_pods_resources.secret_job_memory_limit != null ? {
-            limits = merge(
-              var.nected_pods_resources.secret_job_cpu_limit != null ? { cpu = var.nected_pods_resources.secret_job_cpu_limit } : {},
-              var.nected_pods_resources.secret_job_memory_limit != null ? { memory = var.nected_pods_resources.secret_job_memory_limit } : {}
-            )
-          } : {}
-        )
-      }
     })
   ]
 }

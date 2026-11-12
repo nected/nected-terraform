@@ -1,15 +1,29 @@
 resource "helm_release" "temporal" {
   name       = "temporal"
-  repository = "https://charts.nected.io"
-  chart      = "temporal"
+  #repository = "file:///tmp/nected-charts-local/charts/temporal" #"https://charts.nected.io"
+  chart      = "/tmp/nected-charts-local/charts/temporal"
   namespace  = var.namespace
   version    = var.temporal_chart_version
-  timeout = 100
+  timeout    = 100
 
   values = [
     yamlencode({
       nameOverride     = "nected-temporal"
       fullnameOverride = "nected-temporal"
+
+      # Same hook the nected chart runs. Both releases carry it so install
+      # order does not matter: the first run creates the Secret, the second
+      # sees an unchanged payload hash and exits without writing.
+      # The same job. Temporal has no encryption-at-rest key, so commonSecret
+      # stays off and nothing renders until credentials are enabled.
+      secretsmanager = merge(local.secretsmanager_values, {
+        commonSecret = { enabled = false }
+        credentials = merge(local.secretsmanager_values.credentials, {
+          temporalFullname = "nected-temporal"
+          # Temporal only reads the store password.
+          requiredKeys = [var.secret_manager.temporal_password_key]
+        })
+      })
       additionalAnnotations = {
         "instrumentation.opentelemetry.io/inject-java"   = "false"
         "instrumentation.opentelemetry.io/inject-dotnet" = "false"
@@ -58,7 +72,7 @@ resource "helm_release" "temporal" {
           persistence = {
             default = {
               driver = "${var.temporal_persistant_driver}"
-              sql = {
+              sql = merge({
                 driver          = "postgres12"
                 maxConns        = 30
                 maxIdleConns    = 10
@@ -67,12 +81,20 @@ resource "helm_release" "temporal" {
                 host            = var.postgresql_host
                 port            = 5432
                 user            = var.pg_admin_user
-                password        = var.pg_admin_passwd
                 tls = {
                   enabled                = true
                   enableHostVerification = false
                 }
-              }
+                },
+                # existingSecret suppresses the chart-rendered Secret entirely,
+                # so the password never appears in the release manifest.
+                var.secret_manager.enabled ? {
+                  existingSecret = var.secret_manager.target_secret
+                  secretKey      = var.secret_manager.temporal_password_key
+                  } : {
+                  password = var.pg_admin_passwd
+                }
+              )
               cassandra = {
                 hosts    = "${var.seed_node_list}"
                 port     = 9042

@@ -2,7 +2,13 @@
 
 # === Variables ===
 ES_VERSION="${elasticsearch_version}"
-ELASTIC_PASSWORD="${elasticsearch_password}"
+# Decoded from base64 rather than templated in directly. templatefile() pastes
+# the literal password into this file and bash then expands it, so a value
+# containing $2 loses those characters and the VM ends up with a DIFFERENT
+# password from the one terraform records - every client then gets 401 with no
+# clue why. Base64 output is [A-Za-z0-9+/=], so nothing in it can be expanded,
+# and this holds for any password an operator supplies, not just generated ones.
+ELASTIC_PASSWORD="$(printf '%s' '${elasticsearch_password_b64}' | base64 -d)"
 ES_USER="elastic"
 ES_HOME="/etc/elasticsearch"
 ES_SERVICE="elasticsearch"
